@@ -4,7 +4,6 @@ import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { LoginForm } from '@/components/login-form';
-import { GalleryVerticalEnd } from 'lucide-react';
 
 export default function LoginPage() {
   const { user, isLoading } = useAuth();

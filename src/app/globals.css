@@ -68,9 +68,11 @@
 
 @layer base {
   * {
-    /* @apply border-border; */  /* Commentez cette ligne */
+    /* Commenté pour éviter les problèmes avec Vercel */
+    /* @apply border-border; */
   }
   body {
-    @apply bg-background text-foreground;
+    /* Remplacé par des classes Tailwind standard pour compatibilité Vercel */
+    @apply bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-50;
   }
 } 

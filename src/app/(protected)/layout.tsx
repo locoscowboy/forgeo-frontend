@@ -1,19 +1,12 @@
-﻿import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import { AppSidebar } from "@/components/layout/app-sidebar";
+﻿import { AppSidebar } from "@/components/layout/app-sidebar";
 
-export default async function ProtectedLayout({
+export default function ProtectedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Vérification côté serveur si l'utilisateur est connecté
-  const cookiesStore = await cookies();
-  const hasToken = cookiesStore.has("token");
-  
-  if (!hasToken) {
-    redirect("/login");
-  }
+  // Le middleware s'occupe déjà de vérifier l'authentification, 
+  // donc nous n'avons plus besoin de le faire ici
 
   return (
     <div className="flex h-screen">

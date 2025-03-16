@@ -1,8 +1,8 @@
-'use client';
+﻿"use client";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth/AuthContext';
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth/AuthContext";
 
 export default function Home() {
   const router = useRouter();
@@ -13,10 +13,10 @@ export default function Home() {
     if (!isLoading) {
       if (user) {
         // Rediriger vers le dashboard si l'utilisateur est connecté
-        router.replace('/dashboard');
+        router.replace("/dashboard");
       } else {
         // Rediriger vers la page de login si l'utilisateur n'est pas connecté
-        router.replace('/login');
+        router.replace("/login");
       }
     }
   }, [user, isLoading, router]);

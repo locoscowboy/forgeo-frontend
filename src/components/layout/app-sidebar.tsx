@@ -1,10 +1,10 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { BarChart3, LayoutDashboard, LogOut } from 'lucide-react';
+import { BarChart3, LayoutDashboard, LogOut, Settings } from 'lucide-react';
 
 // Sidebar interface minimale en attendant les composants shadcn/ui
 export function AppSidebar() {
@@ -28,34 +28,46 @@ export function AppSidebar() {
       {/* Navigation */}
       <div className="flex-1 overflow-auto py-4">
         <nav className="space-y-1 px-2">
-          <p className="px-2 py-1 text-xs font-semibold text-muted-foreground">
-            Overview
-          </p>
-          
-          <Link 
-            href="/dashboard" 
-            className={`flex items-center rounded-md px-3 py-2 text-sm font-medium ${
-              isActive('/dashboard')
-                ? 'bg-primary/10 text-primary'
-                : 'text-foreground hover:bg-accent hover:text-accent-foreground'
-            }`}
-          >
-            <LayoutDashboard className="mr-2 h-4 w-4" />
-            Dashboard
-          </Link>
-          
-          <Link 
-            href="/audits" 
-            className={`flex items-center rounded-md px-3 py-2 text-sm font-medium ${
-              isActive('/audits')
-                ? 'bg-primary/10 text-primary'
-                : 'text-foreground hover:bg-accent hover:text-accent-foreground'
-            }`}
-          >
-            <BarChart3 className="mr-2 h-4 w-4" />
-            Audits
-          </Link>
-        </nav>
+  <p className="px-2 py-1 text-xs font-semibold text-muted-foreground">
+    Overview
+  </p>
+  
+  <Link 
+    href="/dashboard" 
+    className={`flex items-center rounded-md px-3 py-2 text-sm font-medium ${
+      isActive('/dashboard')
+        ? 'bg-primary/10 text-primary'
+        : 'text-foreground hover:bg-accent hover:text-accent-foreground'
+    }`}
+  >
+    <LayoutDashboard className="mr-2 h-4 w-4" />
+    Dashboard
+  </Link>
+  
+  <Link 
+    href="/audits" 
+    className={`flex items-center rounded-md px-3 py-2 text-sm font-medium ${
+      isActive('/audits')
+        ? 'bg-primary/10 text-primary'
+        : 'text-foreground hover:bg-accent hover:text-accent-foreground'
+    }`}
+  >
+    <BarChart3 className="mr-2 h-4 w-4" />
+    Audits
+  </Link>
+
+  <Link 
+    href="/settings" 
+    className={`flex items-center rounded-md px-3 py-2 text-sm font-medium ${
+      isActive('/settings')
+        ? 'bg-primary/10 text-primary'
+        : 'text-foreground hover:bg-accent hover:text-accent-foreground'
+    }`}
+  >
+    <Settings className="mr-2 h-4 w-4" />
+    Paramètres
+  </Link>
+</nav>
       </div>
       
       {/* User section */}
@@ -85,3 +97,4 @@ export function AppSidebar() {
     </div>
   );
 } 
+

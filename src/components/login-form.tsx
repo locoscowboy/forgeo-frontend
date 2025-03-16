@@ -30,33 +30,60 @@ export function LoginForm() {
     },
   });
 
-  async function onSubmit(data: LoginFormValues) {
+  async function onSubmit(values: LoginFormValues) {
     setIsLoading(true);
-    setError(null);
-    
     try {
-      // Appeler l'API de login
-      console.log('Tentative de connexion avec:', data.username);
-      const response = await login(data);
+      // Ajouter des logs pour déboguer
+      console.log("Envoi des données de connexion:", values);
       
-      console.log('Réponse de l\'API:', response);
+      const response = await fetch('https://forgeo.store/api/v1/auth/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          'username': values.username,
+          'password': values.password,
+        }).toString(),
+        credentials: 'include',
+      });
       
-      // Vérifier que la réponse contient bien un token
-      if (response && response.access_token) {
-        // Stocker le token dans le contexte d'authentification
-        setAuth(response.access_token);
-        
-        console.log('Authentification réussie, redirection vers le dashboard...');
-        
-        // Rediriger vers le dashboard
-        router.push('/dashboard');
+      console.log("Statut de la réponse:", response.status);
+      
+      // Convertir la réponse en JSON
+      const data = await response.json();
+      console.log("Données reçues:", data);
+      
+      if (response.ok) {
+        // Vérifier que nous avons un token d'accès
+        if (data.access_token) {
+          console.log("Token reçu avec succès");
+          
+          // Stocker le token dans localStorage
+          localStorage.setItem('token', data.access_token);
+          
+          // Mettre à jour le contexte d'authentification
+          if (setAuth) {
+            console.log("Appel de auth.login avec le token");
+            setAuth(data.access_token);
+            
+            // Redirection explicite vers le dashboard
+            console.log("Redirection vers le dashboard");
+            router.push('/dashboard');
+          } else {
+            console.error("Erreur: auth ou auth.login est undefined");
+          }
+        } else {
+          console.error("Erreur: Pas de token dans la réponse", data);
+          setError("Erreur: Le serveur n'a pas fourni de token");
+        }
       } else {
-        setError('Réponse invalide du serveur');
-        console.error('Réponse invalide:', response);
+        console.error("Erreur de l'API:", data);
+        setError(data.detail || "Échec de l'authentification");
       }
-    } catch (err) {
-      setError('Authentification échouée. Vérifiez vos identifiants.');
-      console.error('Erreur de connexion:', err);
+    } catch (error) {
+      console.error("Erreur lors de la connexion:", error);
+      setError("Une erreur s'est produite. Veuillez réessayer.");
     } finally {
       setIsLoading(false);
     }

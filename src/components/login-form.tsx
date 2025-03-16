@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 
 // Schéma de validation
@@ -17,7 +16,6 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const { login: setAuth } = useAuth();
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 

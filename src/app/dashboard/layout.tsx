@@ -15,6 +15,7 @@ export default function DashboardLayout({
 
   useEffect(() => {
     if (!isLoading && !user) {
+      console.log('User not authenticated, redirecting to login...');
       router.push('/login');
     }
   }, [user, isLoading, router]);
@@ -22,19 +23,22 @@ export default function DashboardLayout({
   if (isLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        <p>Loading...</p>
+        <div className="text-center">
+          <h2 className="text-lg font-semibold">Chargement...</h2>
+          <p className="text-sm text-muted-foreground">Veuillez patienter</p>
+        </div>
       </div>
     );
   }
 
   if (!user) {
-    return null; // Will redirect via useEffect
+    return null; // Ne rien afficher pendant la redirection
   }
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen w-full">
       <AppSidebar />
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
         {children}
       </main>
     </div>

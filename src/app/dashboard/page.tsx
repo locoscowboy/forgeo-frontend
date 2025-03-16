@@ -1,24 +1,39 @@
-import React from 'react';
-import Link from 'next/link';
+'use client';
 
-export default function DashboardPage() {
+import { useAuth } from '@/lib/auth/AuthContext';
+
+export default function Dashboard() {
+  const { user } = useAuth();
+  
   return (
-    <div className="flex flex-col p-6">
-      <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-      <p className="text-muted-foreground">Welcome to Forgeo!</p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">Dashboard</h1>
+        <p className="text-muted-foreground">
+          Bienvenue, {user?.full_name || user?.email}!
+        </p>
+      </div>
       
-      <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <div className="rounded-lg border bg-card p-6 shadow-sm">
-          <h3 className="mb-2 text-lg font-medium">HubSpot Audits</h3>
-          <p className="mb-4 text-sm text-muted-foreground">
-            Analyze your HubSpot data quality
+          <h3 className="text-lg font-semibold">Accès HubSpot</h3>
+          <p className="text-sm text-muted-foreground">
+            Configurez votre connexion à HubSpot
           </p>
-          <Link 
-            href="/audits"
-            className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            Go to Audits
-          </Link>
+        </div>
+        
+        <div className="rounded-lg border bg-card p-6 shadow-sm">
+          <h3 className="text-lg font-semibold">Audits</h3>
+          <p className="text-sm text-muted-foreground">
+            Visualisez vos audits récents
+          </p>
+        </div>
+        
+        <div className="rounded-lg border bg-card p-6 shadow-sm">
+          <h3 className="text-lg font-semibold">Paramètres</h3>
+          <p className="text-sm text-muted-foreground">
+            Gérez votre compte et vos préférences
+          </p>
         </div>
       </div>
     </div>

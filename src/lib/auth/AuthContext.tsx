@@ -32,8 +32,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   async function fetchUser(authToken: string) {
+    console.log('Fetching user data with token...');
     try {
       const userData = await getCurrentUser(authToken);
+      console.log('User data fetched successfully:', userData);
       setUser(userData);
       setIsLoading(false);
     } catch (error) {
@@ -45,6 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const login = (newToken: string) => {
+    console.log('Storing auth token and setting user state...');
     localStorage.setItem('auth_token', newToken);
     setToken(newToken);
     fetchUser(newToken);

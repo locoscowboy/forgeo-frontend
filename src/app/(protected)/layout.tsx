@@ -2,13 +2,14 @@
 import { redirect } from "next/navigation";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 
-export default function ProtectedLayout({
+export default async function ProtectedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   // Vérification côté serveur si l'utilisateur est connecté
-  const hasToken = cookies().has("token");
+  const cookiesStore = await cookies();
+  const hasToken = cookiesStore.has("token");
   
   if (!hasToken) {
     redirect("/login");

@@ -18,11 +18,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    // Modifier la clé ici pour utiliser 'token' au lieu de 'auth_token'
     const storedToken = localStorage.getItem('token');
     if (storedToken) {
       setToken(storedToken);
@@ -39,13 +37,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('User data fetched successfully:', userData);
       setUser(userData);
       setIsLoading(false);
-      setIsAuthenticated(true);
     } catch (error) {
       console.error('Failed to fetch user:', error);
       localStorage.removeItem('token');
       setToken(null);
       setIsLoading(false);
-      setIsAuthenticated(false);
     }
   }
 
@@ -53,16 +49,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log("AuthContext: login appelé avec token");
     localStorage.setItem('token', token);
     setToken(token);
-    setIsAuthenticated(true);
-    console.log("AuthContext: état mis à jour - isAuthenticated:", true);
+    console.log("AuthContext: état mis à jour - token défini");
   };
 
   const logout = () => {
-    // Modifier la clé ici aussi pour utiliser 'token' au lieu de 'auth_token'
     localStorage.removeItem('token');
     setUser(null);
     setToken(null);
-    setIsAuthenticated(false);
     router.push('/login');
   };
 

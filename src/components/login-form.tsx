@@ -32,7 +32,6 @@ export function LoginForm() {
   async function onSubmit(values: LoginFormValues) {
     setIsLoading(true);
     try {
-      // Ajouter des logs pour déboguer
       console.log("Envoi des données de connexion:", values);
       
       const response = await fetch('https://forgeo.store/api/v1/auth/token', {
@@ -66,9 +65,12 @@ export function LoginForm() {
             console.log("Appel de auth.login avec le token");
             setAuth(data.access_token);
             
-            // Redirection explicite vers le dashboard
-            console.log("Redirection vers le dashboard");
-            router.push('/dashboard');
+            // Ajout d'un délai court avant la redirection pour s'assurer que le contexte est mis à jour
+            setTimeout(() => {
+              console.log("Redirection vers le dashboard");
+              // Force la navigation complète au lieu d'une simple mise à jour de l'URL
+              window.location.href = '/dashboard';
+            }, 100);
           } else {
             console.error("Erreur: auth ou auth.login est undefined");
           }

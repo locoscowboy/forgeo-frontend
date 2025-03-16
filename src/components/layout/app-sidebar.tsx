@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { BarChart3, HelpCircle, LayoutDashboard, LogOut, Settings, User } from 'lucide-react';
+import { BarChart3, LayoutDashboard, LogOut } from 'lucide-react';
 
 // Sidebar interface minimale en attendant les composants shadcn/ui
 export function AppSidebar() {

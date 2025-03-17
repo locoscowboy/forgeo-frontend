@@ -8,6 +8,11 @@ const inter = { className: '' }; // Remplacer par la fonte Inter si vous l'impor
 export const metadata: Metadata = {
   title: 'Forgeo - HubSpot Data Audit Platform',
   description: 'Analyze and optimize your HubSpot data quality',
+  icons: {
+    icon: '/favicon.png',
+    apple: '/favicon.png',
+    shortcut: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({

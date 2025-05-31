@@ -21,8 +21,124 @@ import {
   ArrowDown,
   Filter,
   Download,
-  Plus
+  Plus,
+  User,
+  Mail,
+  Phone,
+  Building,
+  MapPin,
+  Briefcase,
+  Tag,
+  Hash
 } from "lucide-react";
+
+// Notion-like Table Styles
+const tableStyles = `
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+  
+  .notion-table {
+    font-family: "Inter", sans-serif;
+    border-spacing: 0;
+    border-top: 1px solid #e0e0e0;
+    border-bottom: 1px solid #e0e0e0;
+    width: 100%;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .notion-th {
+    color: #9e9e9e;
+    font-weight: 500;
+    font-size: 0.875rem;
+    cursor: pointer;
+    border-bottom: 1px solid #e0e0e0;
+    border-right: 1px solid #e0e0e0;
+    background-color: #fafafa;
+    position: relative;
+    padding: 0;
+    white-space: nowrap;
+    margin: 0;
+  }
+  
+  .notion-th:hover {
+    background-color: #f5f5f5;
+  }
+  
+  .notion-th:last-child {
+    border-right: 0;
+  }
+  
+  .notion-th-content {
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    padding: 0.75rem 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 40px;
+  }
+  
+  .notion-td {
+    overflow: hidden;
+    color: #424242;
+    align-items: stretch;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    border-bottom: 1px solid #e0e0e0;
+    border-right: 1px solid #e0e0e0;
+    position: relative;
+    white-space: nowrap;
+    margin: 0;
+    min-height: 36px;
+  }
+  
+  .notion-td:last-child {
+    border-right: 0;
+  }
+  
+  .notion-tr:hover .notion-td {
+    background-color: #f8f9fa;
+  }
+  
+  .notion-td-content {
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    min-height: 36px;
+    flex: 1;
+  }
+  
+  .notion-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  
+  .notion-icon {
+    width: 14px;
+    height: 14px;
+    margin-right: 6px;
+    opacity: 0.6;
+  }
+  
+  .sort-icon {
+    width: 12px;
+    height: 12px;
+    opacity: 0.5;
+  }
+  
+  .sort-icon.active {
+    opacity: 1;
+    color: #2563eb;
+  }
+`;
 
 export default function ContactsPage() {
   const { token } = useAuth();
@@ -92,18 +208,32 @@ export default function ContactsPage() {
   };
 
   const getSortIcon = (field: string) => {
-    if (sortField !== field) return <ArrowUpDown className="h-3 w-3 opacity-50" />;
+    const isActive = sortField === field;
+    const className = `sort-icon ${isActive ? 'active' : ''}`;
+    
+    if (!isActive) return <ArrowUpDown className={className} />;
     return sortOrder === "asc" ? 
-      <ArrowUp className="h-3 w-3 text-blue-600" /> : 
-      <ArrowDown className="h-3 w-3 text-blue-600" />;
+      <ArrowUp className={className} /> : 
+      <ArrowDown className={className} />;
   };
+
+  const columns = [
+    { key: "firstname", label: "First Name", icon: User, width: "150px" },
+    { key: "lastname", label: "Last Name", icon: User, width: "150px" },
+    { key: "email", label: "Email", icon: Mail, width: "250px" },
+    { key: "phone", label: "Phone", icon: Phone, width: "150px" },
+    { key: "company", label: "Company", icon: Building, width: "200px" },
+    { key: "jobtitle", label: "Job Title", icon: Briefcase, width: "180px" },
+    { key: "lifecyclestage", label: "Stage", icon: Tag, width: "120px" },
+    { key: "city", label: "City", icon: MapPin, width: "150px" }
+  ];
 
   if (loading && contacts.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Chargement des contacts...</p>
+          <p className="mt-2 text-gray-600 font-medium">Loading contacts...</p>
         </div>
       </div>
     );
@@ -111,11 +241,11 @@ export default function ContactsPage() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">
-          <p className="text-red-600">{error}</p>
+          <p className="text-red-600 font-medium">{error}</p>
           <Button onClick={fetchContacts} className="mt-4">
-            Réessayer
+            Retry
           </Button>
         </div>
       </div>
@@ -123,36 +253,37 @@ export default function ContactsPage() {
   }
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Contacts Database</h1>
-            <p className="text-gray-600 text-sm">
-              {total.toLocaleString()} contact{total > 1 ? 's' : ''} • Page {page} of {totalPages}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="gap-2">
-              <Filter className="h-4 w-4" />
-              Filtres
-            </Button>
-            <Button variant="outline" size="sm" className="gap-2">
-              <Download className="h-4 w-4" />
-              Export
-            </Button>
-            <Button size="sm" className="gap-2 bg-blue-600 hover:bg-blue-700">
-              <Plus className="h-4 w-4" />
-              Nouveau
-            </Button>
+    <>
+      <style>{tableStyles}</style>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Contacts Database</h1>
+              <p className="text-gray-600 text-sm mt-1">
+                {total.toLocaleString()} contacts • Page {page} of {totalPages}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" className="gap-2">
+                <Filter className="h-4 w-4" />
+                Filter
+              </Button>
+              <Button variant="outline" size="sm" className="gap-2">
+                <Download className="h-4 w-4" />
+                Export
+              </Button>
+              <Button size="sm" className="gap-2 bg-blue-600 hover:bg-blue-700">
+                <Plus className="h-4 w-4" />
+                New
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Toolbar */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm mb-6">
-        <div className="p-4 border-b border-gray-200">
+        {/* Controls */}
+        <div className="px-6 py-4 bg-white border-b border-gray-200">
           <div className="flex items-center gap-4">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -165,7 +296,7 @@ export default function ContactsPage() {
             </div>
             
             <Select value={limit.toString()} onValueChange={(value) => setLimit(Number(value))}>
-              <SelectTrigger className="w-32 border-gray-300">
+              <SelectTrigger className="w-40 border-gray-300">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -177,84 +308,102 @@ export default function ContactsPage() {
           </div>
         </div>
 
-        {/* Table */}
-        <div className="overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
+        {/* Table Container */}
+        <div className="px-6 py-6">
+          <div className="overflow-auto">
+            <table className="notion-table">
               {/* Header */}
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  {[
-                    { key: "firstname", label: "First Name" },
-                    { key: "lastname", label: "Last Name" },
-                    { key: "email", label: "Email" },
-                    { key: "phone", label: "Phone" },
-                    { key: "company", label: "Company" },
-                    { key: "jobtitle", label: "Job Title" },
-                    { key: "lifecyclestage", label: "Stage" },
-                    { key: "city", label: "City" }
-                  ].map((column) => (
-                    <th
-                      key={column.key}
-                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200 last:border-r-0"
-                    >
-                      <button
-                        onClick={() => handleSort(column.key)}
-                        className="flex items-center gap-2 hover:text-gray-700 transition-colors group"
+              <thead>
+                <tr className="notion-tr">
+                  {columns.map((column) => {
+                    const Icon = column.icon;
+                    return (
+                      <th
+                        key={column.key}
+                        className="notion-th"
+                        style={{ width: column.width }}
                       >
-                        <span>{column.label}</span>
-                        {getSortIcon(column.key)}
-                      </button>
-                    </th>
-                  ))}
+                        <button
+                          onClick={() => handleSort(column.key)}
+                          className="notion-th-content w-full text-left"
+                        >
+                          <Icon className="notion-icon" />
+                          <span className="font-medium">{column.label}</span>
+                          <div className="ml-auto">
+                            {getSortIcon(column.key)}
+                          </div>
+                        </button>
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
 
               {/* Body */}
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody>
                 {contacts.map((contact) => (
-                  <tr 
-                    key={contact.id}
-                    className="hover:bg-gray-50 transition-colors group"
-                  >
-                    <td className="px-4 py-3 text-sm border-r border-gray-200 font-medium text-gray-900">
-                      {contact.firstname || "-"}
+                  <tr key={contact.id} className="notion-tr">
+                    <td className="notion-td">
+                      <div className="notion-td-content">
+                        {contact.firstname || <span className="text-gray-400">—</span>}
+                      </div>
                     </td>
-                    <td className="px-4 py-3 text-sm border-r border-gray-200 text-gray-900">
-                      {contact.lastname || "-"}
+                    
+                    <td className="notion-td">
+                      <div className="notion-td-content">
+                        {contact.lastname || <span className="text-gray-400">—</span>}
+                      </div>
                     </td>
-                    <td className="px-4 py-3 text-sm border-r border-gray-200">
-                      {contact.email ? (
-                        <a 
-                          href={`mailto:${contact.email}`}
-                          className="text-blue-600 hover:text-blue-800 hover:underline"
-                        >
-                          {contact.email}
-                        </a>
-                      ) : (
-                        <span className="text-gray-400">-</span>
-                      )}
+                    
+                    <td className="notion-td">
+                      <div className="notion-td-content">
+                        {contact.email ? (
+                          <a 
+                            href={`mailto:${contact.email}`}
+                            className="text-blue-600 hover:text-blue-800 hover:underline"
+                          >
+                            {contact.email}
+                          </a>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </div>
                     </td>
-                    <td className="px-4 py-3 text-sm border-r border-gray-200 text-gray-900">
-                      {contact.phone || <span className="text-gray-400">-</span>}
+                    
+                    <td className="notion-td">
+                      <div className="notion-td-content">
+                        {contact.phone || <span className="text-gray-400">—</span>}
+                      </div>
                     </td>
-                    <td className="px-4 py-3 text-sm border-r border-gray-200 text-gray-900">
-                      {contact.company || <span className="text-gray-400">-</span>}
+                    
+                    <td className="notion-td">
+                      <div className="notion-td-content">
+                        {contact.company || <span className="text-gray-400">—</span>}
+                      </div>
                     </td>
-                    <td className="px-4 py-3 text-sm border-r border-gray-200 text-gray-900">
-                      {contact.jobtitle || <span className="text-gray-400">-</span>}
+                    
+                    <td className="notion-td">
+                      <div className="notion-td-content">
+                        {contact.jobtitle || <span className="text-gray-400">—</span>}
+                      </div>
                     </td>
-                    <td className="px-4 py-3 text-sm border-r border-gray-200">
-                      {contact.lifecyclestage ? (
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getLifecycleStageColor(contact.lifecyclestage)}`}>
-                          {contact.lifecyclestage}
-                        </span>
-                      ) : (
-                        <span className="text-gray-400">-</span>
-                      )}
+                    
+                    <td className="notion-td">
+                      <div className="notion-td-content">
+                        {contact.lifecyclestage ? (
+                          <span className={`notion-tag ${getLifecycleStageColor(contact.lifecyclestage)}`}>
+                            {contact.lifecyclestage}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">
-                      {contact.city || <span className="text-gray-400">-</span>}
+                    
+                    <td className="notion-td">
+                      <div className="notion-td-content">
+                        {contact.city || <span className="text-gray-400">—</span>}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -263,60 +412,60 @@ export default function ContactsPage() {
           </div>
         </div>
 
-        {/* Footer with Pagination */}
-        <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-700">
-              Showing {Math.min((page - 1) * limit + 1, total)} to {Math.min(page * limit, total)} of {total.toLocaleString()} results
-            </span>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage(Math.max(1, page - 1))}
-              disabled={page === 1}
-              className="px-3 py-1 text-sm border-gray-300"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            
-            <div className="flex items-center gap-1">
-              {[...Array(Math.min(5, totalPages))].map((_, i) => {
-                const pageNum = Math.max(1, Math.min(totalPages - 4, page - 2)) + i;
-                if (pageNum > totalPages) return null;
-                
-                return (
-                  <Button
-                    key={pageNum}
-                    variant={pageNum === page ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setPage(pageNum)}
-                    className={`px-3 py-1 text-sm ${
-                      pageNum === page 
-                        ? "bg-blue-600 text-white" 
-                        : "border-gray-300 text-gray-700 hover:bg-gray-50"
-                    }`}
-                  >
-                    {pageNum}
-                  </Button>
-                );
-              })}
+        {/* Footer/Pagination */}
+        <div className="px-6 py-4 bg-white border-t border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-700">
+              Showing {Math.min((page - 1) * limit + 1, total)} to {Math.min(page * limit, total)} of {total.toLocaleString()} contacts
             </div>
             
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage(Math.min(totalPages, page + 1))}
-              disabled={page === totalPages}
-              className="px-3 py-1 text-sm border-gray-300"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(Math.max(1, page - 1))}
+                disabled={page === 1}
+                className="px-3 py-1 text-sm"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              
+              <div className="flex items-center gap-1">
+                {[...Array(Math.min(5, totalPages))].map((_, i) => {
+                  const pageNum = Math.max(1, Math.min(totalPages - 4, page - 2)) + i;
+                  if (pageNum > totalPages) return null;
+                  
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={pageNum === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setPage(pageNum)}
+                      className={`px-3 py-1 text-sm ${
+                        pageNum === page 
+                          ? "bg-blue-600 text-white hover:bg-blue-700" 
+                          : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+              </div>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(Math.min(totalPages, page + 1))}
+                disabled={page === totalPages}
+                className="px-3 py-1 text-sm"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 } 

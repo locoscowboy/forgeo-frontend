@@ -5,7 +5,6 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { getContacts, Contact } from "@/lib/api/contacts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,

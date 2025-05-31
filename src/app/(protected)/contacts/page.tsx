@@ -28,8 +28,7 @@ import {
   Building,
   MapPin,
   Briefcase,
-  Tag,
-  Hash
+  Tag
 } from "lucide-react";
 
 // Notion-like Table Styles

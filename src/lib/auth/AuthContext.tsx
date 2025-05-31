@@ -21,7 +21,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
+    const storedToken = getCookieValue('token');
     if (storedToken) {
       setToken(storedToken);
       fetchUser(storedToken);
@@ -29,6 +29,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
     }
   }, []);
+
+  function getCookieValue(name: string) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop()?.split(';').shift();
+    return null;
+  }
 
   async function fetchUser(authToken: string) {
     console.log('Fetching user data with token...');
@@ -48,13 +55,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = (token: string) => {
     console.log("AuthContext: login appelé avec token");
     
-    // Stocker dans localStorage ET cookie
-    localStorage.setItem('token', token);
     document.cookie = `token=${token}; path=/; secure; samesite=strict; max-age=86400`;
     
     setToken(token);
-    
-    // Fetch user data après avoir défini le token
     fetchUser(token);
     
     console.log("AuthContext: état mis à jour - token défini");

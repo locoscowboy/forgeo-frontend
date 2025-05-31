@@ -57,9 +57,6 @@ export function LoginForm() {
         if (data.access_token) {
           console.log("Token reçu avec succès");
           
-          // Stocker le token dans localStorage
-          localStorage.setItem('token', data.access_token);
-          
           // Mettre à jour le contexte d'authentification
           if (setAuth) {
             console.log("Appel de auth.login avec le token");

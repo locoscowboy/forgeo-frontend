@@ -225,65 +225,18 @@ export default function ContactsPage() {
     fetchContacts();
   }, [fetchContacts]);
 
-  const handleSort = async (field: string) => {
+  const handleSort = (field: string) => {
     console.log('🎯 Sort clicked:', field);
     
-    const newSortField = field;
-    let newSortOrder = "asc";
-    
     if (sortField === field) {
-      newSortOrder = sortOrder === "asc" ? "desc" : "asc";
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortOrder("asc");
     }
-    
-    // Mettre à jour les états
-    setSortField(newSortField);
-    setSortOrder(newSortOrder);
     setPage(1);
     
-    // Debug: vérifier le token
-    console.log('🔑 Token available:', !!token);
-    
-    // Appeler fetchContacts directement avec les nouvelles valeurs
-    if (!token) {
-      console.log('❌ No token, aborting API call');
-      return;
-    }
-    
-    console.log('✅ Token OK, proceeding with API call');
-    setLoading(true);
-    
-    try {
-      console.log('📡 Direct API call with:', { 
-        page: 1, 
-        limit, 
-        search, 
-        sortField: newSortField, 
-        sortOrder: newSortOrder 
-      });
-      
-      const response = await getContacts(
-        token,
-        1,
-        limit,
-        search || undefined,
-        newSortField,
-        newSortOrder
-      );
-      
-      console.log('📬 API Response received:', response);
-      
-      setContacts(response.contacts);
-      setTotalPages(response.total_pages);
-      setTotal(response.total);
-      setError(null);
-    } catch (err) {
-      console.log('💥 API Error:', err);
-      setError("Erreur lors du chargement des contacts");
-      console.error(err);
-    } finally {
-      setLoading(false);
-      console.log('🏁 API call finished');
-    }
+    // Ne pas dupliquer l'appel API ici - laisser useEffect/fetchContacts s'en charger
   };
 
   const handleSearch = (value: string) => {

@@ -225,51 +225,19 @@ export default function ContactsPage() {
     fetchContacts();
   }, [fetchContacts]);
 
-  const handleSort = async (field: string) => {
-    console.log('🎯 Sort clicked:', field);
-    
-    let newSortField = field;
-    let newSortOrder = "asc";
+  const handleSort = (field: string) => {
+    console.log('🎯 Sort clicked:', field, 'Current:', sortField, sortOrder); // Debug log
     
     if (sortField === field) {
-      newSortOrder = sortOrder === "asc" ? "desc" : "asc";
+      const newOrder = sortOrder === "asc" ? "desc" : "asc";
+      console.log('🔄 Toggling order to:', newOrder); // Debug log
+      setSortOrder(newOrder);
+    } else {
+      console.log('🆕 New field:', field); // Debug log
+      setSortField(field);
+      setSortOrder("asc");
     }
-    
-    // Mettre à jour les états
-    setSortField(newSortField);
-    setSortOrder(newSortOrder);
     setPage(1);
-    
-    // Appeler fetchContacts directement avec les nouvelles valeurs
-    if (!token) return;
-    setLoading(true);
-    try {
-      console.log('📡 Direct API call with:', { 
-        page: 1, 
-        limit, 
-        search, 
-        sortField: newSortField, 
-        sortOrder: newSortOrder 
-      });
-      
-      const response = await getContacts(
-        token,
-        1, // page reset to 1
-        limit,
-        search || undefined,
-        newSortField,
-        newSortOrder
-      );
-      setContacts(response.contacts);
-      setTotalPages(response.total_pages);
-      setTotal(response.total);
-      setError(null);
-    } catch (err) {
-      setError("Erreur lors du chargement des contacts");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleSearch = (value: string) => {

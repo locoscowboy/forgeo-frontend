@@ -53,5 +53,9 @@ export async function getContacts(
     throw new Error('Failed to fetch contacts');
   }
 
-  return response.json();
+  const data = await response.json();
+  console.log('API Response:', data);
+  console.log('Contacts array:', data.contacts);
+  console.log('Total:', data.total);
+  return data;
 } 

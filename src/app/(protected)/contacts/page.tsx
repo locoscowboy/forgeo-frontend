@@ -48,6 +48,8 @@ export default function ContactsPage() {
         sortField,
         sortOrder
       );
+      console.log('Response received:', response);
+      console.log('Contacts:', response.contacts);
       setContacts(response.contacts);
       setTotalPages(response.total_pages);
       setTotal(response.total);

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { getContacts, Contact } from "@/lib/api/contacts";
 import { Button } from "@/components/ui/button";
@@ -45,6 +45,7 @@ const tableStyles = `
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    table-layout: fixed;
   }
   
   .notion-th {
@@ -80,6 +81,7 @@ const tableStyles = `
     gap: 0.5rem;
     min-height: 40px;
     width: 100%;
+    padding-right: 20px;
   }
   
   .notion-td {
@@ -92,6 +94,8 @@ const tableStyles = `
     text-align: left;
     vertical-align: middle;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   
   .notion-td:last-child {
@@ -129,6 +133,37 @@ const tableStyles = `
     opacity: 1;
     color: #2563eb;
   }
+
+  .resizer {
+    display: inline-block;
+    background: transparent;
+    width: 8px;
+    height: 100%;
+    position: absolute;
+    right: 0;
+    top: 0;
+    transform: translateX(50%);
+    z-index: 1;
+    cursor: col-resize;
+    touch-action: none;
+  }
+
+  .resizer:hover {
+    background-color: #8ecae6;
+  }
+
+  .resizer.isResizing {
+    background-color: #2563eb;
+  }
+
+  .noselect {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
 `;
 
 export default function ContactsPage() {
@@ -143,6 +178,23 @@ export default function ContactsPage() {
   const [sortField, setSortField] = useState("firstname");
   const [sortOrder, setSortOrder] = useState("asc");
   const [limit, setLimit] = useState(50);
+  
+  // Column widths state
+  const [columnWidths, setColumnWidths] = useState({
+    firstname: 150,
+    lastname: 150,
+    email: 250,
+    phone: 150,
+    company: 200,
+    jobtitle: 180,
+    lifecyclestage: 120,
+    city: 150
+  });
+
+  // Resizing state
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizingColumn, setResizingColumn] = useState<string | null>(null);
+  const tableRef = useRef<HTMLTableElement>(null);
 
   const fetchContacts = useCallback(async () => {
     if (!token) return;
@@ -209,15 +261,45 @@ export default function ContactsPage() {
   };
 
   const columns = [
-    { key: "firstname", label: "First Name", icon: User, width: "150px" },
-    { key: "lastname", label: "Last Name", icon: User, width: "150px" },
-    { key: "email", label: "Email", icon: Mail, width: "250px" },
-    { key: "phone", label: "Phone", icon: Phone, width: "150px" },
-    { key: "company", label: "Company", icon: Building, width: "200px" },
-    { key: "jobtitle", label: "Job Title", icon: Briefcase, width: "180px" },
-    { key: "lifecyclestage", label: "Stage", icon: Tag, width: "120px" },
-    { key: "city", label: "City", icon: MapPin, width: "150px" }
+    { key: "firstname", label: "First Name", icon: User },
+    { key: "lastname", label: "Last Name", icon: User },
+    { key: "email", label: "Email", icon: Mail },
+    { key: "phone", label: "Phone", icon: Phone },
+    { key: "company", label: "Company", icon: Building },
+    { key: "jobtitle", label: "Job Title", icon: Briefcase },
+    { key: "lifecyclestage", label: "Stage", icon: Tag },
+    { key: "city", label: "City", icon: MapPin }
   ];
+
+  // Resizer functions
+  const handleMouseDown = (e: React.MouseEvent, columnKey: string) => {
+    e.preventDefault();
+    setIsResizing(true);
+    setResizingColumn(columnKey);
+    
+    const startX = e.clientX;
+    const startWidth = columnWidths[columnKey as keyof typeof columnWidths];
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const diff = e.clientX - startX;
+      const newWidth = Math.max(80, startWidth + diff); // Minimum width of 80px
+      
+      setColumnWidths(prev => ({
+        ...prev,
+        [columnKey]: newWidth
+      }));
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      setResizingColumn(null);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
 
   if (loading && contacts.length === 0) {
     return (
@@ -246,7 +328,7 @@ export default function ContactsPage() {
   return (
     <>
       <style>{tableStyles}</style>
-      <div className="min-h-screen bg-gray-50">
+      <div className={`min-h-screen bg-gray-50 ${isResizing ? 'noselect' : ''}`}>
         {/* Header */}
         <div className="bg-white border-b border-gray-200 px-6 py-4">
           <div className="flex items-center justify-between">
@@ -302,17 +384,19 @@ export default function ContactsPage() {
         {/* Table Container */}
         <div className="px-6 py-6">
           <div className="overflow-auto">
-            <table className="notion-table">
+            <table ref={tableRef} className="notion-table">
               {/* Header */}
               <thead>
                 <tr className="notion-tr">
                   {columns.map((column) => {
                     const Icon = column.icon;
+                    const width = columnWidths[column.key as keyof typeof columnWidths];
+                    
                     return (
                       <th
                         key={column.key}
                         className="notion-th"
-                        style={{ width: column.width }}
+                        style={{ width: `${width}px` }}
                       >
                         <button
                           onClick={() => handleSort(column.key)}
@@ -324,6 +408,12 @@ export default function ContactsPage() {
                             {getSortIcon(column.key)}
                           </div>
                         </button>
+                        
+                        {/* Resizer */}
+                        <div
+                          className={`resizer ${resizingColumn === column.key ? 'isResizing' : ''}`}
+                          onMouseDown={(e) => handleMouseDown(e, column.key)}
+                        />
                       </th>
                     );
                   })}
@@ -334,15 +424,15 @@ export default function ContactsPage() {
               <tbody>
                 {contacts.map((contact) => (
                   <tr key={contact.id} className="notion-tr">
-                    <td className="notion-td">
+                    <td className="notion-td" style={{ width: `${columnWidths.firstname}px` }}>
                       {contact.firstname || <span className="text-gray-400">—</span>}
                     </td>
                     
-                    <td className="notion-td">
+                    <td className="notion-td" style={{ width: `${columnWidths.lastname}px` }}>
                       {contact.lastname || <span className="text-gray-400">—</span>}
                     </td>
                     
-                    <td className="notion-td">
+                    <td className="notion-td" style={{ width: `${columnWidths.email}px` }}>
                       {contact.email ? (
                         <a 
                           href={`mailto:${contact.email}`}
@@ -355,19 +445,19 @@ export default function ContactsPage() {
                       )}
                     </td>
                     
-                    <td className="notion-td">
+                    <td className="notion-td" style={{ width: `${columnWidths.phone}px` }}>
                       {contact.phone || <span className="text-gray-400">—</span>}
                     </td>
                     
-                    <td className="notion-td">
+                    <td className="notion-td" style={{ width: `${columnWidths.company}px` }}>
                       {contact.company || <span className="text-gray-400">—</span>}
                     </td>
                     
-                    <td className="notion-td">
+                    <td className="notion-td" style={{ width: `${columnWidths.jobtitle}px` }}>
                       {contact.jobtitle || <span className="text-gray-400">—</span>}
                     </td>
                     
-                    <td className="notion-td">
+                    <td className="notion-td" style={{ width: `${columnWidths.lifecyclestage}px` }}>
                       {contact.lifecyclestage ? (
                         <span className={`notion-tag ${getLifecycleStageColor(contact.lifecyclestage)}`}>
                           {contact.lifecyclestage}
@@ -377,7 +467,7 @@ export default function ContactsPage() {
                       )}
                     </td>
                     
-                    <td className="notion-td">
+                    <td className="notion-td" style={{ width: `${columnWidths.city}px` }}>
                       {contact.city || <span className="text-gray-400">—</span>}
                     </td>
                   </tr>

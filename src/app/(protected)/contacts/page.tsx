@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { getContacts, Contact } from "@/lib/api/contacts";
 import { Button } from "@/components/ui/button";
@@ -38,7 +38,7 @@ export default function ContactsPage() {
   const [sortOrder, setSortOrder] = useState("asc");
   const [limit, setLimit] = useState(50);
 
-  const fetchContacts = async () => {
+  const fetchContacts = useCallback(async () => {
     if (!token) return;
     setLoading(true);
     try {
@@ -60,11 +60,11 @@ export default function ContactsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, page, limit, search, sortField, sortOrder]);
 
   useEffect(() => {
     fetchContacts();
-  }, [page, search, sortField, sortOrder, limit, token]);
+  }, [fetchContacts]);
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -213,7 +213,7 @@ export default function ContactsPage() {
 
               {/* Body */}
               <tbody className="bg-white divide-y divide-gray-200">
-                {contacts.map((contact, index) => (
+                {contacts.map((contact) => (
                   <tr 
                     key={contact.id}
                     className="hover:bg-gray-50 transition-colors group"

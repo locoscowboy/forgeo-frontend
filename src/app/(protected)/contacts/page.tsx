@@ -196,7 +196,7 @@ export default function ContactsPage() {
   const [resizingColumn, setResizingColumn] = useState<string | null>(null);
   const tableRef = useRef<HTMLTableElement>(null);
 
-  // fetchContacts sans useCallback 
+  // fetchContacts function
   const fetchContacts = async (
     pageParam?: number,
     limitParam?: number,
@@ -249,7 +249,7 @@ export default function ContactsPage() {
     }
   };
 
-  // useEffect simplifié - ignore la règle ESLint pour fetchContacts
+  // useEffect simplifié
   useEffect(() => {
     if (token) {
       fetchContacts();
@@ -257,47 +257,49 @@ export default function ContactsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  // handleSort - appelle fetchContacts directement
+  // handleSort
   const handleSort = (field: string) => {
     console.log('🎯 Sort clicked:', field);
     
-    const newSortField = field; // Utilise const au lieu de let
+    const newSortField = field;
     let newSortOrder = "asc";
     
     if (sortField === field) {
       newSortOrder = sortOrder === "asc" ? "desc" : "asc";
     }
     
-    // Mettre à jour les états
     setSortField(newSortField);
     setSortOrder(newSortOrder);
     setPage(1);
     
-    // Appeler fetchContacts immédiatement avec les nouveaux paramètres
     fetchContacts(1, limit, search, newSortField, newSortOrder);
   };
 
-  // handleSearch - appelle fetchContacts directement
+  // handleSearch
   const handleSearch = (value: string) => {
     console.log('🔍 Search:', value);
     setSearch(value);
     setPage(1);
     
-    // Appeler fetchContacts immédiatement
     fetchContacts(1, limit, value, sortField, sortOrder);
   };
 
-  // Fonction pour la pagination
+  // handlePageChange
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
     fetchContacts(newPage, limit, search, sortField, sortOrder);
   };
 
-  // Fonction pour le changement de limite
+  // handleLimitChange
   const handleLimitChange = (newLimit: number) => {
     setLimit(newLimit);
     setPage(1);
     fetchContacts(1, newLimit, search, sortField, sortOrder);
+  };
+
+  // 🔥 FONCTION RETRY SÉPARÉE pour le bouton d'erreur
+  const handleRetry = () => {
+    fetchContacts();
   };
 
   const getLifecycleStageColor = (stage: string) => {
@@ -343,7 +345,7 @@ export default function ContactsPage() {
 
     const handleMouseMove = (e: MouseEvent) => {
       const diff = e.clientX - startX;
-      const newWidth = Math.max(80, startWidth + diff); // Minimum width of 80px
+      const newWidth = Math.max(80, startWidth + diff);
       
       setColumnWidths(prev => ({
         ...prev,
@@ -378,7 +380,7 @@ export default function ContactsPage() {
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">
           <p className="text-red-600 font-medium">{error}</p>
-          <Button onClick={fetchContacts} className="mt-4">
+          <Button onClick={handleRetry} className="mt-4">
             Retry
           </Button>
         </div>

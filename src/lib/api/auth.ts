@@ -17,7 +17,7 @@ export interface User {
 }
 
 export async function login(credentials: LoginCredentials): Promise<AuthResponse> {
-  const response = await fetch('https://api.forgeo.store/api/v1/auth/token', {
+  const response = await fetch('https://forgeo.store/api/v1/auth/token', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',

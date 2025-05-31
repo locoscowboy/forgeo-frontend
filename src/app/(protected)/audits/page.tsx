@@ -10,7 +10,7 @@ export default function AuditsPage() {
   const connectHubSpot = async () => {
     setConnecting(true);
     try {
-      const response = await fetch("https://api.forgeo.store/api/v1/hubspot/auth", {
+      const response = await fetch("https://forgeo.store/api/v1/hubspot/auth", {
         headers: {
           "Authorization": `Bearer ${token}`
         }

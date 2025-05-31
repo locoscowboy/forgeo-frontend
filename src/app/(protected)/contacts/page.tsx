@@ -59,6 +59,8 @@ const tableStyles = `
     padding: 0;
     white-space: nowrap;
     margin: 0;
+    text-align: left;
+    vertical-align: middle;
   }
   
   .notion-th:hover {
@@ -77,21 +79,19 @@ const tableStyles = `
     align-items: center;
     gap: 0.5rem;
     min-height: 40px;
+    width: 100%;
   }
   
   .notion-td {
-    overflow: hidden;
     color: #424242;
-    align-items: stretch;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
     border-bottom: 1px solid #e0e0e0;
     border-right: 1px solid #e0e0e0;
     position: relative;
-    white-space: nowrap;
     margin: 0;
-    min-height: 36px;
+    padding: 0.5rem;
+    text-align: left;
+    vertical-align: middle;
+    white-space: nowrap;
   }
   
   .notion-td:last-child {
@@ -100,14 +100,6 @@ const tableStyles = `
   
   .notion-tr:hover .notion-td {
     background-color: #f8f9fa;
-  }
-  
-  .notion-td-content {
-    padding: 0.5rem;
-    display: flex;
-    align-items: center;
-    min-height: 36px;
-    flex: 1;
   }
   
   .notion-tag {
@@ -343,66 +335,50 @@ export default function ContactsPage() {
                 {contacts.map((contact) => (
                   <tr key={contact.id} className="notion-tr">
                     <td className="notion-td">
-                      <div className="notion-td-content">
-                        {contact.firstname || <span className="text-gray-400">—</span>}
-                      </div>
+                      {contact.firstname || <span className="text-gray-400">—</span>}
                     </td>
                     
                     <td className="notion-td">
-                      <div className="notion-td-content">
-                        {contact.lastname || <span className="text-gray-400">—</span>}
-                      </div>
+                      {contact.lastname || <span className="text-gray-400">—</span>}
                     </td>
                     
                     <td className="notion-td">
-                      <div className="notion-td-content">
-                        {contact.email ? (
-                          <a 
-                            href={`mailto:${contact.email}`}
-                            className="text-blue-600 hover:text-blue-800 hover:underline"
-                          >
-                            {contact.email}
-                          </a>
-                        ) : (
-                          <span className="text-gray-400">—</span>
-                        )}
-                      </div>
+                      {contact.email ? (
+                        <a 
+                          href={`mailto:${contact.email}`}
+                          className="text-blue-600 hover:text-blue-800 hover:underline"
+                        >
+                          {contact.email}
+                        </a>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
                     </td>
                     
                     <td className="notion-td">
-                      <div className="notion-td-content">
-                        {contact.phone || <span className="text-gray-400">—</span>}
-                      </div>
+                      {contact.phone || <span className="text-gray-400">—</span>}
                     </td>
                     
                     <td className="notion-td">
-                      <div className="notion-td-content">
-                        {contact.company || <span className="text-gray-400">—</span>}
-                      </div>
+                      {contact.company || <span className="text-gray-400">—</span>}
                     </td>
                     
                     <td className="notion-td">
-                      <div className="notion-td-content">
-                        {contact.jobtitle || <span className="text-gray-400">—</span>}
-                      </div>
+                      {contact.jobtitle || <span className="text-gray-400">—</span>}
                     </td>
                     
                     <td className="notion-td">
-                      <div className="notion-td-content">
-                        {contact.lifecyclestage ? (
-                          <span className={`notion-tag ${getLifecycleStageColor(contact.lifecyclestage)}`}>
-                            {contact.lifecyclestage}
-                          </span>
-                        ) : (
-                          <span className="text-gray-400">—</span>
-                        )}
-                      </div>
+                      {contact.lifecyclestage ? (
+                        <span className={`notion-tag ${getLifecycleStageColor(contact.lifecyclestage)}`}>
+                          {contact.lifecyclestage}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
                     </td>
                     
                     <td className="notion-td">
-                      <div className="notion-td-content">
-                        {contact.city || <span className="text-gray-400">—</span>}
-                      </div>
+                      {contact.city || <span className="text-gray-400">—</span>}
                     </td>
                   </tr>
                 ))}

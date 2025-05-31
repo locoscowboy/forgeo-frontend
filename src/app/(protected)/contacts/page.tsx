@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { getContacts, Contact } from "@/lib/api/contacts";
 import { Button } from "@/components/ui/button";
@@ -196,7 +196,7 @@ export default function ContactsPage() {
   const [resizingColumn, setResizingColumn] = useState<string | null>(null);
   const tableRef = useRef<HTMLTableElement>(null);
 
-  // 🔥 NOUVELLE APPROCHE - fetchContacts sans useCallback 
+  // fetchContacts sans useCallback 
   const fetchContacts = async (
     pageParam?: number,
     limitParam?: number,
@@ -249,18 +249,19 @@ export default function ContactsPage() {
     }
   };
 
-  // 🔥 useEffect simplifié - se déclenche seulement sur le changement de token
+  // useEffect simplifié - ignore la règle ESLint pour fetchContacts
   useEffect(() => {
     if (token) {
       fetchContacts();
     }
-  }, [token]); // Seulement le token comme dépendance
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
-  // 🔥 handleSort - appelle fetchContacts directement avec les nouveaux paramètres
+  // handleSort - appelle fetchContacts directement
   const handleSort = (field: string) => {
     console.log('🎯 Sort clicked:', field);
     
-    let newSortField = field;
+    const newSortField = field; // Utilise const au lieu de let
     let newSortOrder = "asc";
     
     if (sortField === field) {
@@ -276,7 +277,7 @@ export default function ContactsPage() {
     fetchContacts(1, limit, search, newSortField, newSortOrder);
   };
 
-  // 🔥 handleSearch - appelle fetchContacts directement
+  // handleSearch - appelle fetchContacts directement
   const handleSearch = (value: string) => {
     console.log('🔍 Search:', value);
     setSearch(value);
@@ -286,13 +287,13 @@ export default function ContactsPage() {
     fetchContacts(1, limit, value, sortField, sortOrder);
   };
 
-  // 🔥 Fonction pour la pagination
+  // Fonction pour la pagination
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
     fetchContacts(newPage, limit, search, sortField, sortOrder);
   };
 
-  // 🔥 Fonction pour le changement de limite
+  // Fonction pour le changement de limite
   const handleLimitChange = (newLimit: number) => {
     setLimit(newLimit);
     setPage(1);

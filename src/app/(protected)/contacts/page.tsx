@@ -196,52 +196,107 @@ export default function ContactsPage() {
   const [resizingColumn, setResizingColumn] = useState<string | null>(null);
   const tableRef = useRef<HTMLTableElement>(null);
 
-  const fetchContacts = useCallback(async () => {
-    if (!token) return;
+  // 🔥 NOUVELLE APPROCHE - fetchContacts sans useCallback 
+  const fetchContacts = async (
+    pageParam?: number,
+    limitParam?: number,
+    searchParam?: string,
+    sortFieldParam?: string,
+    sortOrderParam?: string
+  ) => {
+    if (!token) {
+      console.log('❌ No token available');
+      return;
+    }
+    
+    // Utiliser les paramètres passés ou les états actuels
+    const currentPage = pageParam ?? page;
+    const currentLimit = limitParam ?? limit;
+    const currentSearch = searchParam ?? search;
+    const currentSortField = sortFieldParam ?? sortField;
+    const currentSortOrder = sortOrderParam ?? sortOrder;
+    
     setLoading(true);
     try {
-      console.log('🔥 Fetching contacts with:', { page, limit, search, sortField, sortOrder }); // Debug log
+      console.log('🔥 Fetching contacts with:', { 
+        page: currentPage, 
+        limit: currentLimit, 
+        search: currentSearch, 
+        sortField: currentSortField, 
+        sortOrder: currentSortOrder 
+      });
+      
       const response = await getContacts(
         token,
-        page,
-        limit,
-        search || undefined,
-        sortField,
-        sortOrder
+        currentPage,
+        currentLimit,
+        currentSearch || undefined,
+        currentSortField,
+        currentSortOrder
       );
+      
+      console.log('📦 API Response:', response);
+      
       setContacts(response.contacts);
       setTotalPages(response.total_pages);
       setTotal(response.total);
       setError(null);
     } catch (err) {
       setError("Erreur lors du chargement des contacts");
-      console.error(err);
+      console.error('💥 API Error:', err);
     } finally {
       setLoading(false);
     }
-  }, [token, page, limit, search, sortField, sortOrder]);
+  };
 
+  // 🔥 useEffect simplifié - se déclenche seulement sur le changement de token
   useEffect(() => {
-    fetchContacts();
-  }, [fetchContacts]);
+    if (token) {
+      fetchContacts();
+    }
+  }, [token]); // Seulement le token comme dépendance
 
+  // 🔥 handleSort - appelle fetchContacts directement avec les nouveaux paramètres
   const handleSort = (field: string) => {
     console.log('🎯 Sort clicked:', field);
     
+    let newSortField = field;
+    let newSortOrder = "asc";
+    
     if (sortField === field) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortOrder("asc");
+      newSortOrder = sortOrder === "asc" ? "desc" : "asc";
     }
+    
+    // Mettre à jour les états
+    setSortField(newSortField);
+    setSortOrder(newSortOrder);
     setPage(1);
     
-    // Ne pas dupliquer l'appel API ici - laisser useEffect/fetchContacts s'en charger
+    // Appeler fetchContacts immédiatement avec les nouveaux paramètres
+    fetchContacts(1, limit, search, newSortField, newSortOrder);
   };
 
+  // 🔥 handleSearch - appelle fetchContacts directement
   const handleSearch = (value: string) => {
+    console.log('🔍 Search:', value);
     setSearch(value);
     setPage(1);
+    
+    // Appeler fetchContacts immédiatement
+    fetchContacts(1, limit, value, sortField, sortOrder);
+  };
+
+  // 🔥 Fonction pour la pagination
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    fetchContacts(newPage, limit, search, sortField, sortOrder);
+  };
+
+  // 🔥 Fonction pour le changement de limite
+  const handleLimitChange = (newLimit: number) => {
+    setLimit(newLimit);
+    setPage(1);
+    fetchContacts(1, newLimit, search, sortField, sortOrder);
   };
 
   const getLifecycleStageColor = (stage: string) => {
@@ -373,7 +428,7 @@ export default function ContactsPage() {
               />
             </div>
             
-            <Select value={limit.toString()} onValueChange={(value) => setLimit(Number(value))}>
+            <Select value={limit.toString()} onValueChange={(value) => handleLimitChange(Number(value))}>
               <SelectTrigger className="w-40 border-gray-300">
                 <SelectValue />
               </SelectTrigger>
@@ -493,7 +548,7 @@ export default function ContactsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setPage(Math.max(1, page - 1))}
+                onClick={() => handlePageChange(Math.max(1, page - 1))}
                 disabled={page === 1}
                 className="px-3 py-1 text-sm"
               >
@@ -510,7 +565,7 @@ export default function ContactsPage() {
                       key={pageNum}
                       variant={pageNum === page ? "default" : "outline"}
                       size="sm"
-                      onClick={() => setPage(pageNum)}
+                      onClick={() => handlePageChange(pageNum)}
                       className={`px-3 py-1 text-sm ${
                         pageNum === page 
                           ? "bg-blue-600 text-white hover:bg-blue-700" 
@@ -526,7 +581,7 @@ export default function ContactsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setPage(Math.min(totalPages, page + 1))}
+                onClick={() => handlePageChange(Math.min(totalPages, page + 1))}
                 disabled={page === totalPages}
                 className="px-3 py-1 text-sm"
               >

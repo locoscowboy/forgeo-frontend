@@ -42,7 +42,7 @@ export async function getContacts(
   if (sortField) params.append('sort_field', sortField);
   if (sortOrder) params.append('sort_order', sortOrder);
 
-  const response = await fetch(`https://forgeo.store/api/v1/contacts?${params}`, {
+  const response = await fetch(`https://api.forgeo.store/api/v1/contacts?${params}`, {
     headers: {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',

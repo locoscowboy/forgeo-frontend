@@ -47,8 +47,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = (token: string) => {
     console.log("AuthContext: login appelé avec token");
+    
+    // Stocker dans localStorage ET cookie
     localStorage.setItem('token', token);
+    document.cookie = `token=${token}; path=/; secure; samesite=strict; max-age=86400`;
+    
     setToken(token);
+    
+    // Fetch user data après avoir défini le token
+    fetchUser(token);
+    
     console.log("AuthContext: état mis à jour - token défini");
   };
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -16,6 +17,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const { login: setAuth } = useAuth();
+  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -66,12 +68,14 @@ export function LoginForm() {
             // Ajout d'un délai court avant la redirection pour s'assurer que le contexte est mis à jour
             setTimeout(() => {
               console.log("Redirection vers le dashboard");
-              // Force la navigation complète au lieu d'une simple mise à jour de l'URL
-              window.location.href = '/dashboard';
+              router.push('/dashboard');
             }, 100);
           } else {
             console.error("Erreur: auth ou auth.login est undefined");
           }
+
+          // Ajouter après localStorage.setItem
+          document.cookie = `token=${data.access_token}; path=/; secure; samesite=strict`;
         } else {
           console.error("Erreur: Pas de token dans la réponse", data);
           setError("Erreur: Le serveur n'a pas fourni de token");

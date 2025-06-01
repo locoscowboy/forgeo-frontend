@@ -427,14 +427,10 @@ export default function ContactsPage() {
       <style>{tableStyles}</style>
       <div className={`min-h-screen bg-gray-50 ${isResizing ? 'noselect' : ''}`}>
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="bg-white border-b border-gray-200 px-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Contacts Database</h1>
-              <p className="text-gray-600 text-sm mt-1">
-                {total.toLocaleString()} contacts • Page {searchParams.page} of {totalPages}
-                {loading && " • Mise à jour..."}
-              </p>
+              <h1 className="text-2xl font-bold text-gray-900">Contacts</h1>
             </div>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" className="gap-2">

@@ -425,7 +425,7 @@ export default function ContactsPage() {
   return (
     <>
       <style>{tableStyles}</style>
-      <div className={`min-h-screen bg-gray-50 ${isResizing ? 'noselect' : ''}`}>
+      <div className={`h-screen bg-gray-50 flex flex-col ${isResizing ? 'noselect' : ''}`}>
         {/* Header */}
         <div className="bg-white border-b border-gray-200 px-6 h-14 flex items-center justify-between">
           <div>
@@ -499,8 +499,8 @@ export default function ContactsPage() {
         </div>
 
         {/* Table Container */}
-        <div className="px-0 py-0">
-          <div className="overflow-auto">
+        <div className="flex-1 overflow-hidden">
+          <div className="h-full overflow-auto">
             <table ref={tableRef} className="notion-table">
               {/* Header */}
               <thead>

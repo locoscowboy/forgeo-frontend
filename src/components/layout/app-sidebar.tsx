@@ -57,6 +57,18 @@ export function AppSidebar() {
             Audits
           </Link>
 
+          <Link 
+            href="/settings" 
+            className={`flex items-center rounded-md px-3 py-2 text-sm font-medium ${
+              isActive('/settings')
+                ? 'bg-primary/10 text-primary'
+                : 'text-foreground hover:bg-accent hover:text-accent-foreground'
+            }`}
+          >
+            <Settings className="mr-2 h-4 w-4" />
+            Paramètres
+          </Link>
+
           {/* Espaceur */}
           <div className="py-2" />
 
@@ -87,22 +99,6 @@ export function AppSidebar() {
           >
             <Building className="mr-2 h-4 w-4" />
             Companies
-          </Link>
-
-          {/* Espaceur */}
-          <div className="py-2" />
-
-          {/* Section Settings */}
-          <Link 
-            href="/settings" 
-            className={`flex items-center rounded-md px-3 py-2 text-sm font-medium ${
-              isActive('/settings')
-                ? 'bg-primary/10 text-primary'
-                : 'text-foreground hover:bg-accent hover:text-accent-foreground'
-            }`}
-          >
-            <Settings className="mr-2 h-4 w-4" />
-            Paramètres
           </Link>
         </nav>
       </div>

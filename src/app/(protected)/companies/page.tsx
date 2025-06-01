@@ -24,7 +24,6 @@ import {
   Plus,
   Building,
   Globe,
-  Mail,
   Phone,
   MapPin,
   Users,

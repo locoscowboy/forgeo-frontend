@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { BarChart3, LayoutDashboard, LogOut, Settings, Users } from 'lucide-react';
+import { BarChart3, LayoutDashboard, LogOut, Settings, Users, Building } from 'lucide-react';
 
 // Sidebar interface minimale en attendant les composants shadcn/ui
 export function AppSidebar() {
@@ -54,6 +54,18 @@ export function AppSidebar() {
   >
     <Users className="mr-2 h-4 w-4" />
     Contacts
+  </Link>
+
+  <Link 
+    href="/companies" 
+    className={`flex items-center rounded-md px-3 py-2 text-sm font-medium ${
+      isActive('/companies')
+        ? 'bg-primary/10 text-primary'
+        : 'text-foreground hover:bg-accent hover:text-accent-foreground'
+    }`}
+  >
+    <Building className="mr-2 h-4 w-4" />
+    Companies
   </Link>
   
   <Link 

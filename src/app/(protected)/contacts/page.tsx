@@ -498,7 +498,7 @@ export default function ContactsPage() {
         </div>
 
         {/* Table Container */}
-        <div className="px-6 py-6">
+        <div className="px-0 py-0">
           <div className="overflow-auto">
             <table ref={tableRef} className="notion-table">
               {/* Header */}

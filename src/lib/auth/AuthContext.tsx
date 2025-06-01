@@ -28,7 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } else {
       setIsLoading(false);
     }
-  }, []);
+  }, [fetchUser]);
 
   function getCookieValue(name: string) {
     if (typeof document === 'undefined') return null;

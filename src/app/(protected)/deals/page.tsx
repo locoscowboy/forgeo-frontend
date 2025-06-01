@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { getDeals, Deal } from "@/lib/api/deals";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ import {
   Calendar,
   Target,
   Building,
+  FileText,
   AlertCircle
 } from "lucide-react";
 
@@ -196,7 +197,6 @@ export default function DealsPage() {
   const [total, setTotal] = useState(0);
   
   // États de l'interface
-  const [isResizing, setIsResizing] = useState(false);
   const [columnWidths, setColumnWidths] = useState({
     dealname: 250,
     amount: 120,
@@ -206,6 +206,14 @@ export default function DealsPage() {
     description: 300,
     lastmodifieddate: 150
   });
+  
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizingColumn, setResizingColumn] = useState<string | null>(null);
+  const tableRef = useRef<HTMLTableElement>(null);
+
+  // Debounce pour la recherche
+  const [searchValue, setSearchValue] = useState("");
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fonction principale de récupération des deals
   const fetchDeals = useCallback(async (params: SearchParams) => {
@@ -261,56 +269,91 @@ export default function DealsPage() {
     }
   }, [token, searchParams, fetchDeals]);
 
-  // Fonction pour changer de page
-  const handlePageChange = (newPage: number) => {
-    setSearchParams(prev => ({ ...prev, page: newPage }));
-  };
+  // Fonction pour mettre à jour les paramètres de recherche
+  const updateSearchParams = useCallback((updates: Partial<SearchParams>) => {
+    setSearchParams(prev => {
+      const newParams = { ...prev, ...updates };
+      
+      // Si on change autre chose que la page, remettre à la page 1
+      if ('search' in updates || 'sortField' in updates || 'sortOrder' in updates || 'limit' in updates) {
+        newParams.page = 1;
+      }
+      
+      return newParams;
+    });
+  }, []);
 
-  // Fonction pour changer la recherche
-  const handleSearchChange = (search: string) => {
-    setSearchParams(prev => ({ ...prev, search, page: 1 }));
-  };
-
-  // Fonction pour changer le tri
-  const handleSort = (field: string) => {
-    setSearchParams(prev => ({
-      ...prev,
+  // Gestionnaires d'événements
+  const handleSort = useCallback((field: string) => {
+    console.log('🎯 Sort clicked:', field);
+    
+    updateSearchParams({
       sortField: field,
-      sortOrder: prev.sortField === field && prev.sortOrder === 'asc' ? 'desc' : 'asc',
-      page: 1
-    }));
-  };
+      sortOrder: searchParams.sortField === field && searchParams.sortOrder === "asc" ? "desc" : "asc"
+    });
+  }, [searchParams.sortField, searchParams.sortOrder, updateSearchParams]);
 
-  // Fonction pour changer la limite
-  const handleLimitChange = (limit: string) => {
-    setSearchParams(prev => ({ ...prev, limit: parseInt(limit), page: 1 }));
-  };
-
-  // Fonction pour obtenir la couleur du stage
-  const getDealStageColor = (stage: string) => {
-    const stageColors: { [key: string]: string } = {
-      'appointmentscheduled': 'bg-blue-100 text-blue-800',
-      'qualifiedtobuy': 'bg-green-100 text-green-800',
-      'presentationscheduled': 'bg-yellow-100 text-yellow-800',
-      'decisionmakerboughtin': 'bg-purple-100 text-purple-800',
-      'contractsent': 'bg-orange-100 text-orange-800',
-      'closedwon': 'bg-green-100 text-green-800',
-      'closedlost': 'bg-red-100 text-red-800',
-    };
-    return stageColors[stage.toLowerCase()] || 'bg-gray-100 text-gray-800';
-  };
-
-  // Fonction pour obtenir l'icône de tri
-  const getSortIcon = (field: string) => {
-    if (searchParams.sortField !== field) {
-      return <ArrowUpDown className="sort-icon" />;
+  const handleSearch = useCallback((value: string) => {
+    setSearchValue(value);
+    
+    // Débounce de 300ms pour éviter trop d'appels API
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
     }
-    return searchParams.sortOrder === 'asc' 
-      ? <ArrowUp className="sort-icon active" />
-      : <ArrowDown className="sort-icon active" />;
+    
+    searchTimeoutRef.current = setTimeout(() => {
+      console.log('🔍 Search:', value);
+      updateSearchParams({ search: value });
+    }, 300);
+  }, [updateSearchParams]);
+
+  const handlePageChange = useCallback((newPage: number) => {
+    updateSearchParams({ page: newPage });
+  }, [updateSearchParams]);
+
+  const handleLimitChange = useCallback((newLimit: number) => {
+    updateSearchParams({ limit: newLimit });
+  }, [updateSearchParams]);
+
+  const handleRetry = useCallback(() => {
+    fetchDeals(searchParams);
+  }, [fetchDeals, searchParams]);
+
+  // Cleanup du timeout lors du démontage
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+        searchTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
+  // Fonctions utilitaires
+  const getDealStageColor = (stage: string) => {
+    const colors: { [key: string]: string } = {
+      appointmentscheduled: "bg-blue-50 text-blue-700 border-blue-200",
+      qualifiedtobuy: "bg-green-50 text-green-700 border-green-200",
+      presentationscheduled: "bg-yellow-50 text-yellow-700 border-yellow-200",
+      decisionmakerboughtin: "bg-purple-50 text-purple-700 border-purple-200",
+      contractsent: "bg-orange-50 text-orange-700 border-orange-200",
+      closedwon: "bg-green-50 text-green-700 border-green-200",
+      closedlost: "bg-red-50 text-red-700 border-red-200",
+      other: "bg-gray-50 text-gray-700 border-gray-200",
+    };
+    return colors[stage?.toLowerCase()] || colors.other;
   };
 
-  // Fonction pour formater le montant
+  const getSortIcon = (field: string) => {
+    const isActive = searchParams.sortField === field;
+    const className = `sort-icon ${isActive ? 'active' : ''}`;
+    
+    if (!isActive) return <ArrowUpDown className={className} />;
+    return searchParams.sortOrder === "asc" ? 
+      <ArrowUp className={className} /> : 
+      <ArrowDown className={className} />;
+  };
+
   const formatAmount = (amount: string) => {
     if (!amount || amount === '0' || amount === '') return '—';
     const num = parseFloat(amount);
@@ -322,7 +365,6 @@ export default function DealsPage() {
     }).format(num);
   };
 
-  // Fonction pour formater la date
   const formatDate = (dateString: string) => {
     if (!dateString) return '—';
     try {
@@ -333,297 +375,255 @@ export default function DealsPage() {
     }
   };
 
-  // Gestion du redimensionnement des colonnes
+  const columns = [
+    { key: "dealname", label: "Deal Name", icon: DollarSign },
+    { key: "amount", label: "Amount", icon: TrendingUp },
+    { key: "dealstage", label: "Stage", icon: Target },
+    { key: "closedate", label: "Close Date", icon: Calendar },
+    { key: "pipeline", label: "Pipeline", icon: Building },
+    { key: "description", label: "Description", icon: FileText },
+    { key: "lastmodifieddate", label: "Modified", icon: Calendar }
+  ];
+
+  // Fonctions de redimensionnement des colonnes
   const handleMouseDown = (e: React.MouseEvent, columnKey: string) => {
     e.preventDefault();
     setIsResizing(true);
+    setResizingColumn(columnKey);
     
     const startX = e.clientX;
     const startWidth = columnWidths[columnKey as keyof typeof columnWidths];
-    
+
     const handleMouseMove = (e: MouseEvent) => {
-      const deltaX = e.clientX - startX;
-      const newWidth = Math.max(80, startWidth + deltaX);
+      const diff = e.clientX - startX;
+      const newWidth = Math.max(80, startWidth + diff);
       
       setColumnWidths(prev => ({
         ...prev,
         [columnKey]: newWidth
       }));
     };
-    
+
     const handleMouseUp = () => {
       setIsResizing(false);
+      setResizingColumn(null);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-    
+
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
   };
 
+  // Composants de rendu conditionnel
+  if (loading && deals.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600 font-medium">Chargement des deals...</p>
+          <p className="mt-2 text-sm text-gray-500">Veuillez patienter</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && deals.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center max-w-md">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Erreur de chargement</h2>
+          <p className="text-red-600 mb-4">{error}</p>
+          <Button onClick={handleRetry} className="bg-blue-600 hover:bg-blue-700">
+            Réessayer
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <style>{tableStyles}</style>
-      <div className="flex flex-col h-full bg-gray-50">
+      <div className={`h-screen bg-gray-50 flex flex-col ${isResizing ? 'noselect' : ''}`}>
         {/* Header */}
-        <div className="bg-white border-b px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-8 h-8 bg-green-100 rounded-lg">
-                <DollarSign className="w-4 h-4 text-green-600" />
-              </div>
-              <div>
-                <h1 className="text-xl font-semibold text-gray-900">Deals</h1>
-                <p className="text-sm text-gray-500">
-                  {loading ? 'Chargement...' : `${total} deal${total > 1 ? 's' : ''} au total`}
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-1" />
-                Filtrer
-              </Button>
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-1" />
-                Exporter
-              </Button>
-              <Button size="sm">
-                <Plus className="h-4 w-4 mr-1" />
-                Nouveau deal
-              </Button>
-            </div>
+        <div className="bg-white border-b border-gray-200 px-6 h-14 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Deals</h1>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="gap-2">
+              <Filter className="h-4 w-4" />
+              Filter
+            </Button>
+            <Button variant="outline" size="sm" className="gap-2">
+              <Download className="h-4 w-4" />
+              Export
+            </Button>
+            <Button size="sm" className="gap-2 bg-blue-600 hover:bg-blue-700">
+              <Plus className="h-4 w-4" />
+              New
+            </Button>
           </div>
         </div>
 
-        {/* Toolbar */}
-        <div className="bg-white border-b px-6 py-3">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4 flex-1">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Rechercher des deals..."
-                  value={searchParams.search}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              
-              <Select value={searchParams.limit.toString()} onValueChange={handleLimitChange}>
-                <SelectTrigger className="w-20">
+        {/* Message d'erreur en cas de problème pendant le chargement */}
+        {error && deals.length > 0 && (
+          <div className="bg-red-50 border-b border-red-200 px-6 py-3">
+            <div className="flex items-center gap-2 text-red-700">
+              <AlertCircle className="h-4 w-4" />
+              <span className="text-sm font-medium">Erreur de mise à jour: {error}</span>
+              <Button size="sm" variant="outline" onClick={handleRetry} className="ml-auto">
+                Réessayer
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Controls */}
+        <div className="px-6 py-4 bg-white border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Rechercher des deals..."
+                value={searchValue}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                disabled={loading}
+              />
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <Select 
+                value={searchParams.limit.toString()} 
+                onValueChange={(value) => handleLimitChange(Number(value))}
+                disabled={loading}
+              >
+                <SelectTrigger className="w-40 border-gray-300">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="25">25</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                  <SelectItem value="100">100</SelectItem>
+                  <SelectItem value="25">25 lignes</SelectItem>
+                  <SelectItem value="50">50 lignes</SelectItem>
+                  <SelectItem value="100">100 lignes</SelectItem>
                 </SelectContent>
               </Select>
+              
+              <div className="text-sm text-gray-600">
+                {total.toLocaleString()} deals • Page {searchParams.page} of {totalPages}
+                {loading && " • Mise à jour..."}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Content */}
+        {/* Table Container */}
         <div className="flex-1 overflow-hidden">
-          {error ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center">
-                <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Erreur de chargement</h3>
-                <p className="text-gray-500 mb-4">{error}</p>
-                <Button onClick={() => fetchDeals(searchParams)}>
-                  Réessayer
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="h-full overflow-auto">
-              <table className="notion-table">
-                <thead>
-                  <tr>
-                    <th 
-                      className="notion-th noselect" 
-                      style={{ width: `${columnWidths.dealname}px` }}
-                      onClick={() => handleSort('dealname')}
-                    >
-                      <div className="notion-th-content">
-                        <DollarSign className="notion-icon" />
-                        Nom du deal
-                        {getSortIcon('dealname')}
-                        <div 
-                          className={`resizer ${isResizing ? 'isResizing' : ''}`}
-                          onMouseDown={(e) => handleMouseDown(e, 'dealname')}
-                        />
-                      </div>
-                    </th>
+          <div className="h-full overflow-auto">
+            <table ref={tableRef} className="notion-table">
+              {/* Header */}
+              <thead>
+                <tr className="notion-tr">
+                  {columns.map((column) => {
+                    const Icon = column.icon;
+                    const width = columnWidths[column.key as keyof typeof columnWidths];
                     
-                    <th 
-                      className="notion-th noselect" 
-                      style={{ width: `${columnWidths.amount}px` }}
-                      onClick={() => handleSort('amount')}
-                    >
-                      <div className="notion-th-content">
-                        <TrendingUp className="notion-icon" />
-                        Montant
-                        {getSortIcon('amount')}
-                        <div 
-                          className={`resizer ${isResizing ? 'isResizing' : ''}`}
-                          onMouseDown={(e) => handleMouseDown(e, 'amount')}
-                        />
-                      </div>
-                    </th>
-                    
-                    <th 
-                      className="notion-th noselect" 
-                      style={{ width: `${columnWidths.dealstage}px` }}
-                      onClick={() => handleSort('dealstage')}
-                    >
-                      <div className="notion-th-content">
-                        <Target className="notion-icon" />
-                        Étape
-                        {getSortIcon('dealstage')}
-                        <div 
-                          className={`resizer ${isResizing ? 'isResizing' : ''}`}
-                          onMouseDown={(e) => handleMouseDown(e, 'dealstage')}
-                        />
-                      </div>
-                    </th>
-                    
-                    <th 
-                      className="notion-th noselect" 
-                      style={{ width: `${columnWidths.closedate}px` }}
-                      onClick={() => handleSort('closedate')}
-                    >
-                      <div className="notion-th-content">
-                        <Calendar className="notion-icon" />
-                        Date de clôture
-                        {getSortIcon('closedate')}
-                        <div 
-                          className={`resizer ${isResizing ? 'isResizing' : ''}`}
-                          onMouseDown={(e) => handleMouseDown(e, 'closedate')}
-                        />
-                      </div>
-                    </th>
-                    
-                    <th 
-                      className="notion-th noselect" 
-                      style={{ width: `${columnWidths.pipeline}px` }}
-                      onClick={() => handleSort('pipeline')}
-                    >
-                      <div className="notion-th-content">
-                        <Building className="notion-icon" />
-                        Pipeline
-                        {getSortIcon('pipeline')}
-                        <div 
-                          className={`resizer ${isResizing ? 'isResizing' : ''}`}
-                          onMouseDown={(e) => handleMouseDown(e, 'pipeline')}
-                        />
-                      </div>
-                    </th>
-                    
-                    <th 
-                      className="notion-th noselect" 
-                      style={{ width: `${columnWidths.description}px` }}
-                    >
-                      <div className="notion-th-content">
-                        Description
-                        <div 
-                          className={`resizer ${isResizing ? 'isResizing' : ''}`}
-                          onMouseDown={(e) => handleMouseDown(e, 'description')}
-                        />
-                      </div>
-                    </th>
-                    
-                    <th 
-                      className="notion-th noselect" 
-                      style={{ width: `${columnWidths.lastmodifieddate}px` }}
-                      onClick={() => handleSort('lastmodifieddate')}
-                    >
-                      <div className="notion-th-content">
-                        <Calendar className="notion-icon" />
-                        Modifié
-                        {getSortIcon('lastmodifieddate')}
-                      </div>
-                    </th>
-                  </tr>
-                </thead>
-                
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan={7} className="text-center py-8">
-                        <div className="flex items-center justify-center">
-                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                          <span className="ml-2">Chargement des deals...</span>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : deals.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="text-center py-8 text-gray-500">
-                        Aucun deal trouvé
-                      </td>
-                    </tr>
-                  ) : (
-                    deals.map((deal) => (
-                      <tr key={deal.id} className="notion-tr">
-                        <td className="notion-td" style={{ width: `${columnWidths.dealname}px` }}>
-                          {deal.dealname || <span className="text-gray-400">—</span>}
-                        </td>
-                        
-                        <td className="notion-td" style={{ width: `${columnWidths.amount}px` }}>
-                          <span className="font-medium">
-                            {formatAmount(deal.amount)}
-                          </span>
-                        </td>
-                        
-                        <td className="notion-td" style={{ width: `${columnWidths.dealstage}px` }}>
-                          {deal.dealstage ? (
-                            <span className={`notion-tag ${getDealStageColor(deal.dealstage)}`}>
-                              {deal.dealstage}
-                            </span>
-                          ) : (
-                            <span className="text-gray-400">—</span>
-                          )}
-                        </td>
-                        
-                        <td className="notion-td" style={{ width: `${columnWidths.closedate}px` }}>
-                          {formatDate(deal.closedate)}
-                        </td>
-                        
-                        <td className="notion-td" style={{ width: `${columnWidths.pipeline}px` }}>
-                          {deal.pipeline || <span className="text-gray-400">—</span>}
-                        </td>
-                        
-                        <td className="notion-td" style={{ width: `${columnWidths.description}px` }}>
-                          <div className="truncate" title={deal.description}>
-                            {deal.description || <span className="text-gray-400">—</span>}
+                    return (
+                      <th
+                        key={column.key}
+                        className="notion-th"
+                        style={{ width: `${width}px` }}
+                      >
+                        <button
+                          onClick={() => handleSort(column.key)}
+                          className="notion-th-content w-full text-left"
+                          disabled={loading}
+                        >
+                          <Icon className="notion-icon" />
+                          <span className="font-medium">{column.label}</span>
+                          <div className="ml-auto">
+                            {getSortIcon(column.key)}
                           </div>
-                        </td>
+                        </button>
                         
-                        <td className="notion-td" style={{ width: `${columnWidths.lastmodifieddate}px` }}>
-                          {formatDate(deal.lastmodifieddate)}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
+                        {/* Resizer */}
+                        <div
+                          className={`resizer ${resizingColumn === column.key ? 'isResizing' : ''}`}
+                          onMouseDown={(e) => handleMouseDown(e, column.key)}
+                        />
+                      </th>
+                    );
+                  })}
+                </tr>
+              </thead>
+
+              {/* Body */}
+              <tbody>
+                {deals.map((deal) => (
+                  <tr key={deal.id} className="notion-tr">
+                    <td className="notion-td" style={{ width: `${columnWidths.dealname}px` }}>
+                      {deal.dealname || <span className="text-gray-400">—</span>}
+                    </td>
+                    
+                    <td className="notion-td" style={{ width: `${columnWidths.amount}px` }}>
+                      <span className="font-medium">
+                        {formatAmount(deal.amount)}
+                      </span>
+                    </td>
+                    
+                    <td className="notion-td" style={{ width: `${columnWidths.dealstage}px` }}>
+                      {deal.dealstage ? (
+                        <span className={`notion-tag ${getDealStageColor(deal.dealstage)}`}>
+                          {deal.dealstage}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
+                    </td>
+                    
+                    <td className="notion-td" style={{ width: `${columnWidths.closedate}px` }}>
+                      {formatDate(deal.closedate)}
+                    </td>
+                    
+                    <td className="notion-td" style={{ width: `${columnWidths.pipeline}px` }}>
+                      {deal.pipeline || <span className="text-gray-400">—</span>}
+                    </td>
+                    
+                    <td className="notion-td" style={{ width: `${columnWidths.description}px` }}>
+                      <div className="truncate" title={deal.description}>
+                        {deal.description || <span className="text-gray-400">—</span>}
+                      </div>
+                    </td>
+                    
+                    <td className="notion-td" style={{ width: `${columnWidths.lastmodifieddate}px` }}>
+                      {formatDate(deal.lastmodifieddate)}
+                    </td>
+                  </tr>
+                ))}
+                
+                {/* Ligne de loading pendant la mise à jour */}
+                {loading && deals.length > 0 && (
+                  <tr className="notion-tr">
+                    <td colSpan={columns.length} className="notion-td text-center py-4">
+                      <div className="flex items-center justify-center gap-2 text-gray-500">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                        <span>Mise à jour des données...</span>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        {/* Footer avec pagination */}
-        <div className="bg-white border-t px-6 py-4">
+        {/* Footer/Pagination */}
+        <div className="px-6 py-4 bg-white border-t border-gray-200">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-500">
-              {loading ? (
-                'Chargement...'
-              ) : (
-                `${((searchParams.page - 1) * searchParams.limit) + 1}-${Math.min(searchParams.page * searchParams.limit, total)} sur ${total} deals`
-              )}
+            <div className="text-sm text-gray-700">
+              Affichage de {Math.min((searchParams.page - 1) * searchParams.limit + 1, total)} à {Math.min(searchParams.page * searchParams.limit, total)} sur {total.toLocaleString()} deals
             </div>
             
             <div className="flex items-center gap-2">

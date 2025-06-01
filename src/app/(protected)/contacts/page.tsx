@@ -427,7 +427,7 @@ export default function ContactsPage() {
       <style>{tableStyles}</style>
       <div className={`min-h-screen bg-gray-50 ${isResizing ? 'noselect' : ''}`}>
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-6">
+        <div className="bg-white border-b border-gray-200 px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Contacts</h1>
@@ -464,7 +464,7 @@ export default function ContactsPage() {
 
         {/* Controls */}
         <div className="px-6 py-4 bg-white border-b border-gray-200">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
@@ -476,20 +476,27 @@ export default function ContactsPage() {
               />
             </div>
             
-            <Select 
-              value={searchParams.limit.toString()} 
-              onValueChange={(value) => handleLimitChange(Number(value))}
-              disabled={loading}
-            >
-              <SelectTrigger className="w-40 border-gray-300">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="25">25 lignes</SelectItem>
-                <SelectItem value="50">50 lignes</SelectItem>
-                <SelectItem value="100">100 lignes</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-4">
+              <Select 
+                value={searchParams.limit.toString()} 
+                onValueChange={(value) => handleLimitChange(Number(value))}
+                disabled={loading}
+              >
+                <SelectTrigger className="w-40 border-gray-300">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="25">25 lignes</SelectItem>
+                  <SelectItem value="50">50 lignes</SelectItem>
+                  <SelectItem value="100">100 lignes</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <div className="text-sm text-gray-600">
+                {total.toLocaleString()} contacts • Page {searchParams.page} of {totalPages}
+                {loading && " • Mise à jour..."}
+              </div>
+            </div>
           </div>
         </div>
 

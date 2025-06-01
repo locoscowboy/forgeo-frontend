@@ -36,7 +36,7 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
 }
 
 export async function getCurrentUser(token: string): Promise<User> {
-  const response = await fetch('https://api.forgeo.store/api/v1/users/me', {
+  const response = await fetch('https://forgeo.store/api/v1/users/me', {
     headers: {
       'Authorization': `Bearer ${token}`
     }

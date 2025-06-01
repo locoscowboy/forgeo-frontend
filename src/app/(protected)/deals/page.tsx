@@ -379,10 +379,13 @@ export default function DealsPage() {
     { key: "dealname", label: "Deal Name", icon: DollarSign },
     { key: "amount", label: "Amount", icon: TrendingUp },
     { key: "dealstage", label: "Stage", icon: Target },
-    { key: "closedate", label: "Close Date", icon: Calendar },
     { key: "pipeline", label: "Pipeline", icon: Building },
-    { key: "description", label: "Description", icon: FileText },
-    { key: "lastmodifieddate", label: "Modified", icon: Calendar }
+    { key: "dealtype", label: "Type", icon: FileText },
+    { key: "closedate", label: "Close Date", icon: Calendar },
+    { key: "createdate", label: "Created", icon: Calendar },
+    { key: "lastmodifieddate", label: "Modified", icon: Calendar },
+    { key: "hs_lastmodifieddate", label: "HS Modified", icon: Calendar },
+    { key: "description", label: "Description", icon: FileText }
   ];
 
   // Fonctions de redimensionnement des colonnes
@@ -583,22 +586,34 @@ export default function DealsPage() {
                       )}
                     </td>
                     
+                    <td className="notion-td" style={{ width: `${columnWidths.pipeline}px` }}>
+                      {deal.pipeline || <span className="text-gray-400">—</span>}
+                    </td>
+                    
+                    <td className="notion-td" style={{ width: `${columnWidths.dealtype}px` }}>
+                      {deal.dealtype || <span className="text-gray-400">—</span>}
+                    </td>
+                    
                     <td className="notion-td" style={{ width: `${columnWidths.closedate}px` }}>
                       {formatDate(deal.closedate)}
                     </td>
                     
-                    <td className="notion-td" style={{ width: `${columnWidths.pipeline}px` }}>
-                      {deal.pipeline || <span className="text-gray-400">—</span>}
+                    <td className="notion-td" style={{ width: `${columnWidths.createdate}px` }}>
+                      {formatDate(deal.createdate)}
+                    </td>
+                    
+                    <td className="notion-td" style={{ width: `${columnWidths.lastmodifieddate}px` }}>
+                      {formatDate(deal.lastmodifieddate)}
+                    </td>
+                    
+                    <td className="notion-td" style={{ width: `${columnWidths.hs_lastmodifieddate}px` }}>
+                      {formatDate(deal.hs_lastmodifieddate)}
                     </td>
                     
                     <td className="notion-td" style={{ width: `${columnWidths.description}px` }}>
                       <div className="truncate" title={deal.description}>
                         {deal.description || <span className="text-gray-400">—</span>}
                       </div>
-                    </td>
-                    
-                    <td className="notion-td" style={{ width: `${columnWidths.lastmodifieddate}px` }}>
-                      {formatDate(deal.lastmodifieddate)}
                     </td>
                   </tr>
                 ))}

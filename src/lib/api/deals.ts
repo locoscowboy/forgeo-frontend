@@ -15,6 +15,7 @@ export interface Deal {
   associatedvids: string;
   createdate: string;
   lastmodifieddate: string;
+  hs_lastmodifieddate: string;
 }
 
 export interface DealsResponse {

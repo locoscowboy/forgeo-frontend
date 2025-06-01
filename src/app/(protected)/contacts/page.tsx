@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { getContacts, Contact } from "@/lib/api/contacts";
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,8 @@ import {
   Building,
   MapPin,
   Briefcase,
-  Tag
+  Tag,
+  AlertCircle
 } from "lucide-react";
 
 // Notion-like Table Styles
@@ -166,20 +167,37 @@ const tableStyles = `
   }
 `;
 
+// Interface pour les paramètres de recherche
+interface SearchParams {
+  page: number;
+  limit: number;
+  search: string;
+  sortField: string;
+  sortOrder: 'asc' | 'desc';
+}
+
 export default function ContactsPage() {
   const { token } = useAuth();
+  
+  // États principaux
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
+  
+  // États de pagination et recherche
+  const [searchParams, setSearchParams] = useState<SearchParams>({
+    page: 1,
+    limit: 50,
+    search: "",
+    sortField: "firstname",
+    sortOrder: "asc"
+  });
+  
+  // États des métadonnées
   const [totalPages, setTotalPages] = useState(0);
   const [total, setTotal] = useState(0);
-  const [search, setSearch] = useState("");
-  const [sortField, setSortField] = useState("firstname");
-  const [sortOrder, setSortOrder] = useState("asc");
-  const [limit, setLimit] = useState(50);
   
-  // Column widths state
+  // États de l'interface
   const [columnWidths, setColumnWidths] = useState({
     firstname: 150,
     lastname: 150,
@@ -190,118 +208,130 @@ export default function ContactsPage() {
     lifecyclestage: 120,
     city: 150
   });
-
-  // Resizing state
+  
   const [isResizing, setIsResizing] = useState(false);
   const [resizingColumn, setResizingColumn] = useState<string | null>(null);
   const tableRef = useRef<HTMLTableElement>(null);
 
-  // fetchContacts function
-  const fetchContacts = async (
-    pageParam?: number,
-    limitParam?: number,
-    searchParam?: string,
-    sortFieldParam?: string,
-    sortOrderParam?: string
-  ) => {
+  // Debounce pour la recherche
+  const [searchValue, setSearchValue] = useState("");
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Fonction principale de récupération des contacts
+  const fetchContacts = useCallback(async (params: SearchParams) => {
     if (!token) {
       console.log('❌ No token available');
+      setError("Session expirée. Veuillez vous reconnecter.");
       return;
     }
     
-    // Utiliser les paramètres passés ou les états actuels
-    const currentPage = pageParam ?? page;
-    const currentLimit = limitParam ?? limit;
-    const currentSearch = searchParam ?? search;
-    const currentSortField = sortFieldParam ?? sortField;
-    const currentSortOrder = sortOrderParam ?? sortOrder;
-    
     setLoading(true);
+    setError(null);
+    
     try {
-      console.log('🔥 Fetching contacts with:', { 
-        page: currentPage, 
-        limit: currentLimit, 
-        search: currentSearch, 
-        sortField: currentSortField, 
-        sortOrder: currentSortOrder 
-      });
+      console.log('🔥 Fetching contacts with params:', params);
       
       const response = await getContacts(
         token,
-        currentPage,
-        currentLimit,
-        currentSearch || undefined,
-        currentSortField,
-        currentSortOrder
+        params.page,
+        params.limit,
+        params.search || undefined,
+        params.sortField,
+        params.sortOrder
       );
-      
-      console.log('📦 API Response:', response);
       
       setContacts(response.contacts);
       setTotalPages(response.total_pages);
       setTotal(response.total);
-      setError(null);
+      
+      console.log('✅ Contacts loaded successfully:', {
+        count: response.contacts.length,
+        total: response.total,
+        page: response.page
+      });
+      
     } catch (err) {
-      setError("Erreur lors du chargement des contacts");
-      console.error('💥 API Error:', err);
+      const errorMessage = err instanceof Error ? err.message : "Erreur lors du chargement des contacts";
+      setError(errorMessage);
+      console.error('💥 Error fetching contacts:', err);
+      
+      // Si c'est une erreur d'authentification, ne pas garder des données obsolètes
+      if (errorMessage.includes('Session expirée') || errorMessage.includes('non autorisé')) {
+        setContacts([]);
+      }
     } finally {
       setLoading(false);
     }
-  };
-
-  // useEffect simplifié
-  useEffect(() => {
-    if (token) {
-      fetchContacts();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  // handleSort
-  const handleSort = (field: string) => {
+  // Effect principal pour charger les contacts
+  useEffect(() => {
+    if (token) {
+      fetchContacts(searchParams);
+    }
+  }, [token, searchParams, fetchContacts]);
+
+  // Fonction pour mettre à jour les paramètres de recherche
+  const updateSearchParams = useCallback((updates: Partial<SearchParams>) => {
+    setSearchParams(prev => {
+      const newParams = { ...prev, ...updates };
+      
+      // Si on change autre chose que la page, remettre à la page 1
+      if ('search' in updates || 'sortField' in updates || 'sortOrder' in updates || 'limit' in updates) {
+        newParams.page = 1;
+      }
+      
+      return newParams;
+    });
+  }, []);
+
+  // Gestionnaires d'événements
+  const handleSort = useCallback((field: string) => {
     console.log('🎯 Sort clicked:', field);
     
-    const newSortField = field;
-    let newSortOrder = "asc";
+    updateSearchParams({
+      sortField: field,
+      sortOrder: searchParams.sortField === field && searchParams.sortOrder === "asc" ? "desc" : "asc"
+    });
+  }, [searchParams.sortField, searchParams.sortOrder, updateSearchParams]);
+
+  const handleSearch = useCallback((value: string) => {
+    setSearchValue(value);
     
-    if (sortField === field) {
-      newSortOrder = sortOrder === "asc" ? "desc" : "asc";
+    // Débounce de 300ms pour éviter trop d'appels API
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
     }
     
-    setSortField(newSortField);
-    setSortOrder(newSortOrder);
-    setPage(1);
-    
-    fetchContacts(1, limit, search, newSortField, newSortOrder);
-  };
+    searchTimeoutRef.current = setTimeout(() => {
+      console.log('🔍 Search:', value);
+      updateSearchParams({ search: value });
+    }, 300);
+  }, [updateSearchParams]);
 
-  // handleSearch
-  const handleSearch = (value: string) => {
-    console.log('🔍 Search:', value);
-    setSearch(value);
-    setPage(1);
-    
-    fetchContacts(1, limit, value, sortField, sortOrder);
-  };
+  const handlePageChange = useCallback((newPage: number) => {
+    updateSearchParams({ page: newPage });
+  }, [updateSearchParams]);
 
-  // handlePageChange
-  const handlePageChange = (newPage: number) => {
-    setPage(newPage);
-    fetchContacts(newPage, limit, search, sortField, sortOrder);
-  };
+  const handleLimitChange = useCallback((newLimit: number) => {
+    updateSearchParams({ limit: newLimit });
+  }, [updateSearchParams]);
 
-  // handleLimitChange
-  const handleLimitChange = (newLimit: number) => {
-    setLimit(newLimit);
-    setPage(1);
-    fetchContacts(1, newLimit, search, sortField, sortOrder);
-  };
+  const handleRetry = useCallback(() => {
+    fetchContacts(searchParams);
+  }, [fetchContacts, searchParams]);
 
-  // 🔥 FONCTION RETRY SÉPARÉE pour le bouton d'erreur
-  const handleRetry = () => {
-    fetchContacts();
-  };
+  // Cleanup du timeout lors du démontage
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+        searchTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
+  // Fonctions utilitaires
   const getLifecycleStageColor = (stage: string) => {
     const colors: { [key: string]: string } = {
       lead: "bg-blue-50 text-blue-700 border-blue-200",
@@ -314,11 +344,11 @@ export default function ContactsPage() {
   };
 
   const getSortIcon = (field: string) => {
-    const isActive = sortField === field;
+    const isActive = searchParams.sortField === field;
     const className = `sort-icon ${isActive ? 'active' : ''}`;
     
     if (!isActive) return <ArrowUpDown className={className} />;
-    return sortOrder === "asc" ? 
+    return searchParams.sortOrder === "asc" ? 
       <ArrowUp className={className} /> : 
       <ArrowDown className={className} />;
   };
@@ -334,7 +364,7 @@ export default function ContactsPage() {
     { key: "city", label: "City", icon: MapPin }
   ];
 
-  // Resizer functions
+  // Fonctions de redimensionnement des colonnes
   const handleMouseDown = (e: React.MouseEvent, columnKey: string) => {
     e.preventDefault();
     setIsResizing(true);
@@ -364,24 +394,28 @@ export default function ContactsPage() {
     document.addEventListener('mouseup', handleMouseUp);
   };
 
+  // Composants de rendu conditionnel
   if (loading && contacts.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600 font-medium">Loading contacts...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600 font-medium">Chargement des contacts...</p>
+          <p className="mt-2 text-sm text-gray-500">Veuillez patienter</p>
         </div>
       </div>
     );
   }
 
-  if (error) {
+  if (error && contacts.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="text-center">
-          <p className="text-red-600 font-medium">{error}</p>
-          <Button onClick={handleRetry} className="mt-4">
-            Retry
+        <div className="text-center max-w-md">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Erreur de chargement</h2>
+          <p className="text-red-600 mb-4">{error}</p>
+          <Button onClick={handleRetry} className="bg-blue-600 hover:bg-blue-700">
+            Réessayer
           </Button>
         </div>
       </div>
@@ -398,7 +432,8 @@ export default function ContactsPage() {
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Contacts Database</h1>
               <p className="text-gray-600 text-sm mt-1">
-                {total.toLocaleString()} contacts • Page {page} of {totalPages}
+                {total.toLocaleString()} contacts • Page {searchParams.page} of {totalPages}
+                {loading && " • Mise à jour..."}
               </p>
             </div>
             <div className="flex gap-2">
@@ -418,27 +453,45 @@ export default function ContactsPage() {
           </div>
         </div>
 
+        {/* Message d'erreur en cas de problème pendant le chargement */}
+        {error && contacts.length > 0 && (
+          <div className="bg-red-50 border-b border-red-200 px-6 py-3">
+            <div className="flex items-center gap-2 text-red-700">
+              <AlertCircle className="h-4 w-4" />
+              <span className="text-sm font-medium">Erreur de mise à jour: {error}</span>
+              <Button size="sm" variant="outline" onClick={handleRetry} className="ml-auto">
+                Réessayer
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Controls */}
         <div className="px-6 py-4 bg-white border-b border-gray-200">
           <div className="flex items-center gap-4">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
-                placeholder="Search contacts..."
-                value={search}
+                placeholder="Rechercher des contacts..."
+                value={searchValue}
                 onChange={(e) => handleSearch(e.target.value)}
                 className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                disabled={loading}
               />
             </div>
             
-            <Select value={limit.toString()} onValueChange={(value) => handleLimitChange(Number(value))}>
+            <Select 
+              value={searchParams.limit.toString()} 
+              onValueChange={(value) => handleLimitChange(Number(value))}
+              disabled={loading}
+            >
               <SelectTrigger className="w-40 border-gray-300">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="25">25 rows</SelectItem>
-                <SelectItem value="50">50 rows</SelectItem>
-                <SelectItem value="100">100 rows</SelectItem>
+                <SelectItem value="25">25 lignes</SelectItem>
+                <SelectItem value="50">50 lignes</SelectItem>
+                <SelectItem value="100">100 lignes</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -464,6 +517,7 @@ export default function ContactsPage() {
                         <button
                           onClick={() => handleSort(column.key)}
                           className="notion-th-content w-full text-left"
+                          disabled={loading}
                         >
                           <Icon className="notion-icon" />
                           <span className="font-medium">{column.label}</span>
@@ -535,6 +589,18 @@ export default function ContactsPage() {
                     </td>
                   </tr>
                 ))}
+                
+                {/* Ligne de loading pendant la mise à jour */}
+                {loading && contacts.length > 0 && (
+                  <tr className="notion-tr">
+                    <td colSpan={columns.length} className="notion-td text-center py-4">
+                      <div className="flex items-center justify-center gap-2 text-gray-500">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                        <span>Mise à jour des données...</span>
+                      </div>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -544,15 +610,15 @@ export default function ContactsPage() {
         <div className="px-6 py-4 bg-white border-t border-gray-200">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-700">
-              Showing {Math.min((page - 1) * limit + 1, total)} to {Math.min(page * limit, total)} of {total.toLocaleString()} contacts
+              Affichage de {Math.min((searchParams.page - 1) * searchParams.limit + 1, total)} à {Math.min(searchParams.page * searchParams.limit, total)} sur {total.toLocaleString()} contacts
             </div>
             
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handlePageChange(Math.max(1, page - 1))}
-                disabled={page === 1}
+                onClick={() => handlePageChange(Math.max(1, searchParams.page - 1))}
+                disabled={searchParams.page === 1 || loading}
                 className="px-3 py-1 text-sm"
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -560,17 +626,18 @@ export default function ContactsPage() {
               
               <div className="flex items-center gap-1">
                 {[...Array(Math.min(5, totalPages))].map((_, i) => {
-                  const pageNum = Math.max(1, Math.min(totalPages - 4, page - 2)) + i;
+                  const pageNum = Math.max(1, Math.min(totalPages - 4, searchParams.page - 2)) + i;
                   if (pageNum > totalPages) return null;
                   
                   return (
                     <Button
                       key={pageNum}
-                      variant={pageNum === page ? "default" : "outline"}
+                      variant={pageNum === searchParams.page ? "default" : "outline"}
                       size="sm"
                       onClick={() => handlePageChange(pageNum)}
+                      disabled={loading}
                       className={`px-3 py-1 text-sm ${
-                        pageNum === page 
+                        pageNum === searchParams.page 
                           ? "bg-blue-600 text-white hover:bg-blue-700" 
                           : "border-gray-300 text-gray-700 hover:bg-gray-50"
                       }`}
@@ -584,8 +651,8 @@ export default function ContactsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handlePageChange(Math.min(totalPages, page + 1))}
-                disabled={page === totalPages}
+                onClick={() => handlePageChange(Math.min(totalPages, searchParams.page + 1))}
+                disabled={searchParams.page === totalPages || loading}
                 className="px-3 py-1 text-sm"
               >
                 <ChevronRight className="h-4 w-4" />

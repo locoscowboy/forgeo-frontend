@@ -427,25 +427,23 @@ export default function ContactsPage() {
       <style>{tableStyles}</style>
       <div className={`min-h-screen bg-gray-50 ${isResizing ? 'noselect' : ''}`}>
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-6 h-14 flex items-center">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Contacts</h1>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="gap-2">
-                <Filter className="h-4 w-4" />
-                Filter
-              </Button>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Download className="h-4 w-4" />
-                Export
-              </Button>
-              <Button size="sm" className="gap-2 bg-blue-600 hover:bg-blue-700">
-                <Plus className="h-4 w-4" />
-                New
-              </Button>
-            </div>
+        <div className="bg-white border-b border-gray-200 px-6 h-14 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Contacts</h1>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="gap-2">
+              <Filter className="h-4 w-4" />
+              Filter
+            </Button>
+            <Button variant="outline" size="sm" className="gap-2">
+              <Download className="h-4 w-4" />
+              Export
+            </Button>
+            <Button size="sm" className="gap-2 bg-blue-600 hover:bg-blue-700">
+              <Plus className="h-4 w-4" />
+              New
+            </Button>
           </div>
         </div>
 

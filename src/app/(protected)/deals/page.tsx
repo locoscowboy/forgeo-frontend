@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { getDeals, Deal } from "@/lib/api/deals";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,6 @@ import {
   TrendingUp,
   Calendar,
   Target,
-  Users,
   Building,
   AlertCircle
 } from "lucide-react";

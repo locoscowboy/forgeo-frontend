@@ -273,6 +273,7 @@ export default function AuditsPage() {
       try {
         console.log('🔄 Chargement des audits existants...');
         const audits = await getAudits(token);
+        console.log('📋 Audits récupérés:', audits);
         
         if (audits.length > 0) {
           // Trier par date de création (plus récent en premier)
@@ -281,6 +282,9 @@ export default function AuditsPage() {
           );
           
           const latestAudit = sortedAudits[0];
+          console.log('🎯 Dernier audit trouvé:', latestAudit);
+          console.log('📊 Statut du dernier audit:', latestAudit.status);
+          
           setLastAudit(latestAudit);
           setCurrentAuditId(latestAudit.id);
           
@@ -288,11 +292,14 @@ export default function AuditsPage() {
           if (latestAudit.status === 'completed') {
             console.log('📊 Chargement des résultats du dernier audit...');
             const results = await getAuditResults(token, latestAudit.id);
+            console.log('📈 Résultats récupérés:', results);
             setAuditResults(results);
             setAuditStatus('completed');
           } else if (latestAudit.status === 'running') {
+            console.log('🏃 Audit en cours d\'exécution');
             setAuditStatus('running');
           } else {
+            console.log('⚠️ Statut d\'audit non reconnu:', latestAudit.status);
             setAuditStatus('idle');
           }
         } else {
@@ -304,6 +311,7 @@ export default function AuditsPage() {
         setError(err instanceof Error ? err.message : 'Erreur lors du chargement des audits');
         setAuditStatus('idle');
       } finally {
+        console.log('🏁 Fin du chargement initial');
         setInitialLoading(false);
       }
     };
@@ -419,6 +427,21 @@ export default function AuditsPage() {
             )}
             Lancer nouvel audit
           </Button>
+        </div>
+      </div>
+
+      {/* DEBUG INFO - À SUPPRIMER PLUS TARD */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+          <h3 className="font-bold text-yellow-800 mb-2">🐛 DEBUG INFO</h3>
+          <div className="text-sm text-yellow-700 space-y-1">
+            <p><strong>initialLoading:</strong> {initialLoading.toString()}</p>
+            <p><strong>auditStatus:</strong> {auditStatus}</p>
+            <p><strong>auditResults.length:</strong> {auditResults.length}</p>
+            <p><strong>lastAudit:</strong> {lastAudit ? `ID ${lastAudit.id}, status: ${lastAudit.status}` : 'null'}</p>
+            <p><strong>error:</strong> {error || 'null'}</p>
+            <p><strong>token:</strong> {token ? 'disponible' : 'manquant'}</p>
+          </div>
         </div>
       </div>
 

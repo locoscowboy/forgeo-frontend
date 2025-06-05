@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { 
   createAudit, 
@@ -8,7 +8,8 @@ import {
   getAuditResults, 
   getAuditResultDetails,
   AuditResult,
-  AuditDetail
+  AuditDetail,
+  HubSpotObjectData
 } from "@/lib/api/audits";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,15 +24,6 @@ import {
   DollarSign,
   AlertCircle,
   CheckCircle,
-  Clock,
-  Eye,
-  Mail,
-  Phone,
-  User,
-  Globe,
-  MapPin,
-  Calendar,
-  Activity,
   TrendingUp,
   Loader2
 } from "lucide-react";
@@ -39,7 +31,7 @@ import {
 // Interface pour les critères d'audit groupés
 interface AuditCriteriaGroup {
   category: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   title: string;
   criteria: AuditResult[];
   isExpanded: boolean;
@@ -105,7 +97,7 @@ const CriteriaDetails: React.FC<{
     }
   };
 
-  const getDisplayValue = (data: any, fieldName: string) => {
+  const getDisplayValue = (data: HubSpotObjectData, fieldName: string) => {
     if (!data || !fieldName) return 'N/A';
     
     const value = data[fieldName];
@@ -122,7 +114,7 @@ const CriteriaDetails: React.FC<{
       return <span className="text-green-600">{value}</span>;
     }
     
-    return value.toString();
+    return String(value);
   };
 
   return (
@@ -186,7 +178,7 @@ const CriteriaDetails: React.FC<{
             <div className="p-4">
               <div className="mb-3">
                 <h5 className="font-medium text-gray-900 mb-1">
-                  Exemples d'enregistrements problématiques
+                  Exemples d&apos;enregistrements problématiques
                 </h5>
                 <p className="text-xs text-gray-500">
                   Affichage des 10 premiers résultats sur {result.empty_count}
@@ -275,9 +267,9 @@ export default function AuditsPage() {
     setAuditStatus('creating');
     setAuditResults([]);
     
-    try {
-      // Pour cet exemple, on utilise sync_id = 1 (la dernière sync)
-      // Dans une vraie app, on pourrait permettre à l'utilisateur de choisir
+                         try {
+                       // Pour cet exemple, on utilise sync_id = 1 (la dernière sync)
+                       // Dans une vraie app, on pourrait permettre à l&apos;utilisateur de choisir
       const auditResponse = await createAudit(token, 1);
       setCurrentAuditId(auditResponse.id);
       
@@ -291,10 +283,10 @@ export default function AuditsPage() {
       setAuditResults(results);
       setAuditStatus('completed');
       
-    } catch (err) {
-      console.error('Error during audit:', err);
-      setError(err instanceof Error ? err.message : 'Erreur lors de l\'audit');
-      setAuditStatus('idle');
+         } catch (err) {
+       console.error('Error during audit:', err);
+       setError(err instanceof Error ? err.message : 'Erreur lors de l&apos;audit');
+       setAuditStatus('idle');
     } finally {
       setLoading(false);
     }
@@ -378,7 +370,7 @@ export default function AuditsPage() {
               {auditStatus === 'creating' && (
                 <>
                   <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
-                  <span className="font-medium">Création de l'audit en cours...</span>
+                                     <span className="font-medium">Création de l&apos;audit en cours...</span>
                 </>
               )}
               {auditStatus === 'running' && (
@@ -390,7 +382,7 @@ export default function AuditsPage() {
               {auditStatus === 'completed' && (
                 <>
                   <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span className="font-medium">Audit terminé !</span>
+                                     <span className="font-medium">Audit terminé !</span>
                 </>
               )}
             </div>
@@ -518,12 +510,12 @@ export default function AuditsPage() {
             <h3 className="text-lg font-medium text-gray-900 mb-2">
               Prêt à analyser vos données
             </h3>
-            <p className="text-gray-500 mb-6">
-              Lancez un audit pour identifier les problèmes de qualité dans vos données HubSpot
-            </p>
+                         <p className="text-gray-500 mb-6">
+               Lancez un audit pour identifier les problèmes de qualité dans vos données HubSpot
+             </p>
             <Button onClick={handleNewAudit} size="lg">
               <Play className="h-4 w-4 mr-2" />
-              Démarrer l'audit
+                             Démarrer l&apos;audit
             </Button>
           </div>
         )}

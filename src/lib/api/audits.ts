@@ -7,11 +7,15 @@ export interface AuditResult {
   total_count: number;
 }
 
+export interface HubSpotObjectData {
+  [key: string]: string | number | boolean | null | undefined;
+}
+
 export interface AuditDetail {
   id: number;
   result_id: number;
   hubspot_id: string;
-  object_data: any;
+  object_data: HubSpotObjectData;
 }
 
 export interface Audit {

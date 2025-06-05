@@ -333,7 +333,6 @@ export default function AuditsPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-3">
-              <BarChart3 className="h-8 w-8 text-primary" />
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Audits</h1>
               </div>

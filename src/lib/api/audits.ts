@@ -353,6 +353,82 @@ export async function getAuditResultDetails(
   }
 }
 
+// Récupérer la liste des audits
+export async function getAudits(
+  token: string
+): Promise<Audit[]> {
+  const url = 'https://forgeo.store/api/v1/audits';
+  
+  console.log('🌐 API Request (Get Audits List):', {
+    url,
+    hasToken: !!token
+  });
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    console.log('📡 API Response Status (Get Audits List):', response.status);
+
+    if (!response.ok) {
+      let errorData: APIError = {};
+      
+      try {
+        errorData = await response.json();
+      } catch (parseError) {
+        console.error('❌ Failed to parse error response:', parseError);
+      }
+
+      const errorMessage = errorData.detail || errorData.message || `HTTP ${response.status}: ${response.statusText}`;
+      
+      console.error('❌ API Error (Get Audits List):', {
+        status: response.status,
+        statusText: response.statusText,
+        errorData,
+        errorMessage
+      });
+
+      if (response.status === 401) {
+        throw new Error('Session expirée. Veuillez vous reconnecter.');
+      }
+      
+      if (response.status === 403) {
+        throw new Error('Accès non autorisé à cette ressource.');
+      }
+      
+      if (response.status >= 500) {
+        throw new Error('Erreur serveur. Veuillez réessayer plus tard.');
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+    
+    console.log('✅ API Success (Get Audits List):', {
+      auditsCount: data?.length || 0
+    });
+
+    if (!Array.isArray(data)) {
+      throw new Error('Format de réponse invalide: audits manquants ou malformés');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('💥 Network/Fetch Error (Get Audits List):', error);
+    
+    if (error instanceof Error) {
+      throw error;
+    }
+    
+    throw new Error('Erreur de connexion. Vérifiez votre connexion internet et réessayez.');
+  }
+}
+
 // Récupérer un audit spécifique
 export async function getAudit(
   token: string,

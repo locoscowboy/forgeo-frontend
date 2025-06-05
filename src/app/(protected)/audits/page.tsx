@@ -1,15 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { 
   createAudit, 
   runAudit, 
+  getAudits,
   getAuditResults, 
   getAuditResultDetails,
   AuditResult,
   AuditDetail,
-  HubSpotObjectData
+  HubSpotObjectData,
+  Audit
 } from "@/lib/api/audits";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -246,9 +248,11 @@ export default function AuditsPage() {
   // États principaux
   const [auditResults, setAuditResults] = useState<AuditResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentAuditId, setCurrentAuditId] = useState<number | null>(null);
   const [auditStatus, setAuditStatus] = useState<'idle' | 'creating' | 'running' | 'completed'>('idle');
+  const [lastAudit, setLastAudit] = useState<Audit | null>(null);
   
   // États pour les sections expansées
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
@@ -257,6 +261,55 @@ export default function AuditsPage() {
     deal: true
   });
   const [expandedCriteria, setExpandedCriteria] = useState<Record<number, boolean>>({});
+
+  // Charger le dernier audit au démarrage
+  useEffect(() => {
+    const loadLastAudit = async () => {
+      if (!token) return;
+      
+      setInitialLoading(true);
+      setError(null);
+      
+      try {
+        console.log('🔄 Chargement des audits existants...');
+        const audits = await getAudits(token);
+        
+        if (audits.length > 0) {
+          // Trier par date de création (plus récent en premier)
+          const sortedAudits = audits.sort((a, b) => 
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
+          
+          const latestAudit = sortedAudits[0];
+          setLastAudit(latestAudit);
+          setCurrentAuditId(latestAudit.id);
+          
+          // Si l'audit est terminé, charger ses résultats
+          if (latestAudit.status === 'completed') {
+            console.log('📊 Chargement des résultats du dernier audit...');
+            const results = await getAuditResults(token, latestAudit.id);
+            setAuditResults(results);
+            setAuditStatus('completed');
+          } else if (latestAudit.status === 'running') {
+            setAuditStatus('running');
+          } else {
+            setAuditStatus('idle');
+          }
+        } else {
+          console.log('📝 Aucun audit existant trouvé');
+          setAuditStatus('idle');
+        }
+      } catch (err) {
+        console.error('❌ Erreur lors du chargement des audits:', err);
+        setError(err instanceof Error ? err.message : 'Erreur lors du chargement des audits');
+        setAuditStatus('idle');
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+
+    loadLastAudit();
+  }, [token]);
 
   // Lancer un nouvel audit
   const handleNewAudit = async () => {
@@ -268,10 +321,21 @@ export default function AuditsPage() {
     setAuditResults([]);
     
                          try {
-                       // Pour cet exemple, on utilise sync_id = 1 (la dernière sync)
-                       // Dans une vraie app, on pourrait permettre à l&apos;utilisateur de choisir
+                              // Pour cet exemple, on utilise sync_id = 1 (la dernière sync)
+       // Dans une vraie app, on pourrait permettre à l&apos;utilisateur de choisir
       const auditResponse = await createAudit(token, 1);
       setCurrentAuditId(auditResponse.id);
+      
+      // Créer l'objet audit pour le state
+      const newAudit: Audit = {
+        id: auditResponse.id,
+        user_id: auditResponse.user_id,
+        sync_id: auditResponse.sync_id,
+        status: 'running',
+        created_at: auditResponse.created_at,
+        completed_at: undefined
+      };
+      setLastAudit(newAudit);
       
       setAuditStatus('running');
       
@@ -281,6 +345,14 @@ export default function AuditsPage() {
       // Récupérer les résultats
       const results = await getAuditResults(token, auditResponse.id);
       setAuditResults(results);
+      
+      // Mettre à jour l'audit comme terminé
+      setLastAudit(prev => prev ? {
+        ...prev,
+        status: 'completed',
+        completed_at: new Date().toISOString()
+      } : null);
+      
       setAuditStatus('completed');
       
          } catch (err) {
@@ -353,8 +425,51 @@ export default function AuditsPage() {
       {/* Contenu principal */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         
+        {/* Chargement initial */}
+        {initialLoading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-500" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Chargement des audits...
+              </h3>
+              <p className="text-gray-500">
+                Recherche du dernier audit disponible
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Informations sur le dernier audit */}
+        {!initialLoading && lastAudit && auditStatus === 'completed' && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <CheckCircle className="h-5 w-5 text-blue-500" />
+              <span className="font-medium text-blue-700">Dernier audit disponible</span>
+            </div>
+            <p className="text-sm text-blue-600">
+              Audit #{lastAudit.id} • Créé le {new Date(lastAudit.created_at).toLocaleDateString('fr-FR', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+              {lastAudit.completed_at && (
+                <> • Terminé le {new Date(lastAudit.completed_at).toLocaleDateString('fr-FR', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}</>
+              )}
+            </p>
+          </div>
+        )}
+        
         {/* État de l'audit */}
-        {auditStatus !== 'idle' && (
+        {!initialLoading && auditStatus !== 'idle' && (
           <div className="mb-8 p-6 bg-white rounded-lg border">
             <div className="flex items-center gap-3 mb-4">
               {auditStatus === 'creating' && (
@@ -493,19 +608,19 @@ export default function AuditsPage() {
           </div>
         )}
 
-        {/* État initial */}
-        {auditStatus === 'idle' && auditResults.length === 0 && (
+                {/* État initial - Aucun audit existant */}
+        {!initialLoading && auditStatus === 'idle' && auditResults.length === 0 && !lastAudit && (
           <div className="text-center py-12">
             <BarChart3 className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
               Prêt à analyser vos données
             </h3>
-                         <p className="text-gray-500 mb-6">
-               Lancez un audit pour identifier les problèmes de qualité dans vos données HubSpot
-             </p>
+            <p className="text-gray-500 mb-6">
+              Aucun audit trouvé. Lancez votre premier audit pour identifier les problèmes de qualité dans vos données HubSpot.
+            </p>
             <Button onClick={handleNewAudit} size="lg">
               <Play className="h-4 w-4 mr-2" />
-                             Démarrer l&apos;audit
+              Démarrer l&apos;audit
             </Button>
           </div>
         )}

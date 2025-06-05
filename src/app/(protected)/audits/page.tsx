@@ -336,9 +336,6 @@ export default function AuditsPage() {
               <BarChart3 className="h-8 w-8 text-primary" />
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Audits</h1>
-                <p className="text-sm text-gray-500">
-                  Analysez la qualité de vos données HubSpot
-                </p>
               </div>
             </div>
             

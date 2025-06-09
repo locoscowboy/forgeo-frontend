@@ -45,7 +45,7 @@ const tableStyles = `
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    table-layout: fixed;
+    table-layout: auto;
   }
   
   .notion-th {
@@ -527,8 +527,8 @@ export default function DealsPage() {
 
         {/* Table Container */}
         <div className="flex-1 overflow-hidden">
-          <div className="h-full overflow-auto">
-            <table ref={tableRef} className="notion-table">
+          <div className="h-full overflow-x-auto overflow-y-auto">
+            <table ref={tableRef} className="notion-table" style={{ minWidth: '1400px' }}>
               {/* Header */}
               <thead>
                 <tr className="notion-tr">

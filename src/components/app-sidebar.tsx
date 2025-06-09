@@ -70,7 +70,7 @@ const forgeoData = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar collapsible="none" {...props}>
+    <Sidebar collapsible="none" className="border-r border-gray-200" {...props}>
       <SidebarHeader>
         <TeamSwitcher teams={forgeoData.teams} />
       </SidebarHeader>

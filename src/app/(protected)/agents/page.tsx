@@ -44,23 +44,7 @@ export default function AgentsPage() {
             Beta
           </Badge>
         </div>
-        <div className="flex gap-2">
-          <Button 
-            size="sm" 
-            variant="outline"
-            className="gap-2"
-          >
-            <Settings className="h-4 w-4" />
-            Configuration
-          </Button>
-          <Button 
-            size="sm" 
-            className="gap-2 bg-forgeo-400 hover:bg-forgeo-500 text-black"
-          >
-            <Plus className="h-4 w-4" />
-            Nouvel Agent
-          </Button>
-        </div>
+
       </div>
 
       {/* Main Content */}
@@ -76,7 +60,7 @@ export default function AgentsPage() {
               </div>
             </div>
             <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              CRM Manager AI Agent
+              AI Agent CRM Manager
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               Votre assistant intelligent pour optimiser votre CRM HubSpot. 
@@ -115,7 +99,7 @@ export default function AgentsPage() {
                               <div className="w-10 h-10 bg-forgeo-100 rounded-lg flex items-center justify-center mx-auto mb-3">
                   <Sparkles className="h-5 w-5 text-forgeo-600" />
               </div>
-              <h3 className="font-semibold text-gray-900 mb-1">Analyse Intelligente</h3>
+              <h3 className="font-semibold text-gray-900 mb-1">Merge Contacts Duplicates</h3>
               <p className="text-sm text-gray-600">Détection automatique des problèmes de données</p>
             </div>
             
@@ -123,7 +107,7 @@ export default function AgentsPage() {
               <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
                 <MessageCircle className="h-5 w-5 text-green-600" />
               </div>
-              <h3 className="font-semibold text-gray-900 mb-1">Chat Conversationnel</h3>
+              <h3 className="font-semibold text-gray-900 mb-1">Merge Companies Duplicate</h3>
               <p className="text-sm text-gray-600">Posez vos questions en langage naturel</p>
             </div>
             
@@ -131,7 +115,7 @@ export default function AgentsPage() {
               <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
                 <Zap className="h-5 w-5 text-purple-600" />
               </div>
-              <h3 className="font-semibold text-gray-900 mb-1">Actions Automatiques</h3>
+              <h3 className="font-semibold text-gray-900 mb-1">Associate Parent/Child Companies</h3>
               <p className="text-sm text-gray-600">Exécution automatique de tâches de nettoyage</p>
             </div>
           </div>

@@ -16,6 +16,12 @@ export interface User {
   full_name: string;
 }
 
+export interface RegisterData {
+  email: string;
+  password: string;
+  full_name: string;
+}
+
 export async function login(credentials: LoginCredentials): Promise<AuthResponse> {
   const response = await fetch('https://forgeo.store/api/v1/auth/token', {
     method: 'POST',
@@ -44,6 +50,26 @@ export async function getCurrentUser(token: string): Promise<User> {
 
   if (!response.ok) {
     throw new Error('Failed to fetch user');
+  }
+
+  return response.json();
+}
+
+export async function register(userData: RegisterData): Promise<AuthResponse> {
+  const response = await fetch('https://forgeo.store/api/v1/auth/signup', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      email: userData.email,
+      password: userData.password,
+      full_name: userData.full_name,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Registration failed');
   }
 
   return response.json();

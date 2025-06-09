@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useAuth } from '@/lib/auth/AuthContext';
+import { register } from '@/lib/api/auth';
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -13,7 +15,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-interface RegisterData {
+interface RegisterFormData {
   full_name: string;
   email: string;
   password: string;
@@ -24,7 +26,7 @@ export function RegisterForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-  const [formData, setFormData] = useState<RegisterData>({
+  const [formData, setFormData] = useState<RegisterFormData>({
     full_name: '',
     email: '',
     password: '',
@@ -33,6 +35,7 @@ export function RegisterForm({
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { login: loginUser } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,19 +57,27 @@ export function RegisterForm({
     }
 
     try {
-      // TODO: Implémenter l'API de création de compte
-      // const response = await register(formData);
-      setSuccess('Compte créé avec succès ! Vous pouvez maintenant vous connecter.');
-      setFormData({ full_name: '', email: '', password: '', confirmPassword: '' });
-    } catch {
-      setError('Erreur lors de la création du compte. Veuillez réessayer.');
+      // Créer le compte via l'API
+      const response = await register({
+        email: formData.email,
+        password: formData.password,
+        full_name: formData.full_name,
+      });
+      
+      // Connecter automatiquement l'utilisateur
+      loginUser(response.access_token);
+      
+      // Note: La redirection se fera automatiquement via l'AuthContext
+    } catch (error) {
+      console.error('Registration error:', error);
+      setError('Erreur lors de la création du compte. Cet email existe peut-être déjà.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleInputChange = (field: keyof RegisterData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleInputChange = (field: keyof RegisterFormData, value: string) => {
+    setFormData((prev: RegisterFormData) => ({ ...prev, [field]: value }));
   };
 
   return (

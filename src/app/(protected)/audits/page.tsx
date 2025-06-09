@@ -656,9 +656,9 @@ export default function AuditsPage() {
   return (
     <>
       <style>{tableStyles}</style>
-      <div className="min-h-screen bg-gray-50">
+      <div className="h-full bg-gray-50 flex flex-col">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 h-14 flex items-center justify-between">
+      <div className="bg-white border-b border-gray-200 px-6 h-14 flex items-center justify-between flex-shrink-0">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Audits</h1>
         </div>
@@ -695,7 +695,8 @@ export default function AuditsPage() {
       </div>
 
       {/* Contenu principal */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         
         {/* Chargement initial */}
         {initialLoading && (
@@ -896,6 +897,7 @@ export default function AuditsPage() {
             </Button>
           </div>
         )}
+        </div>
       </div>
     </div>
     </>

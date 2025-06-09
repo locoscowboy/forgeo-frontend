@@ -7,7 +7,6 @@ import {
   Building,
   DollarSign,
   GalleryVerticalEnd,
-  Settings,
   Users,
 } from "lucide-react"
 
@@ -64,12 +63,6 @@ const forgeoData = {
       title: "Deals",
       url: "/deals",
       icon: DollarSign,
-      isActive: false,
-    },
-    {
-      title: "Settings",
-      url: "/settings",
-      icon: Settings,
       isActive: false,
     },
   ],

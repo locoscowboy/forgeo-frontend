@@ -44,7 +44,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
-  SidebarSeparator,
 } from "@/components/ui/sidebar"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -241,31 +240,28 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
         <SidebarProvider className="items-start">
           <Sidebar collapsible="none" className="hidden md:flex min-w-[250px]">
             <SidebarContent>
-              {forgeoSettingsData.nav.map((section, index) => (
-                <React.Fragment key={section.title}>
-                  <SidebarGroup>
-                    <SidebarGroupLabel>{section.title}</SidebarGroupLabel>
-                    <SidebarGroupContent>
-                      <SidebarMenu>
-                        {section.items.map((item) => (
-                          <SidebarMenuItem key={item.name}>
-                            <SidebarMenuButton
-                              asChild
-                              isActive={item.name === activeSection}
-                              onClick={() => setActiveSection(item.name)}
-                            >
-                              <button className="w-full">
-                                <item.icon />
-                                <span>{item.name}</span>
-                              </button>
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
-                        ))}
-                      </SidebarMenu>
-                    </SidebarGroupContent>
-                  </SidebarGroup>
-                  {index < forgeoSettingsData.nav.length - 1 && <SidebarSeparator />}
-                </React.Fragment>
+              {forgeoSettingsData.nav.map((section) => (
+                <SidebarGroup key={section.title}>
+                  <SidebarGroupLabel>{section.title}</SidebarGroupLabel>
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      {section.items.map((item) => (
+                        <SidebarMenuItem key={item.name}>
+                          <SidebarMenuButton
+                            asChild
+                            isActive={item.name === activeSection}
+                            onClick={() => setActiveSection(item.name)}
+                          >
+                            <button className="w-full">
+                              <item.icon />
+                              <span>{item.name}</span>
+                            </button>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </SidebarGroup>
               ))}
               
               {/* Logout button at the bottom */}

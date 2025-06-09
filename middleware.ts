@@ -17,9 +17,9 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // Rediriger les utilisateurs authentifiés de la page login vers le dashboard
+  // Rediriger les utilisateurs authentifiés de la page login vers les agents
   if ((pathname === '/login' || pathname === '/register') && token) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    return NextResponse.redirect(new URL('/agents', request.url));
   }
 
   return NextResponse.next();

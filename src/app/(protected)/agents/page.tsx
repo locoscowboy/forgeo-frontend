@@ -9,7 +9,6 @@ import {
   Bot,
   Sparkles,
   MessageCircle,
-  TrendingUp,
   Settings,
   Zap
 } from "lucide-react";

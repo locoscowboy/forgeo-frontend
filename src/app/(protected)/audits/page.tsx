@@ -212,6 +212,7 @@ const CriteriaDetails: React.FC<{
     
     try {
       const fetchedDetails = await getAuditResultDetails(token, auditId, result.id, 1, 10);
+      console.log('🔍 Debug fetchedDetails:', fetchedDetails);
       setDetails(fetchedDetails);
     } catch (err) {
       console.error('Error loading details:', err);
@@ -229,10 +230,20 @@ const CriteriaDetails: React.FC<{
   };
 
   const getDisplayValue = (data: HubSpotObjectData, fieldName: string) => {
+    // Debug: afficher la structure des données
+    console.log('🔍 Debug getDisplayValue:', { 
+      data, 
+      fieldName, 
+      value: data?.[fieldName],
+      allKeys: data ? Object.keys(data) : 'no data'
+    });
+    
     if (!data || !fieldName) return <span className="text-gray-400">—</span>;
     
     const value = data[fieldName];
-    if (value === null || value === undefined || value === '') {
+    
+    // Vérification plus précise des valeurs vides
+    if (value === null || value === undefined || value === '' || value === 'null') {
       return <span className="text-red-500 italic">Manquant</span>;
     }
     
@@ -345,7 +356,13 @@ const CriteriaDetails: React.FC<{
                           </th>
                         );
                       })}
-                      <th className="notion-th" style={{ width: '150px' }}>
+                      <th className="notion-th" style={{ width: '200px' }}>
+                        <div className="notion-th-content">
+                          <AlertCircle className="notion-icon" />
+                          <span className="font-medium">Champ problématique</span>
+                        </div>
+                      </th>
+                      <th className="notion-th" style={{ width: '120px' }}>
                         <div className="notion-th-content">
                           <AlertCircle className="notion-icon" />
                           <span className="font-medium">Statut</span>
@@ -365,7 +382,15 @@ const CriteriaDetails: React.FC<{
                             )}
                           </td>
                         ))}
-                        <td className="notion-td" style={{ width: '150px' }}>
+                        <td className="notion-td" style={{ width: '200px' }}>
+                          <div className="flex flex-col">
+                            <span className="text-xs text-gray-500 mb-1">{result.field_name}:</span>
+                            <span className="text-sm">
+                              {getDisplayValue(detail.object_data, result.field_name)}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="notion-td" style={{ width: '120px' }}>
                           <span className="notion-tag bg-red-50 text-red-700 border-red-200">
                             Problématique
                           </span>

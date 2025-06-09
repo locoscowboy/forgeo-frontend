@@ -18,7 +18,6 @@ import { Badge } from "@/components/ui/badge";
 import { 
   BarChart3,
   Plus,
-  Play,
   ChevronDown,
   ChevronRight,
   ChevronLeft,

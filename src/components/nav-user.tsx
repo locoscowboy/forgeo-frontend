@@ -9,6 +9,7 @@ import {
 } from "lucide-react"
 
 import { useAuth } from '@/lib/auth/AuthContext'
+import { SettingsDialog } from '@/components/settings-dialog'
 import {
   Avatar,
   AvatarFallback,
@@ -99,12 +100,14 @@ export function NavUser({
             <DropdownMenuGroup>
               <DropdownMenuItem>
                 <BadgeCheck />
-                Account
+                Compte
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Settings />
-                Settings
-              </DropdownMenuItem>
+              <SettingsDialog>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  <Settings />
+                  Paramètres
+                </DropdownMenuItem>
+              </SettingsDialog>
               <DropdownMenuItem>
                 <Bell />
                 Notifications
@@ -113,7 +116,7 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => logout()}>
               <LogOut />
-              Log out
+              Se déconnecter
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

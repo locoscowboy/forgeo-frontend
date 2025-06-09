@@ -36,34 +36,44 @@ const forgeoData = {
   ],
   navMain: [
     {
-      title: "Agents",
-      url: "/agents",
-      icon: Bot,
-      isActive: false,
+      title: "Actions",
+      items: [
+        {
+          title: "Agents",
+          url: "/agents",
+          icon: Bot,
+          isActive: false,
+        },
+        {
+          title: "Audits",
+          url: "/audits", 
+          icon: BarChart3,
+          isActive: false,
+        },
+      ],
     },
     {
-      title: "Audits",
-      url: "/audits", 
-      icon: BarChart3,
-      isActive: false,
-    },
-    {
-      title: "Contacts",
-      url: "/contacts",
-      icon: Users,
-      isActive: false,
-    },
-    {
-      title: "Companies",
-      url: "/companies",
-      icon: Building,
-      isActive: false,
-    },
-    {
-      title: "Deals",
-      url: "/deals",
-      icon: DollarSign,
-      isActive: false,
+      title: "Records",
+      items: [
+        {
+          title: "Contacts",
+          url: "/contacts",
+          icon: Users,
+          isActive: false,
+        },
+        {
+          title: "Companies",
+          url: "/companies",
+          icon: Building,
+          isActive: false,
+        },
+        {
+          title: "Deals",
+          url: "/deals",
+          icon: DollarSign,
+          isActive: false,
+        },
+      ],
     },
   ],
 }
@@ -75,7 +85,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <TeamSwitcher teams={forgeoData.teams} />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={forgeoData.navMain} />
+        <NavMain sections={forgeoData.navMain} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={forgeoData.user} />

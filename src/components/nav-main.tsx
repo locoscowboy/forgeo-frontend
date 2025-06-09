@@ -13,40 +13,43 @@ import {
 } from '@/components/ui/sidebar'
 
 export function NavMain({
-  items,
+  sections,
 }: {
-  items: {
+  sections: {
     title: string
-    url: string
-    icon?: LucideIcon
-    isActive?: boolean
-    items?: {
+    items: {
       title: string
       url: string
+      icon?: LucideIcon
+      isActive?: boolean
     }[]
   }[]
 }) {
   const pathname = usePathname()
 
   return (
-    <SidebarGroup>
-      <SidebarGroupLabel>Platform</SidebarGroupLabel>
-      <SidebarMenu>
-        {items.map((item) => (
-          <SidebarMenuItem key={item.title}>
-            <SidebarMenuButton 
-              tooltip={item.title}
-              isActive={pathname === item.url}
-              asChild
-            >
-              <Link href={item.url}>
-                {item.icon && <item.icon />}
-                <span>{item.title}</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        ))}
-      </SidebarMenu>
-    </SidebarGroup>
+    <>
+      {sections.map((section) => (
+        <SidebarGroup key={section.title}>
+          <SidebarGroupLabel>{section.title}</SidebarGroupLabel>
+          <SidebarMenu>
+            {section.items.map((item) => (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton 
+                  tooltip={item.title}
+                  isActive={pathname === item.url}
+                  asChild
+                >
+                  <Link href={item.url}>
+                    {item.icon && <item.icon />}
+                    <span>{item.title}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarGroup>
+      ))}
+    </>
   )
 }

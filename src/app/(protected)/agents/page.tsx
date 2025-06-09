@@ -51,7 +51,7 @@ export default function AgentsPage() {
           </Button>
           <Button 
             size="sm" 
-            className="gap-2 bg-blue-600 hover:bg-blue-700"
+            className="gap-2 bg-forgeo-400 hover:bg-forgeo-500 text-black"
           >
             <Plus className="h-4 w-4" />
             Nouvel Agent
@@ -83,7 +83,7 @@ export default function AgentsPage() {
           {/* Search Bar - ChatGPT Style */}
           <div className="max-w-3xl mx-auto mb-8">
             <div className="relative">
-              <div className="flex items-center bg-white border border-gray-300 rounded-xl shadow-sm hover:shadow-md transition-shadow focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
+              <div className="flex items-center bg-white border border-gray-300 rounded-xl shadow-sm hover:shadow-md transition-shadow focus-within:ring-2 focus-within:ring-forgeo-500 focus-within:border-forgeo-500">
                 <div className="flex-1 px-4 py-3">
                   <Input
                     placeholder="Demandez à votre CRM Manager AI... (ex: Analyse mes données de contacts)"
@@ -97,7 +97,7 @@ export default function AgentsPage() {
                   onClick={handleSendMessage}
                   disabled={!message.trim()}
                   size="sm"
-                  className="mr-2 h-8 w-8 p-0 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300"
+                                      className="mr-2 h-8 w-8 p-0 bg-forgeo-400 hover:bg-forgeo-500 text-black disabled:bg-gray-300"
                 >
                   <Send className="h-4 w-4" />
                 </Button>
@@ -108,8 +108,8 @@ export default function AgentsPage() {
           {/* Features Preview */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <div className="bg-white p-4 rounded-lg border border-gray-200 text-center">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                <Sparkles className="h-5 w-5 text-blue-600" />
+                              <div className="w-10 h-10 bg-forgeo-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                  <Sparkles className="h-5 w-5 text-forgeo-600" />
               </div>
               <h3 className="font-semibold text-gray-900 mb-1">Analyse Intelligente</h3>
               <p className="text-sm text-gray-600">Détection automatique des problèmes de données</p>

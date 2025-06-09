@@ -270,7 +270,7 @@ const CriteriaDetails: React.FC<{
     
     // Formatage spécial pour certains champs
     if (fieldName === 'email' && typeof value === 'string') {
-      return <span className="text-blue-600">{value}</span>;
+                  return <span className="text-forgeo-600">{value}</span>;
     }
     
     if (fieldName === 'phone' && typeof value === 'string') {
@@ -415,7 +415,7 @@ const CriteriaDetails: React.FC<{
                       <tr className="notion-tr">
                         <td colSpan={columns.length + 2} className="notion-td text-center py-4">
                           <div className="flex items-center justify-center gap-2 text-gray-500">
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-forgeo-600"></div>
                             <span>Mise à jour des données...</span>
                           </div>
                         </td>
@@ -457,9 +457,9 @@ const CriteriaDetails: React.FC<{
                               onClick={() => handlePageChange(pageNum)}
                               disabled={loading}
                               className={`px-3 py-1 text-sm ${
-                                pageNum === currentPage 
-                                  ? "bg-blue-600 text-white hover:bg-blue-700" 
-                                  : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                                                        pageNum === currentPage 
+                          ? "bg-forgeo-400 text-black hover:bg-forgeo-500" 
+                          : "border-gray-300 text-gray-700 hover:bg-gray-50"
                               }`}
                             >
                               {pageNum}
@@ -665,9 +665,9 @@ export default function AuditsPage() {
           </div>
           {!initialLoading && lastAudit && auditStatus === 'completed' && (
             <div className="flex items-center gap-2 text-sm">
-              <CheckCircle className="h-4 w-4 text-blue-500" />
-              <span className="text-blue-700 font-medium">Dernier audit disponible:</span>
-              <span className="text-blue-600">
+              <CheckCircle className="h-4 w-4 text-forgeo-600" />
+              <span className="text-forgeo-700 font-medium">Dernier audit disponible:</span>
+              <span className="text-forgeo-600">
                 Audit #{lastAudit.id} • Créé le {new Date(lastAudit.created_at).toLocaleDateString('fr-FR', {
                   day: 'numeric',
                   month: 'long',
@@ -693,7 +693,7 @@ export default function AuditsPage() {
             onClick={handleNewAudit}
             disabled={loading}
             size="sm"
-            className="gap-2 bg-blue-600 hover:bg-blue-700"
+            className="gap-2 bg-forgeo-400 hover:bg-forgeo-500 text-black"
           >
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -713,7 +713,7 @@ export default function AuditsPage() {
         {initialLoading && (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-500" />
+              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-forgeo-500" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
                 Chargement des audits...
               </h3>
@@ -732,7 +732,7 @@ export default function AuditsPage() {
             <div className="flex items-center gap-3 mb-4">
               {auditStatus === 'creating' && (
                 <>
-                  <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
+                  <Loader2 className="h-5 w-5 animate-spin text-forgeo-500" />
                                      <span className="font-medium">Création de l&apos;audit en cours...</span>
                 </>
               )}
@@ -761,13 +761,13 @@ export default function AuditsPage() {
                   <p className="text-sm text-red-600">{issuePercentage.toFixed(1)}% des enregistrements</p>
                 </div>
                 
-                <div className="bg-blue-50 p-4 rounded-lg">
+                <div className="bg-forgeo-50 p-4 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
-                    <BarChart3 className="h-5 w-5 text-blue-500" />
-                    <span className="font-medium text-blue-700">Total analysé</span>
+                    <BarChart3 className="h-5 w-5 text-forgeo-600" />
+                    <span className="font-medium text-forgeo-700">Total analysé</span>
                   </div>
-                  <p className="text-2xl font-bold text-blue-600">{totalRecords.toLocaleString()}</p>
-                  <p className="text-sm text-blue-600">enregistrements</p>
+                  <p className="text-2xl font-bold text-forgeo-600">{totalRecords.toLocaleString()}</p>
+                  <p className="text-sm text-forgeo-600">enregistrements</p>
                 </div>
                 
                 <div className="bg-green-50 p-4 rounded-lg">

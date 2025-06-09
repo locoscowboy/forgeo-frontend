@@ -23,12 +23,25 @@ module.exports = {
   				'sans-serif'
   			]
   		},
-  		colors: {
-  			border: 'hsl(var(--border))',
-  			input: 'hsl(var(--input))',
-  			ring: 'hsl(var(--ring))',
-  			background: 'hsl(var(--background))',
-  			foreground: 'hsl(var(--foreground))',
+  				colors: {
+			border: 'hsl(var(--border))',
+			input: 'hsl(var(--input))',
+			ring: 'hsl(var(--ring))',
+			background: 'hsl(var(--background))',
+			foreground: 'hsl(var(--foreground))',
+			forgeo: {
+				DEFAULT: '#FDC700',
+				50: '#FEF6CC',
+				100: '#FEF0A3',
+				200: '#FDE350',
+				300: '#FDD91F',
+				400: '#FDC700',
+				500: '#E5B300',
+				600: '#B8A000',
+				700: '#8A7700',
+				800: '#5D4E00',
+				900: '#2F2700'
+			},
   			primary: {
   				DEFAULT: 'hsl(var(--primary))',
   				foreground: 'hsl(var(--primary-foreground))'

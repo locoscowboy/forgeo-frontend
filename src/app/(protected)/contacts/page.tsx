@@ -334,7 +334,7 @@ export default function ContactsPage() {
   // Fonctions utilitaires
   const getLifecycleStageColor = (stage: string) => {
     const colors: { [key: string]: string } = {
-      lead: "bg-blue-50 text-blue-700 border-blue-200",
+              lead: "bg-forgeo-50 text-forgeo-700 border-forgeo-200",
       customer: "bg-green-50 text-green-700 border-green-200",
       subscriber: "bg-purple-50 text-purple-700 border-purple-200",
       opportunity: "bg-orange-50 text-orange-700 border-orange-200",
@@ -399,7 +399,7 @@ export default function ContactsPage() {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-forgeo-600 mx-auto"></div>
           <p className="mt-4 text-gray-600 font-medium">Chargement des contacts...</p>
           <p className="mt-2 text-sm text-gray-500">Veuillez patienter</p>
         </div>
@@ -414,7 +414,7 @@ export default function ContactsPage() {
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Erreur de chargement</h2>
           <p className="text-red-600 mb-4">{error}</p>
-          <Button onClick={handleRetry} className="bg-blue-600 hover:bg-blue-700">
+                        <Button onClick={handleRetry} className="bg-forgeo-400 hover:bg-forgeo-500 text-black">
             Réessayer
           </Button>
         </div>
@@ -440,7 +440,7 @@ export default function ContactsPage() {
               <Download className="h-4 w-4" />
               Export
             </Button>
-            <Button size="sm" className="gap-2 bg-blue-600 hover:bg-blue-700">
+            <Button size="sm" className="gap-2 bg-forgeo-400 hover:bg-forgeo-500 text-black">
               <Plus className="h-4 w-4" />
               New
             </Button>
@@ -469,7 +469,7 @@ export default function ContactsPage() {
                 placeholder="Rechercher des contacts..."
                 value={searchValue}
                 onChange={(e) => handleSearch(e.target.value)}
-                className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                className="pl-10 border-gray-300 focus:border-forgeo-500 focus:ring-forgeo-500"
                 disabled={loading}
               />
             </div>
@@ -554,7 +554,7 @@ export default function ContactsPage() {
                       {contact.email ? (
                         <a 
                           href={`mailto:${contact.email}`}
-                          className="text-blue-600 hover:text-blue-800 hover:underline"
+                          className="text-forgeo-600 hover:text-forgeo-800 hover:underline"
                         >
                           {contact.email}
                         </a>
@@ -596,7 +596,7 @@ export default function ContactsPage() {
                   <tr className="notion-tr">
                     <td colSpan={columns.length} className="notion-td text-center py-4">
                       <div className="flex items-center justify-center gap-2 text-gray-500">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-forgeo-600"></div>
                         <span>Mise à jour des données...</span>
                       </div>
                     </td>
@@ -638,9 +638,9 @@ export default function ContactsPage() {
                       onClick={() => handlePageChange(pageNum)}
                       disabled={loading}
                       className={`px-3 py-1 text-sm ${
-                        pageNum === searchParams.page 
-                          ? "bg-blue-600 text-white hover:bg-blue-700" 
-                          : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                                              pageNum === searchParams.page 
+                        ? "bg-forgeo-400 text-black hover:bg-forgeo-500" 
+                        : "border-gray-300 text-gray-700 hover:bg-gray-50"
                       }`}
                     >
                       {pageNum}

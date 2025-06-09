@@ -1,4 +1,5 @@
-﻿import { AppSidebar } from "@/components/layout/app-sidebar";
+﻿import { AppSidebar } from "@/components/app-sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default function ProtectedLayout({
   children,
@@ -9,11 +10,11 @@ export default function ProtectedLayout({
   // donc nous n'avons plus besoin de le faire ici
 
   return (
-    <div className="flex h-screen">
+    <SidebarProvider>
       <AppSidebar />
-      <main className="flex-1 overflow-y-auto">
+      <SidebarInset>
         {children}
-      </main>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

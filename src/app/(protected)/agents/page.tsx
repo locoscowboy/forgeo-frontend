@@ -133,45 +133,6 @@ export default function AgentsPage() {
             </div>
           </div>
         </div>
-
-        {/* Bottom Cards */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <div className="rounded-lg border bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Settings className="h-5 w-5 text-blue-600" />
-              </div>
-              <h3 className="text-lg font-semibold">Accès HubSpot</h3>
-            </div>
-            <p className="text-sm text-gray-600">
-              Configurez votre connexion à HubSpot pour permettre à l&apos;agent d&apos;accéder à vos données CRM
-            </p>
-          </div>
-          
-          <div className="rounded-lg border bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                <TrendingUp className="h-5 w-5 text-green-600" />
-              </div>
-              <h3 className="text-lg font-semibold">Audits</h3>
-            </div>
-            <p className="text-sm text-gray-600">
-              Visualisez vos audits récents et suivez l&apos;évolution de la qualité de vos données
-            </p>
-          </div>
-          
-          <div className="rounded-lg border bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                <Bot className="h-5 w-5 text-purple-600" />
-              </div>
-              <h3 className="text-lg font-semibold">Agents IA</h3>
-            </div>
-            <p className="text-sm text-gray-600">
-              Gérez vos agents intelligents et configurez leurs capacités d&apos;automatisation
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   );

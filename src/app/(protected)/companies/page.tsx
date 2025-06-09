@@ -551,13 +551,13 @@ export default function CompaniesPage() {
               {/* Body */}
               <tbody>
                 {!loading && companies.length === 0 && !error ? (
-                  <tr className="notion-tr">
-                    <td colSpan={columns.length} className="notion-td text-center py-12">
-                      <div className="flex flex-col items-center gap-3 text-gray-500">
-                        <Building className="h-12 w-12 text-gray-300" />
-                        <div>
-                          <h3 className="font-medium text-gray-900 mb-1">Aucune entreprise trouvée</h3>
-                          <p className="text-sm">Commencez par créer votre première entreprise ou ajustez vos filtres de recherche.</p>
+                  <tr className="border-0">
+                    <td colSpan={columns.length} className="border-0 bg-transparent py-16 text-center">
+                      <div className="flex flex-col items-center justify-center gap-4 text-gray-500">
+                        <Building className="h-16 w-16 text-gray-300" />
+                        <div className="space-y-2">
+                          <h3 className="text-lg font-semibold text-gray-900">Aucune entreprise trouvée</h3>
+                          <p className="text-sm text-gray-600 max-w-md">Commencez par créer votre première entreprise ou ajustez vos filtres de recherche.</p>
                         </div>
                       </div>
                     </td>

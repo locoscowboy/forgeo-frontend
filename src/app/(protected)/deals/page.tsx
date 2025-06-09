@@ -131,7 +131,7 @@ const tableStyles = `
   
   .sort-icon.active {
     opacity: 1;
-    color: #2563eb;
+    color: #facc15;
   }
 
   .resizer {
@@ -153,7 +153,7 @@ const tableStyles = `
   }
 
   .resizer.isResizing {
-    background-color: #2563eb;
+    background-color: #facc15;
   }
 
   .noselect {

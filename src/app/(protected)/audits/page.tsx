@@ -233,7 +233,7 @@ const CriteriaDetails: React.FC<{
     
     // Accéder aux données dans la structure HubSpot: data.properties[fieldName]
     const properties = data.properties || {};
-    const value = (properties as any)[fieldName];
+    const value = properties[fieldName as keyof typeof properties];
     
     // Vérification plus précise des valeurs vides
     if (value === null || value === undefined || value === '' || value === 'null') {

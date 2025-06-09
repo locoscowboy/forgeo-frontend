@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { 
   Plus,
   Send,
@@ -37,8 +38,11 @@ export default function AgentsPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-6 h-14 flex items-center justify-between">
-        <div>
+        <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold text-gray-900">Agents</h1>
+          <Badge variant="secondary" className="bg-forgeo-100 text-forgeo-700 border-forgeo-200">
+            Beta
+          </Badge>
         </div>
         <div className="flex gap-2">
           <Button 

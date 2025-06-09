@@ -71,7 +71,7 @@ export default function AgentsPage() {
           {/* Welcome Section */}
           <div className="text-center mb-8">
             <div className="flex items-center justify-center mb-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-forgeo-400 to-forgeo-600 rounded-full flex items-center justify-center">
+              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg">
                 <Image src="/favicon.png" alt="Forgeo" width={32} height={32} />
               </div>
             </div>

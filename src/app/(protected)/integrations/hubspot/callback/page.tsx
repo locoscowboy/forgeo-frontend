@@ -1,12 +1,12 @@
 "use client"
 
-import React, { useEffect } from 'react'
+import React, { useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth/AuthContext'
 import { exchangeHubSpotCode } from '@/lib/api/integrations'
 import { RefreshCw, CheckCircle, XCircle } from 'lucide-react'
 
-export default function HubSpotCallbackPage() {
+function HubSpotCallbackContent() {
   const searchParams = useSearchParams()
   const { token } = useAuth()
   const [status, setStatus] = React.useState<'loading' | 'success' | 'error'>('loading')
@@ -138,5 +138,29 @@ export default function HubSpotCallbackPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
+        <RefreshCw className="w-12 h-12 mx-auto mb-4 text-blue-600 animate-spin" />
+        <h1 className="text-xl font-semibold text-gray-900 mb-2">
+          Chargement...
+        </h1>
+        <p className="text-gray-600">
+          Initialisation de la page de callback
+        </p>
+      </div>
+    </div>
+  )
+}
+
+export default function HubSpotCallbackPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <HubSpotCallbackContent />
+    </Suspense>
   )
 } 

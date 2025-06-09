@@ -4,7 +4,6 @@ import {
   BadgeCheck,
   Bell,
   ChevronsUpDown,
-  CreditCard,
   LogOut,
   Settings,
 } from "lucide-react"

@@ -71,16 +71,17 @@ export default function HubSpotCallbackPage() {
           window.close()
         }, 2000)
         
-      } catch (error: any) {
-        setStatus('error')
-        setMessage(`Erreur lors de l'échange du code: ${error.message || error}`)
-        if (window.opener) {
-          window.opener.postMessage({ 
-            type: 'hubspot-auth-error', 
-            error: error.message || 'exchange_failed' 
-          }, window.location.origin)
-        }
-      }
+             } catch (error: unknown) {
+         setStatus('error')
+         const errorMessage = error instanceof Error ? error.message : String(error)
+         setMessage(`Erreur lors de l'échange du code: ${errorMessage}`)
+         if (window.opener) {
+           window.opener.postMessage({ 
+             type: 'hubspot-auth-error', 
+             error: errorMessage || 'exchange_failed' 
+           }, window.location.origin)
+         }
+       }
     }
 
     handleCallback()

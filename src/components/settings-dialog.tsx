@@ -20,7 +20,6 @@ import {
   RefreshCw,
   Link,
   Unlink,
-  Calendar,
   Users,
   DollarSign
 } from "lucide-react"
@@ -121,14 +120,7 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
     dataStats: undefined
   })
 
-  // Charger le statut HubSpot au montage et quand les settings s'ouvrent
-  React.useEffect(() => {
-    if (open && activeSection === "Intégrations" && token) {
-      loadHubSpotStatus()
-    }
-  }, [open, activeSection, token])
-
-  const loadHubSpotStatus = async () => {
+  const loadHubSpotStatus = React.useCallback(async () => {
     if (!token) return
     
     setHubspotConnection(prev => ({ ...prev, isLoading: true }))
@@ -148,7 +140,14 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
         syncStatus: 'error'
       }))
     }
-  }
+  }, [token])
+
+  // Charger le statut HubSpot au montage et quand les settings s'ouvrent
+  React.useEffect(() => {
+    if (open && activeSection === "Intégrations" && token) {
+      loadHubSpotStatus()
+    }
+  }, [open, activeSection, token, loadHubSpotStatus])
 
   const handleConnectHubSpot = async () => {
     if (!token) return

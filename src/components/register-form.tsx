@@ -58,7 +58,7 @@ export function RegisterForm({
       // const response = await register(formData);
       setSuccess('Compte créé avec succès ! Vous pouvez maintenant vous connecter.');
       setFormData({ full_name: '', email: '', password: '', confirmPassword: '' });
-    } catch (error) {
+    } catch {
       setError('Erreur lors de la création du compte. Veuillez réessayer.');
     } finally {
       setIsLoading(false);
@@ -155,7 +155,7 @@ export function RegisterForm({
         </CardContent>
       </Card>
       <div className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 [&_a]:hover:text-primary">
-        En créant un compte, vous acceptez nos <a href="#">Conditions d'utilisation</a>{" "}
+        En créant un compte, vous acceptez nos <a href="#">Conditions d&apos;utilisation</a>{" "}
         et notre <a href="#">Politique de confidentialité</a>.
       </div>
     </div>

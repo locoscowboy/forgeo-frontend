@@ -32,7 +32,7 @@ export function LoginForm({
     try {
       const response = await login(credentials);
       loginUser(response.access_token);
-    } catch (error) {
+    } catch {
       setError('Email ou mot de passe incorrect');
     } finally {
       setIsLoading(false);
@@ -103,7 +103,7 @@ export function LoginForm({
         </CardContent>
       </Card>
       <div className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 [&_a]:hover:text-primary">
-        En continuant, vous acceptez nos <a href="#">Conditions d'utilisation</a>{" "}
+        En continuant, vous acceptez nos <a href="#">Conditions d&apos;utilisation</a>{" "}
         et notre <a href="#">Politique de confidentialité</a>.
       </div>
     </div>

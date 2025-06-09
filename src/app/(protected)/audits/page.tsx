@@ -21,6 +21,7 @@ import {
   Play,
   ChevronDown,
   ChevronRight,
+  ChevronLeft,
   Users,
   Building,
   DollarSign,
@@ -203,16 +204,27 @@ const CriteriaDetails: React.FC<{
   const [details, setDetails] = useState<AuditDetail[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // États de pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit] = useState(25); // Nombre d'éléments par page
+  const [totalPages, setTotalPages] = useState(0);
+  const [total, setTotal] = useState(0);
 
-  const loadDetails = async () => {
-    if (loading || details.length > 0) return;
-    
+  const loadDetails = async (page: number = 1) => {
     setLoading(true);
     setError(null);
     
     try {
-      const fetchedDetails = await getAuditResultDetails(token, auditId, result.id, 1, 10);
+      // Charger tous les résultats avec pagination
+      const fetchedDetails = await getAuditResultDetails(token, auditId, result.id, page, limit);
       setDetails(fetchedDetails);
+      
+      // Calculer la pagination basée sur le nombre total d'éléments problématiques
+      const totalItems = result.empty_count;
+      setTotal(totalItems);
+      setTotalPages(Math.ceil(totalItems / limit));
+      
     } catch (err) {
       console.error('Error loading details:', err);
       setError(err instanceof Error ? err.message : 'Erreur lors du chargement des détails');
@@ -224,8 +236,13 @@ const CriteriaDetails: React.FC<{
   const handleToggle = () => {
     onToggle();
     if (!isExpanded && details.length === 0) {
-      loadDetails();
+      loadDetails(1);
     }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    loadDetails(newPage);
   };
 
   const getDisplayValue = (data: HubSpotObjectData, fieldName: string) => {
@@ -297,7 +314,7 @@ const CriteriaDetails: React.FC<{
       </div>
       
       {isExpanded && (
-        <div className="border-t bg-gray-50">
+        <div className="border-t bg-white">
           {loading && (
             <div className="p-8 text-center">
               <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
@@ -319,18 +336,9 @@ const CriteriaDetails: React.FC<{
           )}
           
           {!loading && !error && details.length > 0 && (
-            <div className="p-4">
-              <div className="mb-3">
-                <h5 className="font-medium text-gray-900 mb-1">
-                  Exemples d&apos;enregistrements problématiques
-                </h5>
-                <p className="text-xs text-gray-500">
-                  Affichage des 10 premiers résultats sur {result.empty_count}
-                </p>
-              </div>
-              
-              {/* Table avec style Notion */}
-              <div className="max-h-96 overflow-auto">
+            <div className="flex flex-col h-full">
+              {/* Table avec style Notion - sans padding */}
+              <div className="flex-1 overflow-auto">
                 <table className="notion-table">
                   <thead>
                     <tr className="notion-tr">
@@ -390,15 +398,76 @@ const CriteriaDetails: React.FC<{
                         </td>
                       </tr>
                     ))}
+                    
+                    {/* Ligne de loading pendant la mise à jour */}
+                    {loading && details.length > 0 && (
+                      <tr className="notion-tr">
+                        <td colSpan={columns.length + 2} className="notion-td text-center py-4">
+                          <div className="flex items-center justify-center gap-2 text-gray-500">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                            <span>Mise à jour des données...</span>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
               
-              {result.empty_count > 10 && (
-                <div className="mt-3 p-2 bg-blue-50 rounded text-center">
-                  <p className="text-xs text-blue-700">
-                    Et {result.empty_count - 10} autres enregistrements...
-                  </p>
+              {/* Footer/Pagination */}
+              {totalPages > 1 && (
+                <div className="px-6 py-4 bg-white border-t border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-gray-700">
+                      Affichage de {Math.min((currentPage - 1) * limit + 1, total)} à {Math.min(currentPage * limit, total)} sur {total.toLocaleString()} enregistrements problématiques
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                        disabled={currentPage === 1 || loading}
+                        className="px-3 py-1 text-sm"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      
+                      <div className="flex items-center gap-1">
+                        {[...Array(Math.min(5, totalPages))].map((_, i) => {
+                          const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+                          if (pageNum > totalPages) return null;
+                          
+                          return (
+                            <Button
+                              key={pageNum}
+                              variant={pageNum === currentPage ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => handlePageChange(pageNum)}
+                              disabled={loading}
+                              className={`px-3 py-1 text-sm ${
+                                pageNum === currentPage 
+                                  ? "bg-blue-600 text-white hover:bg-blue-700" 
+                                  : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                              }`}
+                            >
+                              {pageNum}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                        disabled={currentPage === totalPages || loading}
+                        className="px-3 py-1 text-sm"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

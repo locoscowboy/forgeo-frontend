@@ -19,7 +19,6 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarRail,
 } from '@/components/ui/sidebar'
 
 // Forgeo CRM data structure
@@ -78,7 +77,7 @@ const forgeoData = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar collapsible="none" {...props}>
       <SidebarHeader>
         <TeamSwitcher teams={forgeoData.teams} />
       </SidebarHeader>
@@ -88,7 +87,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarFooter>
         <NavUser user={forgeoData.user} />
       </SidebarFooter>
-      <SidebarRail />
     </Sidebar>
   )
 }

@@ -10,11 +10,15 @@ export default function ProtectedLayout({
   // donc nous n'avons plus besoin de le faire ici
 
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        {children}
-      </SidebarInset>
+    <SidebarProvider defaultOpen={true}>
+      <div className="flex h-screen w-screen overflow-hidden">
+        <AppSidebar />
+        <SidebarInset className="flex-1 overflow-hidden">
+          <main className="flex flex-col h-full w-full overflow-hidden">
+            {children}
+          </main>
+        </SidebarInset>
+      </div>
     </SidebarProvider>
   );
 }

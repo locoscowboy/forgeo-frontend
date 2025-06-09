@@ -425,9 +425,9 @@ export default function ContactsPage() {
   return (
     <>
       <style>{tableStyles}</style>
-      <div className={`min-h-0 bg-gray-50 flex flex-col ${isResizing ? 'noselect' : ''}`}>
+      <div className={`h-full bg-gray-50 flex flex-col ${isResizing ? 'noselect' : ''}`}>
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-6 h-14 flex items-center justify-between shrink-0">
+        <div className="bg-white border-b border-gray-200 px-6 h-14 flex items-center justify-between flex-shrink-0">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Contacts</h1>
           </div>
@@ -449,7 +449,7 @@ export default function ContactsPage() {
 
         {/* Message d'erreur en cas de problème pendant le chargement */}
         {error && contacts.length > 0 && (
-          <div className="bg-red-50 border-b border-red-200 px-6 py-3 shrink-0">
+          <div className="bg-red-50 border-b border-red-200 px-6 py-3">
             <div className="flex items-center gap-2 text-red-700">
               <AlertCircle className="h-4 w-4" />
               <span className="text-sm font-medium">Erreur de mise à jour: {error}</span>
@@ -461,7 +461,7 @@ export default function ContactsPage() {
         )}
 
         {/* Controls */}
-        <div className="px-6 py-4 bg-white border-b border-gray-200 shrink-0">
+        <div className="px-6 py-4 bg-white border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -499,8 +499,8 @@ export default function ContactsPage() {
         </div>
 
         {/* Table Container */}
-        <div className="flex-1 min-h-0 overflow-hidden">
-          <div className="h-full overflow-auto">
+        <div className="flex-1 overflow-hidden min-h-0">
+          <div className="h-full overflow-x-auto overflow-y-auto">
             <table ref={tableRef} className="notion-table">
               {/* Header */}
               <thead>
@@ -608,7 +608,7 @@ export default function ContactsPage() {
         </div>
 
         {/* Footer/Pagination */}
-        <div className="px-6 py-4 bg-white border-t border-gray-200 shrink-0">
+        <div className="px-6 py-4 bg-white border-t border-gray-200 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-700">
               Affichage de {Math.min((searchParams.page - 1) * searchParams.limit + 1, total)} à {Math.min(searchParams.page * searchParams.limit, total)} sur {total.toLocaleString()} contacts

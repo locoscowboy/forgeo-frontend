@@ -1,9 +1,13 @@
 import React from 'react';
 import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
 
-const inter = { className: '' }; // Remplacer par la fonte Inter si vous l'importez
+const inter = Inter({ 
+  subsets: ['latin'],
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'Forgeo - HubSpot Data Audit Platform',

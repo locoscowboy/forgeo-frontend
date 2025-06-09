@@ -212,7 +212,6 @@ const CriteriaDetails: React.FC<{
     
     try {
       const fetchedDetails = await getAuditResultDetails(token, auditId, result.id, 1, 10);
-      console.log('🔍 Debug fetchedDetails:', fetchedDetails);
       setDetails(fetchedDetails);
     } catch (err) {
       console.error('Error loading details:', err);
@@ -230,17 +229,11 @@ const CriteriaDetails: React.FC<{
   };
 
   const getDisplayValue = (data: HubSpotObjectData, fieldName: string) => {
-    // Debug: afficher la structure des données
-    console.log('🔍 Debug getDisplayValue:', { 
-      data, 
-      fieldName, 
-      value: data?.[fieldName],
-      allKeys: data ? Object.keys(data) : 'no data'
-    });
-    
     if (!data || !fieldName) return <span className="text-gray-400">—</span>;
     
-    const value = data[fieldName];
+    // Accéder aux données dans la structure HubSpot: data.properties[fieldName]
+    const properties = data.properties || {};
+    const value = (properties as any)[fieldName];
     
     // Vérification plus précise des valeurs vides
     if (value === null || value === undefined || value === '' || value === 'null') {

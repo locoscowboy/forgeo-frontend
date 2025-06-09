@@ -27,8 +27,102 @@ import {
   AlertCircle,
   CheckCircle,
   TrendingUp,
-  Loader2
+  Loader2,
+  User,
+  Mail,
+  Phone,
+  Briefcase,
+  Calendar,
+  FileText,
+  Hash
 } from "lucide-react";
+
+// Notion-like Table Styles (same as other pages)
+const tableStyles = `
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+  
+  .notion-table {
+    font-family: "Inter", sans-serif;
+    border-spacing: 0;
+    border-top: 1px solid #e0e0e0;
+    border-bottom: 1px solid #e0e0e0;
+    width: 100%;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    table-layout: fixed;
+  }
+  
+  .notion-th {
+    color: #9e9e9e;
+    font-weight: 500;
+    font-size: 0.875rem;
+    border-bottom: 1px solid #e0e0e0;
+    border-right: 1px solid #e0e0e0;
+    background-color: #fafafa;
+    position: relative;
+    padding: 0;
+    white-space: nowrap;
+    margin: 0;
+    text-align: left;
+    vertical-align: middle;
+  }
+  
+  .notion-th:last-child {
+    border-right: 0;
+  }
+  
+  .notion-th-content {
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    padding: 0.75rem 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 40px;
+    width: 100%;
+  }
+  
+  .notion-td {
+    color: #424242;
+    border-bottom: 1px solid #e0e0e0;
+    border-right: 1px solid #e0e0e0;
+    position: relative;
+    margin: 0;
+    padding: 0.5rem;
+    text-align: left;
+    vertical-align: middle;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .notion-td:last-child {
+    border-right: 0;
+  }
+  
+  .notion-tr:hover .notion-td {
+    background-color: #f8f9fa;
+  }
+  
+  .notion-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  
+  .notion-icon {
+    width: 14px;
+    height: 14px;
+    margin-right: 6px;
+    opacity: 0.6;
+  }
+`;
 
 // Interface pour les critères d'audit groupés
 interface AuditCriteriaGroup {
@@ -63,7 +157,42 @@ const criteriaLabels: Record<string, string> = {
   "missing_owner_deal": "Transactions sans propriétaire"
 };
 
-// Composant pour afficher les détails d'un critère
+// Configuration des colonnes pour chaque type d'objet
+const getColumnsForCategory = (category: string) => {
+  switch (category) {
+    case 'contact':
+      return [
+        { key: 'hubspot_id', label: 'HubSpot ID', icon: Hash, width: 120 },
+        { key: 'firstname', label: 'Prénom', icon: User, width: 150 },
+        { key: 'lastname', label: 'Nom', icon: User, width: 150 },
+        { key: 'email', label: 'Email', icon: Mail, width: 250 },
+        { key: 'phone', label: 'Téléphone', icon: Phone, width: 150 },
+        { key: 'jobtitle', label: 'Fonction', icon: Briefcase, width: 180 }
+      ];
+    case 'company':
+      return [
+        { key: 'hubspot_id', label: 'HubSpot ID', icon: Hash, width: 120 },
+        { key: 'name', label: 'Nom', icon: Building, width: 200 },
+        { key: 'domain', label: 'Domaine', icon: FileText, width: 180 },
+        { key: 'industry', label: 'Secteur', icon: Briefcase, width: 150 },
+        { key: 'phone', label: 'Téléphone', icon: Phone, width: 150 }
+      ];
+    case 'deal':
+      return [
+        { key: 'hubspot_id', label: 'HubSpot ID', icon: Hash, width: 120 },
+        { key: 'dealname', label: 'Nom', icon: DollarSign, width: 200 },
+        { key: 'amount', label: 'Montant', icon: DollarSign, width: 120 },
+        { key: 'dealstage', label: 'Étape', icon: TrendingUp, width: 150 },
+        { key: 'closedate', label: 'Date fermeture', icon: Calendar, width: 150 }
+      ];
+    default:
+      return [
+        { key: 'hubspot_id', label: 'HubSpot ID', icon: Hash, width: 120 }
+      ];
+  }
+};
+
+// Composant pour afficher les détails d'un critère avec tableau
 const CriteriaDetails: React.FC<{
   auditId: number;
   result: AuditResult;
@@ -100,7 +229,7 @@ const CriteriaDetails: React.FC<{
   };
 
   const getDisplayValue = (data: HubSpotObjectData, fieldName: string) => {
-    if (!data || !fieldName) return 'N/A';
+    if (!data || !fieldName) return <span className="text-gray-400">—</span>;
     
     const value = data[fieldName];
     if (value === null || value === undefined || value === '') {
@@ -115,9 +244,18 @@ const CriteriaDetails: React.FC<{
     if (fieldName === 'phone' && typeof value === 'string') {
       return <span className="text-green-600">{value}</span>;
     }
+
+    if (fieldName === 'amount' && typeof value === 'string') {
+      const amount = parseFloat(value);
+      if (!isNaN(amount)) {
+        return <span className="font-medium">{amount.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</span>;
+      }
+    }
     
     return String(value);
   };
+
+  const columns = getColumnsForCategory(result.category);
 
   return (
     <div className="border rounded-lg bg-white">
@@ -187,44 +325,55 @@ const CriteriaDetails: React.FC<{
                 </p>
               </div>
               
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {details.map((detail, index) => (
-                  <div key={detail.id} className="flex items-center justify-between p-3 bg-white rounded border text-sm">
-                    <div className="flex items-center gap-3">
-                      <span className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center text-xs font-mono">
-                        {index + 1}
-                      </span>
-                      <div>
-                        <p className="font-medium text-gray-900">
-                          HubSpot ID: {detail.hubspot_id}
-                        </p>
-                        {detail.object_data && (
-                          <div className="flex items-center gap-4 mt-1 text-xs text-gray-500">
-                            {detail.object_data.firstname && (
-                              <span>👤 {detail.object_data.firstname}</span>
+              {/* Table avec style Notion */}
+              <div className="max-h-96 overflow-auto">
+                <table className="notion-table">
+                  <thead>
+                    <tr className="notion-tr">
+                      {columns.map((column) => {
+                        const Icon = column.icon;
+                        return (
+                          <th
+                            key={column.key}
+                            className="notion-th"
+                            style={{ width: `${column.width}px` }}
+                          >
+                            <div className="notion-th-content">
+                              <Icon className="notion-icon" />
+                              <span className="font-medium">{column.label}</span>
+                            </div>
+                          </th>
+                        );
+                      })}
+                      <th className="notion-th" style={{ width: '150px' }}>
+                        <div className="notion-th-content">
+                          <AlertCircle className="notion-icon" />
+                          <span className="font-medium">Statut</span>
+                        </div>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {details.map((detail) => (
+                      <tr key={detail.id} className="notion-tr">
+                        {columns.map((column) => (
+                          <td key={column.key} className="notion-td" style={{ width: `${column.width}px` }}>
+                            {column.key === 'hubspot_id' ? (
+                              <span className="font-mono text-sm">{detail.hubspot_id}</span>
+                            ) : (
+                              getDisplayValue(detail.object_data, column.key)
                             )}
-                            {detail.object_data.lastname && (
-                              <span>{detail.object_data.lastname}</span>
-                            )}
-                            {detail.object_data.name && (
-                              <span>🏢 {detail.object_data.name}</span>
-                            )}
-                            {detail.object_data.dealname && (
-                              <span>💼 {detail.object_data.dealname}</span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="text-right">
-                      <p className="text-xs text-gray-500 mb-1">Valeur manquante:</p>
-                      <p className="font-medium">
-                        {getDisplayValue(detail.object_data, result.field_name)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                          </td>
+                        ))}
+                        <td className="notion-td" style={{ width: '150px' }}>
+                          <span className="notion-tag bg-red-50 text-red-700 border-red-200">
+                            Problématique
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
               
               {result.empty_count > 10 && (
@@ -270,7 +419,7 @@ export default function AuditsPage() {
       setInitialLoading(true);
       setError(null);
       
-      try {
+    try {
         console.log('🔄 Chargement des audits existants...');
         const audits = await getAudits(token);
         console.log('📋 Audits récupérés:', audits);
@@ -407,7 +556,9 @@ export default function AuditsPage() {
   const issuePercentage = totalRecords > 0 ? (totalIssues / totalRecords) * 100 : 0;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
+      <style>{tableStyles}</style>
+      <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-6 h-14 flex items-center justify-between">
         <div>
@@ -649,5 +800,6 @@ export default function AuditsPage() {
         )}
       </div>
     </div>
+    </>
   );
 }

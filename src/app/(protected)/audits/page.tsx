@@ -97,6 +97,7 @@ const tableStyles = `
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    min-height: 48px;
   }
   
   .notion-td:last-child {
@@ -207,7 +208,7 @@ const CriteriaDetails: React.FC<{
   
   // États de pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const [limit] = useState(25); // Nombre d'éléments par page
+  const [limit] = useState(10); // Nombre d'éléments par page
   const [totalPages, setTotalPages] = useState(0);
   const [total, setTotal] = useState(0);
 
@@ -216,8 +217,18 @@ const CriteriaDetails: React.FC<{
     setError(null);
     
     try {
+      console.log('🔍 Loading audit details:', { page, limit, resultId: result.id });
+      
       // Charger tous les résultats avec pagination
       const fetchedDetails = await getAuditResultDetails(token, auditId, result.id, page, limit);
+      
+      console.log('📊 Fetched details:', { 
+        count: fetchedDetails.length, 
+        page, 
+        firstItemId: fetchedDetails[0]?.hubspot_id,
+        lastItemId: fetchedDetails[fetchedDetails.length - 1]?.hubspot_id 
+      });
+      
       setDetails(fetchedDetails);
       
       // Calculer la pagination basée sur le nombre total d'éléments problématiques
@@ -337,8 +348,8 @@ const CriteriaDetails: React.FC<{
           
           {!loading && !error && details.length > 0 && (
             <div className="flex flex-col h-full">
-              {/* Table avec style Notion - sans padding */}
-              <div className="flex-1 overflow-auto">
+              {/* Table avec style Notion - sans padding, hauteur fixe */}
+              <div className="overflow-auto" style={{ height: '440px' }}>
                 <table className="notion-table">
                   <thead>
                     <tr className="notion-tr">
@@ -419,7 +430,7 @@ const CriteriaDetails: React.FC<{
                 <div className="px-6 py-4 bg-white border-t border-gray-200">
                   <div className="flex items-center justify-between">
                     <div className="text-sm text-gray-700">
-                      Affichage de {Math.min((currentPage - 1) * limit + 1, total)} à {Math.min(currentPage * limit, total)} sur {total.toLocaleString()} enregistrements problématiques
+                      Affichage de {Math.min((currentPage - 1) * limit + 1, total)} à {Math.min(currentPage * limit, total)} sur {total.toLocaleString()} enregistrements
                     </div>
                     
                     <div className="flex items-center gap-2">

@@ -1,39 +1,202 @@
 ﻿"use client";
 
+import React, { useState } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { 
+  Plus,
+  Search,
+  Send,
+  Bot,
+  Sparkles,
+  MessageCircle,
+  TrendingUp,
+  Settings,
+  Zap
+} from "lucide-react";
 
-export default function Dashboard() {
+export default function AgentsPage() {
   const { user } = useAuth();
-  
+  const [message, setMessage] = useState("");
+
+  const handleSendMessage = () => {
+    if (message.trim()) {
+      // TODO: Implement AI Agent interaction
+      console.log("Message envoyé:", message);
+      setMessage("");
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  const suggestedPrompts = [
+    "Analyse la qualité de mes données HubSpot",
+    "Trouve les contacts sans email",
+    "Identifie les doublons dans ma base",
+    "Optimise mes processus de vente",
+    "Génère un rapport de performance",
+    "Nettoie mes données d'entreprises"
+  ];
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Bienvenue, {user?.full_name || user?.email}!
-        </p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 px-6 h-14 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Agents</h1>
+        </div>
+        <div className="flex gap-2">
+          <Button 
+            size="sm" 
+            variant="outline"
+            className="gap-2"
+          >
+            <Settings className="h-4 w-4" />
+            Configuration
+          </Button>
+          <Button 
+            size="sm" 
+            className="gap-2 bg-blue-600 hover:bg-blue-700"
+          >
+            <Plus className="h-4 w-4" />
+            Nouvel Agent
+          </Button>
+        </div>
       </div>
-      
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <div className="rounded-lg border bg-card p-6 shadow-sm">
-          <h3 className="text-lg font-semibold">Accès HubSpot</h3>
-          <p className="text-sm text-muted-foreground">
-            Configurez votre connexion à HubSpot
-          </p>
-        </div>
+
+      {/* Main Content */}
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-8">
         
-        <div className="rounded-lg border bg-card p-6 shadow-sm">
-          <h3 className="text-lg font-semibold">Audits</h3>
-          <p className="text-sm text-muted-foreground">
-            Visualisez vos audits récents
-          </p>
+        {/* AI Agent Interface */}
+        <div className="mb-12">
+          {/* Welcome Section */}
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center mb-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                <Bot className="h-8 w-8 text-white" />
+              </div>
+            </div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+              CRM Manager AI Agent
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Votre assistant intelligent pour optimiser votre CRM HubSpot. 
+              Posez vos questions, demandez des analyses ou obtenez des recommandations personnalisées.
+            </p>
+          </div>
+
+          {/* Search Bar - ChatGPT Style */}
+          <div className="max-w-3xl mx-auto mb-8">
+            <div className="relative">
+              <div className="flex items-center bg-white border border-gray-300 rounded-xl shadow-sm hover:shadow-md transition-shadow focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
+                <div className="flex-1 px-4 py-3">
+                  <Input
+                    placeholder="Demandez à votre CRM Manager AI... (ex: Analyse mes données de contacts)"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    className="border-0 focus:ring-0 text-base placeholder:text-gray-500 bg-transparent"
+                  />
+                </div>
+                <Button
+                  onClick={handleSendMessage}
+                  disabled={!message.trim()}
+                  size="sm"
+                  className="mr-2 h-8 w-8 p-0 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {/* Suggested Prompts */}
+              <div className="mt-4">
+                <p className="text-sm text-gray-500 mb-3 text-center">Suggestions :</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {suggestedPrompts.map((prompt, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setMessage(prompt)}
+                      className="text-left px-3 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                    >
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Features Preview */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div className="bg-white p-4 rounded-lg border border-gray-200 text-center">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <Sparkles className="h-5 w-5 text-blue-600" />
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-1">Analyse Intelligente</h3>
+              <p className="text-sm text-gray-600">Détection automatique des problèmes de données</p>
+            </div>
+            
+            <div className="bg-white p-4 rounded-lg border border-gray-200 text-center">
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <MessageCircle className="h-5 w-5 text-green-600" />
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-1">Chat Conversationnel</h3>
+              <p className="text-sm text-gray-600">Posez vos questions en langage naturel</p>
+            </div>
+            
+            <div className="bg-white p-4 rounded-lg border border-gray-200 text-center">
+              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <Zap className="h-5 w-5 text-purple-600" />
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-1">Actions Automatiques</h3>
+              <p className="text-sm text-gray-600">Exécution automatique de tâches de nettoyage</p>
+            </div>
+          </div>
         </div>
-        
-        <div className="rounded-lg border bg-card p-6 shadow-sm">
-          <h3 className="text-lg font-semibold">Paramètres</h3>
-          <p className="text-sm text-muted-foreground">
-            Gérez votre compte et vos préférences
-          </p>
+
+        {/* Bottom Cards */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="rounded-lg border bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Settings className="h-5 w-5 text-blue-600" />
+              </div>
+              <h3 className="text-lg font-semibold">Accès HubSpot</h3>
+            </div>
+            <p className="text-sm text-gray-600">
+              Configurez votre connexion à HubSpot pour permettre à l'agent d'accéder à vos données CRM
+            </p>
+          </div>
+          
+          <div className="rounded-lg border bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <TrendingUp className="h-5 w-5 text-green-600" />
+              </div>
+              <h3 className="text-lg font-semibold">Audits</h3>
+            </div>
+            <p className="text-sm text-gray-600">
+              Visualisez vos audits récents et suivez l'évolution de la qualité de vos données
+            </p>
+          </div>
+          
+          <div className="rounded-lg border bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                <Bot className="h-5 w-5 text-purple-600" />
+              </div>
+              <h3 className="text-lg font-semibold">Agents IA</h3>
+            </div>
+            <p className="text-sm text-gray-600">
+              Gérez vos agents intelligents et configurez leurs capacités d'automatisation
+            </p>
+          </div>
         </div>
       </div>
     </div>

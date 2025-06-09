@@ -873,13 +873,9 @@ export default function AuditsPage() {
             <h3 className="text-lg font-medium text-gray-900 mb-2">
               Prêt à analyser vos données
             </h3>
-            <p className="text-gray-500 mb-6">
+            <p className="text-gray-500">
               Aucun audit trouvé. Lancez votre premier audit pour identifier les problèmes de qualité dans vos données HubSpot.
             </p>
-            <Button onClick={handleNewAudit} size="lg">
-              <Play className="h-4 w-4 mr-2" />
-              Démarrer l&apos;audit
-            </Button>
           </div>
         )}
         </div>

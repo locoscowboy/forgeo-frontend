@@ -12,7 +12,7 @@ export default function LoginPage() {
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      router.push('/dashboard');
+      router.push('/agents');
     }
   }, [user, router]);
 

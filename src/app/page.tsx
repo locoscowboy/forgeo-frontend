@@ -12,8 +12,8 @@ export default function Home() {
     // Attendre que l'état d'authentification soit chargé
     if (!isLoading) {
       if (user) {
-        // Rediriger vers le dashboard si l'utilisateur est connecté
-        router.replace("/dashboard");
+                  // Rediriger vers les agents si l'utilisateur est connecté
+        router.replace("/agents");
       } else {
         // Rediriger vers la page de login si l'utilisateur n'est pas connecté
         router.replace("/login");

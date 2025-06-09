@@ -65,7 +65,7 @@ export function LoginForm() {
         
         // Petit délai pour permettre à l'AuthContext de se mettre à jour
         setTimeout(() => {
-          router.push('/dashboard');
+          router.push('/agents');
         }, 100);
         
       } else {

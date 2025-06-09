@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
   Plus,
-  Search,
   Send,
   Bot,
   Sparkles,
@@ -17,7 +16,6 @@ import {
 } from "lucide-react";
 
 export default function AgentsPage() {
-  const { user } = useAuth();
   const [message, setMessage] = useState("");
 
   const handleSendMessage = () => {
@@ -41,7 +39,7 @@ export default function AgentsPage() {
     "Identifie les doublons dans ma base",
     "Optimise mes processus de vente",
     "Génère un rapport de performance",
-    "Nettoie mes données d'entreprises"
+    "Nettoie mes données d&apos;entreprises"
   ];
 
   return (
@@ -170,7 +168,7 @@ export default function AgentsPage() {
               <h3 className="text-lg font-semibold">Accès HubSpot</h3>
             </div>
             <p className="text-sm text-gray-600">
-              Configurez votre connexion à HubSpot pour permettre à l'agent d'accéder à vos données CRM
+              Configurez votre connexion à HubSpot pour permettre à l&apos;agent d&apos;accéder à vos données CRM
             </p>
           </div>
           
@@ -182,7 +180,7 @@ export default function AgentsPage() {
               <h3 className="text-lg font-semibold">Audits</h3>
             </div>
             <p className="text-sm text-gray-600">
-              Visualisez vos audits récents et suivez l'évolution de la qualité de vos données
+              Visualisez vos audits récents et suivez l&apos;évolution de la qualité de vos données
             </p>
           </div>
           
@@ -194,7 +192,7 @@ export default function AgentsPage() {
               <h3 className="text-lg font-semibold">Agents IA</h3>
             </div>
             <p className="text-sm text-gray-600">
-              Gérez vos agents intelligents et configurez leurs capacités d'automatisation
+              Gérez vos agents intelligents et configurez leurs capacités d&apos;automatisation
             </p>
           </div>
         </div>

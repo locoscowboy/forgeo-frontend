@@ -699,7 +699,7 @@ export default function AuditsPage() {
             ) : (
               <Plus className="h-4 w-4" />
             )}
-            Lancer nouvel audit
+            Nouvel Audit
           </Button>
         </div>
       </div>

@@ -32,14 +32,7 @@ export default function AgentsPage() {
     }
   };
 
-  const suggestedPrompts = [
-    "Analyse la qualité de mes données HubSpot",
-    "Trouve les contacts sans email",
-    "Identifie les doublons dans ma base",
-    "Optimise mes processus de vente",
-    "Génère un rapport de performance",
-    "Nettoie mes données d&apos;entreprises"
-  ];
+
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -109,22 +102,6 @@ export default function AgentsPage() {
                 >
                   <Send className="h-4 w-4" />
                 </Button>
-              </div>
-              
-              {/* Suggested Prompts */}
-              <div className="mt-4">
-                <p className="text-sm text-gray-500 mb-3 text-center">Suggestions :</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {suggestedPrompts.map((prompt, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setMessage(prompt)}
-                      className="text-left px-3 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                    >
-                      {prompt}
-                    </button>
-                  ))}
-                </div>
               </div>
             </div>
           </div>

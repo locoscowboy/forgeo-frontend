@@ -550,6 +550,20 @@ export default function CompaniesPage() {
 
               {/* Body */}
               <tbody>
+                {!loading && companies.length === 0 && !error ? (
+                  <tr className="notion-tr">
+                    <td colSpan={columns.length} className="notion-td text-center py-12">
+                      <div className="flex flex-col items-center gap-3 text-gray-500">
+                        <Building className="h-12 w-12 text-gray-300" />
+                        <div>
+                          <h3 className="font-medium text-gray-900 mb-1">Aucune entreprise trouvée</h3>
+                          <p className="text-sm">Commencez par créer votre première entreprise ou ajustez vos filtres de recherche.</p>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                ) : null}
+                
                 {companies.map((company) => (
                   <tr key={company.id} className="notion-tr">
                     <td className="notion-td" style={{ width: `${columnWidths.name}px` }}>

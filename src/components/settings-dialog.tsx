@@ -119,11 +119,13 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
     syncStatus: 'idle',
     dataStats: undefined
   })
+  const [connectionError, setConnectionError] = React.useState<string | null>(null)
 
   const loadHubSpotStatus = React.useCallback(async () => {
     if (!token) return
     
     setHubspotConnection(prev => ({ ...prev, isLoading: true }))
+    setConnectionError(null)
     
     try {
       const status = await getHubSpotStatus(token)
@@ -133,6 +135,8 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
       })
     } catch (error) {
       console.error('Erreur lors du chargement du statut HubSpot:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue'
+      setConnectionError(`Erreur de connexion: ${errorMessage}`)
       setHubspotConnection(prev => ({ 
         ...prev, 
         isLoading: false,
@@ -153,6 +157,7 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
     if (!token) return
     
     setHubspotConnection(prev => ({ ...prev, isLoading: true }))
+    setConnectionError(null)
     
     try {
       const { auth_url } = await getHubSpotAuthUrl(token)
@@ -164,16 +169,24 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
         'width=600,height=700,scrollbars=yes,resizable=yes'
       )
 
+      if (!popup) {
+        throw new Error('Impossible d\'ouvrir la fenêtre d\'autorisation. Vérifiez que les popups ne sont pas bloquées.')
+      }
+
       // Écouter les messages de la popup
       const handleMessage = (event: MessageEvent) => {
         if (event.origin !== window.location.origin) return
         
         if (event.data.type === 'hubspot-auth-success') {
           popup?.close()
-          loadHubSpotStatus() // Recharger le statut après connexion
+          // Attendre un peu avant de recharger le statut pour laisser le temps au backend
+          setTimeout(() => {
+            loadHubSpotStatus()
+          }, 1000)
           window.removeEventListener('message', handleMessage)
         } else if (event.data.type === 'hubspot-auth-error') {
           popup?.close()
+          setConnectionError(`Erreur d'authentification: ${event.data.error || 'Échec de l\'autorisation'}`)
           setHubspotConnection(prev => ({ 
             ...prev, 
             isLoading: false,
@@ -196,6 +209,8 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
 
     } catch (error) {
       console.error('Erreur lors de la connexion HubSpot:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue'
+      setConnectionError(`Erreur de connexion: ${errorMessage}`)
       setHubspotConnection(prev => ({ 
         ...prev, 
         isLoading: false,
@@ -208,6 +223,7 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
     if (!token) return
     
     setHubspotConnection(prev => ({ ...prev, isLoading: true }))
+    setConnectionError(null)
     
     try {
       await disconnectHubSpot(token)
@@ -221,6 +237,8 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
       })
     } catch (error) {
       console.error('Erreur lors de la déconnexion HubSpot:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue'
+      setConnectionError(`Erreur de déconnexion: ${errorMessage}`)
       setHubspotConnection(prev => ({ ...prev, isLoading: false }))
     }
   }
@@ -229,13 +247,16 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
     if (!token) return
     
     setHubspotConnection(prev => ({ ...prev, syncStatus: 'syncing' }))
+    setConnectionError(null)
     
     try {
       await syncHubSpotData(token)
       // Recharger le statut après synchronisation
-      setTimeout(() => loadHubSpotStatus(), 1000)
+      setTimeout(() => loadHubSpotStatus(), 2000)
     } catch (error) {
       console.error('Erreur lors de la synchronisation HubSpot:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue'
+      setConnectionError(`Erreur de synchronisation: ${errorMessage}`)
       setHubspotConnection(prev => ({ ...prev, syncStatus: 'error' }))
     }
   }
@@ -268,9 +289,17 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
                     </CardDescription>
                   </div>
                 </div>
-                <Badge variant={hubspotConnection.isConnected ? "default" : "secondary"} className="ml-4">
+                <Badge variant={
+                  hubspotConnection.isConnected ? "default" : 
+                  hubspotConnection.isLoading ? "secondary" : 
+                  connectionError ? "destructive" : "secondary"
+                } className="ml-4">
                   {hubspotConnection.isConnected ? (
                     <><CheckCircle className="w-3 h-3 mr-1" /> Connecté</>
+                  ) : hubspotConnection.isLoading ? (
+                    <><RefreshCw className="w-3 h-3 mr-1 animate-spin" /> Connexion...</>
+                  ) : connectionError ? (
+                    <><XCircle className="w-3 h-3 mr-1" /> Erreur</>
                   ) : (
                     <><XCircle className="w-3 h-3 mr-1" /> Non connecté</>
                   )}
@@ -278,6 +307,29 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
               </CardHeader>
               
               <CardContent className="space-y-4">
+                {/* Affichage des erreurs */}
+                {connectionError && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start">
+                        <XCircle className="w-4 h-4 text-red-600 mr-2 mt-0.5 flex-shrink-0" />
+                        <p className="text-sm text-red-700">{connectionError}</p>
+                      </div>
+                      <Button
+                        onClick={() => {
+                          setConnectionError(null)
+                          loadHubSpotStatus()
+                        }}
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-100 ml-2"
+                      >
+                        Réessayer
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
                 {!hubspotConnection.isConnected ? (
                   <div className="space-y-4">
                     <p className="text-sm text-muted-foreground">
@@ -298,24 +350,30 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
                 ) : (
                   <div className="space-y-4">
                     {/* Account Info */}
-                    <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
-                      <div>
-                        <Label className="text-xs text-muted-foreground">Portal ID</Label>
-                        <p className="text-sm font-medium">{hubspotConnection.accountInfo?.portalId}</p>
+                    {hubspotConnection.accountInfo ? (
+                      <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Portal ID</Label>
+                          <p className="text-sm font-medium">{hubspotConnection.accountInfo.portalId || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Domaine</Label>
+                          <p className="text-sm font-medium">{hubspotConnection.accountInfo.domain || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Fuseau horaire</Label>
+                          <p className="text-sm font-medium">{hubspotConnection.accountInfo.timeZone || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Devise</Label>
+                          <p className="text-sm font-medium">{hubspotConnection.accountInfo.currency || 'N/A'}</p>
+                        </div>
                       </div>
-                      <div>
-                        <Label className="text-xs text-muted-foreground">Domaine</Label>
-                        <p className="text-sm font-medium">{hubspotConnection.accountInfo?.domain}</p>
+                    ) : (
+                      <div className="p-4 bg-gray-50 rounded-lg text-center">
+                        <p className="text-sm text-muted-foreground">Chargement des informations du compte...</p>
                       </div>
-                      <div>
-                        <Label className="text-xs text-muted-foreground">Fuseau horaire</Label>
-                        <p className="text-sm font-medium">{hubspotConnection.accountInfo?.timeZone}</p>
-                      </div>
-                      <div>
-                        <Label className="text-xs text-muted-foreground">Devise</Label>
-                        <p className="text-sm font-medium">{hubspotConnection.accountInfo?.currency}</p>
-                      </div>
-                    </div>
+                    )}
 
                     {/* Sync Status */}
                     <div className="space-y-3">
@@ -375,7 +433,7 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
                     <div className="flex gap-2 pt-2">
                       <Button 
                         onClick={handleSyncHubSpot}
-                        disabled={hubspotConnection.syncStatus === 'syncing'}
+                        disabled={hubspotConnection.syncStatus === 'syncing' || hubspotConnection.isLoading}
                         variant="outline"
                         className="flex-1"
                       >
@@ -386,8 +444,17 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
                         )}
                       </Button>
                       <Button 
+                        onClick={loadHubSpotStatus}
+                        disabled={hubspotConnection.isLoading || hubspotConnection.syncStatus === 'syncing'}
+                        variant="outline"
+                        size="sm"
+                        title="Actualiser les informations"
+                      >
+                        <RefreshCw className={`w-4 h-4 ${hubspotConnection.isLoading ? 'animate-spin' : ''}`} />
+                      </Button>
+                      <Button 
                         onClick={handleDisconnectHubSpot}
-                        disabled={hubspotConnection.isLoading}
+                        disabled={hubspotConnection.isLoading || hubspotConnection.syncStatus === 'syncing'}
                         variant="outline"
                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                       >
@@ -574,26 +641,26 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
             <SidebarContent>
               {forgeoSettingsData.nav.map((section) => (
                 <SidebarGroup key={section.title}>
-                  <SidebarGroupLabel>{section.title}</SidebarGroupLabel>
-                  <SidebarGroupContent>
-                    <SidebarMenu>
-                      {section.items.map((item) => (
-                        <SidebarMenuItem key={item.name}>
-                          <SidebarMenuButton
-                            asChild
-                            isActive={item.name === activeSection}
-                            onClick={() => setActiveSection(item.name)}
-                          >
-                            <button className="w-full">
-                              <item.icon />
-                              <span>{item.name}</span>
-                            </button>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      ))}
-                    </SidebarMenu>
-                  </SidebarGroupContent>
-                </SidebarGroup>
+                    <SidebarGroupLabel>{section.title}</SidebarGroupLabel>
+                    <SidebarGroupContent>
+                      <SidebarMenu>
+                        {section.items.map((item) => (
+                          <SidebarMenuItem key={item.name}>
+                            <SidebarMenuButton
+                              asChild
+                              isActive={item.name === activeSection}
+                              onClick={() => setActiveSection(item.name)}
+                            >
+                              <button className="w-full">
+                                <item.icon />
+                                <span>{item.name}</span>
+                              </button>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        ))}
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </SidebarGroup>
               ))}
               
               {/* Logout button at the bottom */}

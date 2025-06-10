@@ -1,13 +1,13 @@
 "use client"
 
 import React, { useEffect, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth/AuthContext'
-import { exchangeHubSpotCode } from '@/lib/api/integrations'
 import { RefreshCw, CheckCircle, XCircle } from 'lucide-react'
 
 function HubSpotCallbackContent() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const { token } = useAuth()
   const [status, setStatus] = React.useState<'loading' | 'success' | 'error'>('loading')
   const [message, setMessage] = React.useState('')
@@ -16,6 +16,31 @@ function HubSpotCallbackContent() {
     const handleCallback = async () => {
       const code = searchParams?.get('code')
       const error = searchParams?.get('error')
+      const connected = searchParams?.get('connected')
+
+      // Si on arrive ici avec connected=true, c'est que le backend a réussi
+      if (connected === 'true') {
+        setStatus('success')
+        setMessage('Connexion HubSpot réussie!')
+        
+        // Notifier la fenêtre parent du succès si c'est une popup
+        if (window.opener) {
+          window.opener.postMessage({ 
+            type: 'hubspot-auth-success' 
+          }, window.location.origin)
+          
+          // Fermer automatiquement la fenêtre après 2 secondes
+          setTimeout(() => {
+            window.close()
+          }, 2000)
+        } else {
+          // Si ce n'est pas une popup, rediriger vers les audits
+          setTimeout(() => {
+            router.push('/audits')
+          }, 2000)
+        }
+        return
+      }
 
       if (error) {
         setStatus('error')
@@ -55,37 +80,58 @@ function HubSpotCallbackContent() {
       }
 
       try {
-        await exchangeHubSpotCode(code, token)
-        setStatus('success')
-        setMessage('Connexion HubSpot réussie!')
-        
-        // Notifier la fenêtre parent du succès
-        if (window.opener) {
-          window.opener.postMessage({ 
-            type: 'hubspot-auth-success' 
-          }, window.location.origin)
+        // Le backend fait automatiquement la redirection après traitement
+        // On fait juste un appel direct à l'endpoint callback avec le code
+        const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+        const response = await fetch(`${API_BASE}/api/v1/hubspot/callback?code=${code}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          // Ne pas suivre les redirections automatiquement
+          redirect: 'manual'
+        });
+
+        // Le backend redirige vers /audits?connected=true
+        if (response.status === 302 || response.status === 0) {
+          setStatus('success')
+          setMessage('Connexion HubSpot réussie!')
+          
+          // Notifier la fenêtre parent du succès
+          if (window.opener) {
+            window.opener.postMessage({ 
+              type: 'hubspot-auth-success' 
+            }, window.location.origin)
+            
+            // Fermer automatiquement la fenêtre après 2 secondes
+            setTimeout(() => {
+              window.close()
+            }, 2000)
+          } else {
+            // Si ce n'est pas une popup, rediriger vers les audits
+            setTimeout(() => {
+              router.push('/audits')
+            }, 2000)
+          }
+        } else if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
         }
         
-        // Fermer automatiquement la fenêtre après 2 secondes
-        setTimeout(() => {
-          window.close()
-        }, 2000)
-        
-             } catch (error: unknown) {
-         setStatus('error')
-         const errorMessage = error instanceof Error ? error.message : String(error)
-         setMessage(`Erreur lors de l'échange du code: ${errorMessage}`)
-         if (window.opener) {
-           window.opener.postMessage({ 
-             type: 'hubspot-auth-error', 
-             error: errorMessage || 'exchange_failed' 
-           }, window.location.origin)
-         }
-       }
+      } catch (error: unknown) {
+        setStatus('error')
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        setMessage(`Erreur lors de l'échange du code: ${errorMessage}`)
+        if (window.opener) {
+          window.opener.postMessage({ 
+            type: 'hubspot-auth-error', 
+            error: errorMessage || 'exchange_failed' 
+          }, window.location.origin)
+        }
+      }
     }
 
     handleCallback()
-  }, [searchParams, token])
+  }, [searchParams, token, router])
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -113,7 +159,7 @@ function HubSpotCallbackContent() {
                 Votre compte HubSpot a été connecté avec succès.
               </p>
               <p className="text-sm text-gray-500 mt-2">
-                Cette fenêtre va se fermer automatiquement...
+                {window.opener ? 'Cette fenêtre va se fermer automatiquement...' : 'Redirection vers les audits...'}
               </p>
             </>
           )}
@@ -128,10 +174,10 @@ function HubSpotCallbackContent() {
                 {message}
               </p>
               <button
-                onClick={() => window.close()}
+                onClick={() => window.opener ? window.close() : router.push('/audits')}
                 className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
               >
-                Fermer
+                {window.opener ? 'Fermer' : 'Retour aux audits'}
               </button>
             </>
           )}

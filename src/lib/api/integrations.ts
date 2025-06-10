@@ -13,6 +13,18 @@ export interface HubSpotAccount {
   is_active: boolean;
 }
 
+// Interface pour le token backend
+export interface HubSpotToken {
+  id: number;
+  user_id: number;
+  access_token: string;
+  refresh_token: string;
+  expires_at: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at?: string;
+}
+
 export interface HubSpotConnectionStatus {
   isConnected: boolean;
   accountInfo?: {
@@ -32,11 +44,18 @@ export interface HubSpotConnectionStatus {
 }
 
 export interface HubSpotAuthResponse {
-  access_token: string;
-  refresh_token: string;
-  expires_at: string;
-  hub_domain: string;
-  hub_id: string;
+  auth_url: string;
+}
+
+export interface HubSpotSyncResponse {
+  id: number;
+  user_id: number;
+  status: string;
+  total_contacts?: number;
+  total_companies?: number;
+  total_deals?: number;
+  created_at: string;
+  completed_at?: string;
 }
 
 export interface APIError {
@@ -88,21 +107,23 @@ async function apiCall<T>(
  * Obtenir l'URL d'autorisation HubSpot
  */
 export async function getHubSpotAuthUrl(token: string): Promise<{ auth_url: string }> {
-  return apiCall<{ auth_url: string }>('/api/v1/hubspot/auth-url', {
+  return apiCall<HubSpotAuthResponse>('/api/v1/hubspot/auth', {
     method: 'GET',
   }, token);
 }
 
 /**
  * Échanger le code d'autorisation contre un token d'accès
+ * Note: Le backend utilise GET avec query params au lieu de POST avec body
  */
 export async function exchangeHubSpotCode(
   code: string, 
   token: string
-): Promise<HubSpotAuthResponse> {
-  return apiCall<HubSpotAuthResponse>('/api/v1/hubspot/callback', {
-    method: 'POST',
-    body: JSON.stringify({ code }),
+): Promise<{ message: string }> {
+  // Le backend utilise un GET avec query param et redirige automatiquement
+  // On simule juste un succès ici puisque la redirection se fait côté backend
+  return apiCall<{ message: string }>(`/api/v1/hubspot/callback?code=${code}`, {
+    method: 'GET',
   }, token);
 }
 
@@ -111,23 +132,23 @@ export async function exchangeHubSpotCode(
  */
 export async function getHubSpotStatus(token: string): Promise<HubSpotConnectionStatus> {
   try {
-    const account = await apiCall<HubSpotAccount>('/api/v1/hubspot/account', {
+    const tokenData = await apiCall<HubSpotToken>('/api/v1/hubspot/token', {
       method: 'GET',
     }, token);
 
-    // Si on a un compte, récupérer les informations détaillées
-    if (account) {
+    // Si on a un token, récupérer les informations détaillées et stats
+    if (tokenData && tokenData.is_active) {
       const [accountInfo, dataStats] = await Promise.all([
-        getHubSpotAccountInfo(token),
-        getHubSpotDataStats(token)
+        getHubSpotAccountInfo(token).catch(() => undefined),
+        getHubSpotDataStats(token).catch(() => undefined)
       ]);
 
       return {
         isConnected: true,
         accountInfo,
         dataStats,
-        syncStatus: 'success', // TODO: récupérer le vrai statut
-        lastSync: account.updated_at
+        syncStatus: 'success',
+        lastSync: tokenData.updated_at || tokenData.created_at
       };
     }
 
@@ -136,7 +157,7 @@ export async function getHubSpotStatus(token: string): Promise<HubSpotConnection
       syncStatus: 'idle'
     };
   } catch (error) {
-    // Si l'erreur est 404, l'utilisateur n'a pas de compte HubSpot connecté
+    // Si l'erreur est 404, l'utilisateur n'a pas de token HubSpot
     if ((error as APIError).status === 404) {
       return {
         isConnected: false,
@@ -148,39 +169,113 @@ export async function getHubSpotStatus(token: string): Promise<HubSpotConnection
 }
 
 /**
- * Obtenir les informations du compte HubSpot
+ * Obtenir les informations du compte HubSpot depuis l'API HubSpot directement
  */
 export async function getHubSpotAccountInfo(token: string): Promise<HubSpotConnectionStatus['accountInfo']> {
-  return apiCall<HubSpotConnectionStatus['accountInfo']>('/api/v1/hubspot/account-info', {
-    method: 'GET',
-  }, token);
+  try {
+    // Récupérer le token d'accès
+    const tokenData = await apiCall<HubSpotToken>('/api/v1/hubspot/token', {
+      method: 'GET',
+    }, token);
+
+    if (!tokenData?.access_token) {
+      throw new Error('No access token available');
+    }
+
+    // Appeler l'API HubSpot pour obtenir les informations du compte
+    const response = await fetch('https://api.hubapi.com/account-info/v3/details', {
+      headers: {
+        'Authorization': `Bearer ${tokenData.access_token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch account info from HubSpot');
+    }
+
+    const data = await response.json();
+    
+    return {
+      portalId: data.portalId?.toString() || '',
+      domain: data.accountDomain || '',
+      timeZone: data.timeZone || '',
+      currency: data.companyCurrency || '',
+      subscription: data.subscriptionType || ''
+    };
+  } catch (error) {
+    console.error('Error fetching HubSpot account info:', error);
+    // Retourner des données par défaut en cas d'erreur
+    return {
+      portalId: 'N/A',
+      domain: 'N/A',
+      timeZone: 'N/A',
+      currency: 'N/A',
+      subscription: 'N/A'
+    };
+  }
 }
 
 /**
- * Obtenir les statistiques des données HubSpot
+ * Obtenir les statistiques des données HubSpot depuis la dernière synchronisation
  */
 export async function getHubSpotDataStats(token: string): Promise<HubSpotConnectionStatus['dataStats']> {
-  return apiCall<HubSpotConnectionStatus['dataStats']>('/api/v1/hubspot/data-stats', {
-    method: 'GET',
-  }, token);
+  try {
+    // Récupérer la dernière synchronisation
+    const latestSync = await apiCall<HubSpotSyncResponse>('/api/v1/hubspot-sync/latest', {
+      method: 'GET',
+    }, token);
+
+    if (!latestSync) {
+      return {
+        contacts: 0,
+        companies: 0,
+        deals: 0
+      };
+    }
+
+    return {
+      contacts: latestSync.total_contacts || 0,
+      companies: latestSync.total_companies || 0,
+      deals: latestSync.total_deals || 0
+    };
+  } catch (error) {
+    console.error('Error fetching HubSpot data stats:', error);
+    return {
+      contacts: 0,
+      companies: 0,
+      deals: 0
+    };
+  }
 }
 
 /**
  * Lancer une synchronisation HubSpot
  */
 export async function syncHubSpotData(token: string): Promise<{ sync_id: number; status: string }> {
-  return apiCall<{ sync_id: number; status: string }>('/api/v1/hubspot/sync', {
+  const response = await apiCall<HubSpotSyncResponse>('/api/v1/hubspot-sync', {
     method: 'POST',
   }, token);
+
+  return {
+    sync_id: response.id,
+    status: response.status
+  };
 }
 
 /**
  * Obtenir le statut d'une synchronisation
  */
 export async function getSyncStatus(syncId: number, token: string): Promise<{ status: string; progress?: number }> {
-  return apiCall<{ status: string; progress?: number }>(`/api/v1/hubspot/sync/${syncId}/status`, {
+  const response = await apiCall<HubSpotSyncResponse>(`/api/v1/hubspot-sync/${syncId}`, {
     method: 'GET',
   }, token);
+
+  return {
+    status: response.status,
+    // Le backend n'a pas de champ progress, on peut le calculer selon le statut
+    progress: response.status === 'completed' ? 100 : response.status === 'in_progress' ? 50 : 0
+  };
 }
 
 /**
@@ -194,9 +289,10 @@ export async function disconnectHubSpot(token: string): Promise<{ message: strin
 
 /**
  * Rafraîchir le token d'accès HubSpot
+ * Note: Le backend gère automatiquement le refresh dans l'endpoint /token
  */
-export async function refreshHubSpotToken(token: string): Promise<HubSpotAuthResponse> {
-  return apiCall<HubSpotAuthResponse>('/api/v1/hubspot/refresh-token', {
-    method: 'POST',
+export async function refreshHubSpotToken(token: string): Promise<HubSpotToken> {
+  return apiCall<HubSpotToken>('/api/v1/hubspot/token', {
+    method: 'GET',
   }, token);
 } 

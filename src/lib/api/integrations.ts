@@ -136,16 +136,12 @@ export async function getHubSpotStatus(token: string): Promise<HubSpotConnection
       method: 'GET',
     }, token);
 
-    // Si on a un token, récupérer les informations détaillées et stats
+    // Si on a un token, récupérer les statistiques des données
     if (tokenData && tokenData.is_active) {
-      const [accountInfo, dataStats] = await Promise.all([
-        getHubSpotAccountInfo(token).catch(() => undefined),
-        getHubSpotDataStats(token).catch(() => undefined)
-      ]);
+      const dataStats = await getHubSpotDataStats(token).catch(() => undefined);
 
       return {
         isConnected: true,
-        accountInfo,
         dataStats,
         syncStatus: 'success',
         lastSync: tokenData.updated_at || tokenData.created_at
@@ -168,53 +164,7 @@ export async function getHubSpotStatus(token: string): Promise<HubSpotConnection
   }
 }
 
-/**
- * Obtenir les informations du compte HubSpot depuis l'API HubSpot directement
- */
-export async function getHubSpotAccountInfo(token: string): Promise<HubSpotConnectionStatus['accountInfo']> {
-  try {
-    // Récupérer le token d'accès
-    const tokenData = await apiCall<HubSpotToken>('/api/v1/hubspot/token', {
-      method: 'GET',
-    }, token);
 
-    if (!tokenData?.access_token) {
-      throw new Error('No access token available');
-    }
-
-    // Appeler l'API HubSpot pour obtenir les informations du compte
-    const response = await fetch('https://api.hubapi.com/account-info/v3/details', {
-      headers: {
-        'Authorization': `Bearer ${tokenData.access_token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch account info from HubSpot');
-    }
-
-    const data = await response.json();
-    
-    return {
-      portalId: data.portalId?.toString() || '',
-      domain: data.accountDomain || '',
-      timeZone: data.timeZone || '',
-      currency: data.companyCurrency || '',
-      subscription: data.subscriptionType || ''
-    };
-  } catch (error) {
-    console.error('Error fetching HubSpot account info:', error);
-    // Retourner des données par défaut en cas d'erreur
-    return {
-      portalId: 'N/A',
-      domain: 'N/A',
-      timeZone: 'N/A',
-      currency: 'N/A',
-      subscription: 'N/A'
-    };
-  }
-}
 
 /**
  * Obtenir les statistiques des données HubSpot depuis la dernière synchronisation

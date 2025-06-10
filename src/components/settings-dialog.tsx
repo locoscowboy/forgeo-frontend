@@ -285,7 +285,7 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
                   <div className="flex-1">
                     <CardTitle className="text-lg">HubSpot CRM</CardTitle>
                     <CardDescription>
-                      Synchronisez vos contacts, entreprises et deals HubSpot
+                      Synchronisez vos données CRM automatiquement
                     </CardDescription>
                   </div>
                 </div>
@@ -349,36 +349,9 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {/* Account Info */}
-                    {hubspotConnection.accountInfo ? (
-                      <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
-                        <div>
-                          <Label className="text-xs text-muted-foreground">Portal ID</Label>
-                          <p className="text-sm font-medium">{hubspotConnection.accountInfo.portalId || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <Label className="text-xs text-muted-foreground">Domaine</Label>
-                          <p className="text-sm font-medium">{hubspotConnection.accountInfo.domain || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <Label className="text-xs text-muted-foreground">Fuseau horaire</Label>
-                          <p className="text-sm font-medium">{hubspotConnection.accountInfo.timeZone || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <Label className="text-xs text-muted-foreground">Devise</Label>
-                          <p className="text-sm font-medium">{hubspotConnection.accountInfo.currency || 'N/A'}</p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="p-4 bg-gray-50 rounded-lg text-center">
-                        <p className="text-sm text-muted-foreground">Chargement des informations du compte...</p>
-                      </div>
-                    )}
-
-                    {/* Sync Status */}
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-sm font-medium">État de synchronisation</Label>
+                    {/* Sync Status - Simplifié */}
+                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center space-x-3">
                         <Badge variant={
                           hubspotConnection.syncStatus === 'success' ? 'default' :
                           hubspotConnection.syncStatus === 'syncing' ? 'secondary' :
@@ -393,70 +366,62 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
                            hubspotConnection.syncStatus === 'error' ? 'Erreur' :
                            'Prêt'}
                         </Badge>
+                        {hubspotConnection.lastSync && (
+                          <span className="text-sm text-muted-foreground">
+                            {new Date(hubspotConnection.lastSync).toLocaleDateString('fr-FR')}
+                          </span>
+                        )}
                       </div>
                       
-                      {hubspotConnection.lastSync && (
-                        <p className="text-xs text-muted-foreground">
-                          Dernière synchronisation : {new Date(hubspotConnection.lastSync).toLocaleString('fr-FR')}
-                        </p>
-                      )}
+                      <Button 
+                        onClick={handleSyncHubSpot}
+                        disabled={hubspotConnection.syncStatus === 'syncing' || hubspotConnection.isLoading}
+                        variant="outline"
+                        size="sm"
+                      >
+                        {hubspotConnection.syncStatus === 'syncing' ? (
+                          <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Sync...</>
+                        ) : (
+                          <><RefreshCw className="w-4 h-4 mr-2" /> Synchroniser</>
+                        )}
+                      </Button>
                     </div>
 
-                    {/* Data Overview */}
+                    {/* Data Overview - Amélioré visuellement */}
                     {hubspotConnection.dataStats && (
                       <div className="grid grid-cols-3 gap-3">
-                        <div className="text-center p-3 bg-blue-50 rounded-lg">
-                          <Users className="w-5 h-5 mx-auto mb-1 text-blue-600" />
-                          <p className="text-xs text-muted-foreground">Contacts</p>
-                          <p className="text-lg font-semibold text-blue-600">
+                        <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-100">
+                          <Users className="w-6 h-6 mx-auto mb-2 text-blue-600" />
+                          <p className="text-xs text-blue-600 font-medium">Contacts</p>
+                          <p className="text-xl font-bold text-blue-700">
                             {hubspotConnection.dataStats.contacts.toLocaleString()}
                           </p>
                         </div>
-                        <div className="text-center p-3 bg-green-50 rounded-lg">
-                          <Building className="w-5 h-5 mx-auto mb-1 text-green-600" />
-                          <p className="text-xs text-muted-foreground">Entreprises</p>
-                          <p className="text-lg font-semibold text-green-600">
+                        <div className="text-center p-4 bg-green-50 rounded-lg border border-green-100">
+                          <Building className="w-6 h-6 mx-auto mb-2 text-green-600" />
+                          <p className="text-xs text-green-600 font-medium">Entreprises</p>
+                          <p className="text-xl font-bold text-green-700">
                             {hubspotConnection.dataStats.companies.toLocaleString()}
                           </p>
                         </div>
-                        <div className="text-center p-3 bg-purple-50 rounded-lg">
-                          <DollarSign className="w-5 h-5 mx-auto mb-1 text-purple-600" />
-                          <p className="text-xs text-muted-foreground">Deals</p>
-                          <p className="text-lg font-semibold text-purple-600">
+                        <div className="text-center p-4 bg-purple-50 rounded-lg border border-purple-100">
+                          <DollarSign className="w-6 h-6 mx-auto mb-2 text-purple-600" />
+                          <p className="text-xs text-purple-600 font-medium">Deals</p>
+                          <p className="text-xl font-bold text-purple-700">
                             {hubspotConnection.dataStats.deals.toLocaleString()}
                           </p>
                         </div>
                       </div>
                     )}
 
-                    {/* Actions */}
-                    <div className="flex gap-2 pt-2">
-                      <Button 
-                        onClick={handleSyncHubSpot}
-                        disabled={hubspotConnection.syncStatus === 'syncing' || hubspotConnection.isLoading}
-                        variant="outline"
-                        className="flex-1"
-                      >
-                        {hubspotConnection.syncStatus === 'syncing' ? (
-                          <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Synchronisation...</>
-                        ) : (
-                          <><RefreshCw className="w-4 h-4 mr-2" /> Synchroniser</>
-                        )}
-                      </Button>
-                      <Button 
-                        onClick={loadHubSpotStatus}
-                        disabled={hubspotConnection.isLoading || hubspotConnection.syncStatus === 'syncing'}
-                        variant="outline"
-                        size="sm"
-                        title="Actualiser les informations"
-                      >
-                        <RefreshCw className={`w-4 h-4 ${hubspotConnection.isLoading ? 'animate-spin' : ''}`} />
-                      </Button>
+                    {/* Actions simplifiées */}
+                    <div className="flex justify-end pt-2">
                       <Button 
                         onClick={handleDisconnectHubSpot}
                         disabled={hubspotConnection.isLoading || hubspotConnection.syncStatus === 'syncing'}
-                        variant="outline"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        variant="ghost"
+                        size="sm"
+                        className="text-gray-600 hover:text-red-600 hover:bg-red-50"
                       >
                         <Unlink className="w-4 h-4 mr-2" />
                         Déconnecter

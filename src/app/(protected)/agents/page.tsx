@@ -98,7 +98,7 @@ export default function AgentsPage() {
                   <Sparkles className="h-5 w-5 text-forgeo-600" />
               </div>
               <h3 className="font-semibold text-gray-900 mb-1">Merge Contacts Duplicates</h3>
-              <p className="text-sm text-gray-600">Détection automatique des problèmes de données</p>
+              <p className="text-sm text-gray-600">Remove duplicates from contact records</p>
             </div>
             
             <div className="bg-white p-4 rounded-lg border border-gray-200 text-center">
@@ -106,7 +106,7 @@ export default function AgentsPage() {
                 <MessageCircle className="h-5 w-5 text-green-600" />
               </div>
               <h3 className="font-semibold text-gray-900 mb-1">Merge Companies Duplicate</h3>
-              <p className="text-sm text-gray-600">Posez vos questions en langage naturel</p>
+              <p className="text-sm text-gray-600">Remove duplicates from company records</p>
             </div>
             
             <div className="bg-white p-4 rounded-lg border border-gray-200 text-center">
@@ -114,7 +114,7 @@ export default function AgentsPage() {
                 <Zap className="h-5 w-5 text-purple-600" />
               </div>
               <h3 className="font-semibold text-gray-900 mb-1">Associate Parent/Child Companies</h3>
-              <p className="text-sm text-gray-600">Exécution automatique de tâches de nettoyage</p>
+              <p className="text-sm text-gray-600">Link parent and subsidiary companies</p>
             </div>
           </div>
         </div>

@@ -149,6 +149,14 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
   // Charger le statut HubSpot au montage et quand les settings s'ouvrent
   React.useEffect(() => {
     if (open && activeSection === "Intégrations" && token) {
+      // Reset l'état avant de charger pour éviter les faux positifs
+      setHubspotConnection(prev => ({ 
+        ...prev, 
+        isConnected: false, 
+        isLoading: true,
+        dataStats: undefined,
+        syncStatus: 'idle' 
+      }))
       loadHubSpotStatus()
     }
   }, [open, activeSection, token, loadHubSpotStatus])
@@ -289,21 +297,6 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
                     </CardDescription>
                   </div>
                 </div>
-                <Badge variant={
-                  hubspotConnection.isConnected ? "default" : 
-                  hubspotConnection.isLoading ? "secondary" : 
-                  connectionError ? "destructive" : "secondary"
-                } className="ml-4">
-                  {hubspotConnection.isConnected ? (
-                    <><CheckCircle className="w-3 h-3 mr-1" /> Connecté</>
-                  ) : hubspotConnection.isLoading ? (
-                    <><RefreshCw className="w-3 h-3 mr-1 animate-spin" /> Connexion...</>
-                  ) : connectionError ? (
-                    <><XCircle className="w-3 h-3 mr-1" /> Erreur</>
-                  ) : (
-                    <><XCircle className="w-3 h-3 mr-1" /> Non connecté</>
-                  )}
-                </Badge>
               </CardHeader>
               
               <CardContent className="space-y-4">
@@ -332,20 +325,29 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
 
                 {!hubspotConnection.isConnected ? (
                   <div className="space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                      Connectez votre compte HubSpot pour synchroniser automatiquement vos données et effectuer des audits de qualité.
-                    </p>
-                    <Button 
-                      onClick={handleConnectHubSpot}
-                      disabled={hubspotConnection.isLoading}
-                      className="w-full bg-orange-600 hover:bg-orange-700 text-white"
-                    >
-                      {hubspotConnection.isLoading ? (
-                        <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Connexion en cours...</>
-                      ) : (
-                        <><Link className="w-4 h-4 mr-2" /> Connecter HubSpot</>
-                      )}
-                    </Button>
+                    <div className="text-center p-6 border-2 border-dashed border-gray-200 rounded-lg">
+                      <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg viewBox="0 0 24 24" className="w-8 h-8 text-orange-600" fill="currentColor">
+                          <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.568 8.16c-.169-.044-.337-.081-.506-.114-.013-.003-.025-.007-.038-.01l-.144-.033c-.231-.053-.465-.1-.701-.14-.028-.005-.056-.009-.084-.014-.201-.033-.404-.062-.608-.086-.059-.007-.118-.013-.178-.019-.165-.017-.331-.031-.498-.041-.083-.005-.167-.009-.251-.012-.151-.005-.302-.007-.454-.007s-.303.002-.454.007c-.084.003-.168.007-.251.012-.167.01-.333.024-.498.041-.06.006-.119.012-.178.019-.204.024-.407.053-.608.086-.028.005-.056.009-.084.014-.236.04-.47.087-.701.14l-.144.033c-.013.003-.025.007-.038.01-.169.033-.337.07-.506.114-.844.22-1.513.765-1.812 1.473-.15.357-.226.748-.226 1.161 0 .695.212 1.342.612 1.873.4.531.968.907 1.645 1.088.169.045.344.068.522.068.178 0 .353-.023.522-.068.677-.181 1.245-.557 1.645-1.088.4-.531.612-1.178.612-1.873 0-.413-.076-.804-.226-1.161-.299-.708-.968-1.253-1.812-1.473z"/>
+                        </svg>
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Connectez votre HubSpot</h3>
+                      <p className="text-sm text-gray-600 mb-4">
+                        Synchronisez automatiquement vos contacts, entreprises et deals pour effectuer des audits de qualité.
+                      </p>
+                      <Button 
+                        onClick={handleConnectHubSpot}
+                        disabled={hubspotConnection.isLoading}
+                        className="bg-orange-600 hover:bg-orange-700 text-white"
+                        size="lg"
+                      >
+                        {hubspotConnection.isLoading ? (
+                          <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Connexion en cours...</>
+                        ) : (
+                          <><Link className="w-4 h-4 mr-2" /> Connecter HubSpot</>
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -364,7 +366,7 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
                           {hubspotConnection.syncStatus === 'success' ? 'Synchronisé' :
                            hubspotConnection.syncStatus === 'syncing' ? 'En cours...' :
                            hubspotConnection.syncStatus === 'error' ? 'Erreur' :
-                           'Prêt'}
+                           'Prêt à synchroniser'}
                         </Badge>
                         {hubspotConnection.lastSync && (
                           <span className="text-sm text-muted-foreground">

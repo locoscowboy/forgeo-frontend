@@ -136,16 +136,38 @@ export async function getHubSpotStatus(token: string): Promise<HubSpotConnection
       method: 'GET',
     }, token);
 
-    // Si on a un token, récupérer les statistiques des données
+    // Si on a un token actif, récupérer les statistiques des données
     if (tokenData && tokenData.is_active) {
-      const dataStats = await getHubSpotDataStats(token).catch(() => undefined);
+      try {
+        const dataStats = await getHubSpotDataStats(token);
+        
+        // Vérifier si on a vraiment des données ou si c'est juste un token vide
+        const hasRealData = dataStats && (
+          (dataStats.contacts && dataStats.contacts > 0) ||
+          (dataStats.companies && dataStats.companies > 0) ||
+          (dataStats.deals && dataStats.deals > 0)
+        );
 
-      return {
-        isConnected: true,
-        dataStats,
-        syncStatus: 'success',
-        lastSync: tokenData.updated_at || tokenData.created_at
-      };
+        return {
+          isConnected: true,
+          dataStats,
+          syncStatus: hasRealData ? 'success' : 'idle',
+          lastSync: tokenData.updated_at || tokenData.created_at
+        };
+      } catch (statsError) {
+        // Si on ne peut pas récupérer les stats, on considère que la connexion n'est pas complète
+        console.warn('Impossible de récupérer les statistiques HubSpot:', statsError);
+        return {
+          isConnected: true,
+          syncStatus: 'idle',
+          lastSync: tokenData.updated_at || tokenData.created_at,
+          dataStats: {
+            contacts: 0,
+            companies: 0,
+            deals: 0
+          }
+        };
+      }
     }
 
     return {
@@ -160,11 +182,14 @@ export async function getHubSpotStatus(token: string): Promise<HubSpotConnection
         syncStatus: 'idle'
       };
     }
-    throw error;
+    
+    console.error('Erreur lors de la vérification du statut HubSpot:', error);
+    return {
+      isConnected: false,
+      syncStatus: 'error'
+    };
   }
 }
-
-
 
 /**
  * Obtenir les statistiques des données HubSpot depuis la dernière synchronisation
@@ -176,12 +201,18 @@ export async function getHubSpotDataStats(token: string): Promise<HubSpotConnect
       method: 'GET',
     }, token);
 
-    if (!latestSync) {
-      return {
-        contacts: 0,
-        companies: 0,
-        deals: 0
-      };
+    // Vérifier qu'on a une synchronisation complétée avec des données réelles
+    if (!latestSync || latestSync.status !== 'completed') {
+      throw new Error('Aucune synchronisation complétée trouvée');
+    }
+
+    // Vérifier qu'il y a au moins quelques données
+    const totalData = (latestSync.total_contacts || 0) + 
+                      (latestSync.total_companies || 0) + 
+                      (latestSync.total_deals || 0);
+
+    if (totalData === 0) {
+      throw new Error('Aucune donnée synchronisée');
     }
 
     return {
@@ -190,12 +221,8 @@ export async function getHubSpotDataStats(token: string): Promise<HubSpotConnect
       deals: latestSync.total_deals || 0
     };
   } catch (error) {
-    console.error('Error fetching HubSpot data stats:', error);
-    return {
-      contacts: 0,
-      companies: 0,
-      deals: 0
-    };
+    console.warn('Aucune donnée synchronisée disponible:', error);
+    throw error; // On laisse l'erreur remonter pour que getHubSpotStatus puisse la gérer
   }
 }
 

@@ -82,8 +82,7 @@ function HubSpotCallbackContent() {
       try {
         // Le backend fait automatiquement la redirection après traitement
         // On fait juste un appel direct à l'endpoint callback avec le code
-        const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
-        const response = await fetch(`${API_BASE}/api/v1/hubspot/callback?code=${code}`, {
+        const response = await fetch(`https://forgeo.store/api/v1/hubspot/callback?code=${code}`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,

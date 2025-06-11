@@ -574,26 +574,28 @@ export default function AuditsPage() {
     setAuditStatus('creating');
     setAuditResults([]);
     
-                         try {
-                              // Pour cet exemple, on utilise sync_id = 1 (la dernière sync)
-       // Dans une vraie app, on pourrait permettre à l&apos;utilisateur de choisir
-      const auditResponse = await createAudit(token, 1);
+    try {
+      // Créer l'audit avec un titre et description par défaut
+      // Le backend gèrera automatiquement la synchronisation
+      const auditResponse = await createAudit(token);
       setCurrentAuditId(auditResponse.id);
       
       // Créer l'objet audit pour le state
       const newAudit: Audit = {
         id: auditResponse.id,
         user_id: auditResponse.user_id,
-        sync_id: auditResponse.sync_id,
+        sync_id: auditResponse.sync_id, // Maintenant optionnel
         status: 'running',
         created_at: auditResponse.created_at,
-        completed_at: undefined
+        completed_at: undefined,
+        title: auditResponse.title,
+        description: auditResponse.description
       };
       setLastAudit(newAudit);
       
       setAuditStatus('running');
       
-      // Exécuter l'audit
+      // Exécuter l'audit - le backend utilisera automatiquement la dernière sync
       await runAudit(token, auditResponse.id);
       
       // Récupérer les résultats
@@ -609,10 +611,10 @@ export default function AuditsPage() {
       
       setAuditStatus('completed');
       
-         } catch (err) {
-       console.error('Error during audit:', err);
-       setError(err instanceof Error ? err.message : 'Erreur lors de l&apos;audit');
-       setAuditStatus('idle');
+    } catch (err) {
+      console.error('Error during audit:', err);
+      setError(err instanceof Error ? err.message : 'Erreur lors de l\'audit');
+      setAuditStatus('idle');
     } finally {
       setLoading(false);
     }

@@ -21,20 +21,30 @@ export interface AuditDetail {
 export interface Audit {
   id: number;
   user_id: number;
-  sync_id: number;
+  sync_id?: number;
   status: string;
   created_at: string;
   completed_at?: string;
+  title?: string;
+  description?: string;
   results?: AuditResult[];
 }
 
 export interface AuditResponse {
   id: number;
   user_id: number;
-  sync_id: number;
+  sync_id?: number;
   status: string;
   created_at: string;
   completed_at?: string;
+  title?: string;
+  description?: string;
+  quality_score?: number;
+  total_contacts?: number;
+  total_companies?: number;
+  total_deals?: number;
+  total_issues?: number;
+  data_sync_id?: number;
 }
 
 export interface APIError {
@@ -46,13 +56,15 @@ export interface APIError {
 // Créer un nouvel audit
 export async function createAudit(
   token: string,
-  syncId: number
+  title: string = "Audit de qualité des données",
+  description: string = "Analyse automatique des données HubSpot"
 ): Promise<AuditResponse> {
   const url = 'https://forgeo.store/api/v1/audits';
   
   console.log('🌐 API Request (Create Audit):', {
     url,
-    syncId,
+    title,
+    description,
     hasToken: !!token
   });
 
@@ -63,7 +75,7 @@ export async function createAudit(
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ sync_id: syncId }),
+      body: JSON.stringify({ title, description }),
     });
 
     console.log('📡 API Response Status (Create Audit):', response.status);

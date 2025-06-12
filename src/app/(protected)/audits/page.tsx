@@ -574,7 +574,7 @@ export default function AuditsPage() {
     setAuditStatus('creating');
     setAuditResults([]);
     
-    try {
+                         try {
       // Créer l'audit avec un titre et description par défaut
       // Le backend gèrera automatiquement la synchronisation
       const auditResponse = await createAudit(token);
@@ -611,10 +611,10 @@ export default function AuditsPage() {
       
       setAuditStatus('completed');
       
-    } catch (err) {
-      console.error('Error during audit:', err);
+         } catch (err) {
+       console.error('Error during audit:', err);
       setError(err instanceof Error ? err.message : 'Erreur lors de l\'audit');
-      setAuditStatus('idle');
+       setAuditStatus('idle');
     } finally {
       setLoading(false);
     }

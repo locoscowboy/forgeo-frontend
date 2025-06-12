@@ -29,7 +29,8 @@ import {
   Users,
   Calendar,
   FileText,
-  AlertCircle
+  AlertCircle,
+  Linkedin
 } from "lucide-react";
 
 // Notion-like Table Styles
@@ -212,7 +213,8 @@ export default function CompaniesPage() {
     description: 250,
     founded_year: 100,
     numberofemployees: 120,
-    lastmodifieddate: 150
+    lastmodifieddate: 150,
+    linkedin: 200
   });
   
   const [isResizing, setIsResizing] = useState(false);
@@ -371,7 +373,8 @@ export default function CompaniesPage() {
     { key: "state", label: "State", icon: MapPin },
     { key: "country", label: "Country", icon: MapPin },
     { key: "founded_year", label: "Founded", icon: Calendar },
-    { key: "numberofemployees", label: "Employees", icon: Users }
+    { key: "numberofemployees", label: "Employees", icon: Users },
+    { key: "linkedin", label: "LinkedIn", icon: Linkedin }
   ];
 
   // Fonctions de redimensionnement des colonnes
@@ -622,6 +625,22 @@ export default function CompaniesPage() {
                     <td className="notion-td" style={{ width: `${columnWidths.numberofemployees}px` }}>
                       {company.numberofemployees ? (
                         <span className="text-gray-700">{parseInt(company.numberofemployees).toLocaleString()}</span>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
+                    </td>
+                    
+                    <td className="notion-td" style={{ width: `${columnWidths.linkedin}px` }}>
+                      {company.properties?.linkedin_company_page ? (
+                        <a 
+                          href={company.properties.linkedin_company_page}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 text-blue-600 hover:text-blue-800 hover:underline"
+                        >
+                          <Linkedin className="h-4 w-4" />
+                          <span>LinkedIn</span>
+                        </a>
                       ) : (
                         <span className="text-gray-400">—</span>
                       )}

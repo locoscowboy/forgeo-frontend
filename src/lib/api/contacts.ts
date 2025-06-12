@@ -15,6 +15,15 @@ export interface Contact {
   lifecyclestage: string;
   hs_lead_status: string;
   lastmodifieddate: string;
+  properties?: {
+    [key: string]: any;
+    hs_linkedin_url?: string;
+    createdate?: string;
+    hs_analytics_source?: string;
+    hubspot_owner_id?: string;
+    mobilephone?: string;
+    hs_lead_score?: string;
+  };
 }
 
 export interface ContactsResponse {

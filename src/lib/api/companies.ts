@@ -14,6 +14,18 @@ export interface Company {
   founded_year: string;
   numberofemployees: string;
   lastmodifieddate: string;
+  properties?: {
+    [key: string]: any;
+    linkedin_company_page?: string;
+    linkedinbio?: string;
+    createdate?: string;
+    annualrevenue?: string;
+    total_money_raised?: string;
+    web_technologies?: string;
+    hubspot_owner_id?: string;
+    facebook_company_page?: string;
+    twitterhandle?: string;
+  };
 }
 
 export interface CompaniesResponse {

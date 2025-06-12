@@ -29,7 +29,8 @@ import {
   MapPin,
   Briefcase,
   Tag,
-  AlertCircle
+  AlertCircle,
+  Linkedin
 } from "lucide-react";
 
 // Notion-like Table Styles
@@ -206,7 +207,8 @@ export default function ContactsPage() {
     company: 200,
     jobtitle: 180,
     lifecyclestage: 120,
-    city: 150
+    city: 150,
+    linkedin: 200
   });
   
   const [isResizing, setIsResizing] = useState(false);
@@ -361,7 +363,8 @@ export default function ContactsPage() {
     { key: "company", label: "Company", icon: Building },
     { key: "jobtitle", label: "Job Title", icon: Briefcase },
     { key: "lifecyclestage", label: "Stage", icon: Tag },
-    { key: "city", label: "City", icon: MapPin }
+    { key: "city", label: "City", icon: MapPin },
+    { key: "linkedin", label: "LinkedIn", icon: Linkedin }
   ];
 
   // Fonctions de redimensionnement des colonnes
@@ -601,6 +604,22 @@ export default function ContactsPage() {
                     
                     <td className="notion-td" style={{ width: `${columnWidths.city}px` }}>
                       {contact.city || <span className="text-gray-400">—</span>}
+                    </td>
+                    
+                    <td className="notion-td" style={{ width: `${columnWidths.linkedin}px` }}>
+                      {contact.properties?.hs_linkedin_url ? (
+                        <a 
+                          href={contact.properties.hs_linkedin_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 text-blue-600 hover:text-blue-800 hover:underline"
+                        >
+                          <Linkedin className="h-4 w-4" />
+                          <span>LinkedIn</span>
+                        </a>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
                     </td>
                   </tr>
                 ))}

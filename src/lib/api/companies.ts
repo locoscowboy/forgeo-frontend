@@ -15,7 +15,7 @@ export interface Company {
   numberofemployees: string;
   lastmodifieddate: string;
   properties?: {
-    [key: string]: any;
+    [key: string]: string | number | boolean | null | undefined;
     linkedin_company_page?: string;
     linkedinbio?: string;
     createdate?: string;

@@ -16,7 +16,7 @@ export interface Contact {
   hs_lead_status: string;
   lastmodifieddate: string;
   properties?: {
-    [key: string]: any;
+    [key: string]: string | number | boolean | null | undefined;
     hs_linkedin_url?: string;
     createdate?: string;
     hs_analytics_source?: string;

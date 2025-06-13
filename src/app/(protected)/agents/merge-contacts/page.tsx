@@ -139,7 +139,7 @@ export default function MergeContactsPage() {
         <div className="w-1/2 bg-white p-8 overflow-y-auto">
           {/* Overview */}
           <div className="mb-8">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Vue d&apos;ensemble</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Overview</h2>
             <div className="grid grid-cols-1 gap-4">
               <div className="text-center p-4 bg-gray-50 rounded-lg">
                 <div className="text-2xl font-bold text-gray-900">~15 min</div>
@@ -203,10 +203,7 @@ export default function MergeContactsPage() {
 
         {/* Right Column - Pipeline */}
         <div className="w-1/2 bg-gray-50 p-8 overflow-y-auto">
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">Pipeline d&apos;exécution</h2>
-          <p className="text-sm text-gray-600 mb-6">
-            Séquence d&apos;agents qui s&apos;exécuteront automatiquement
-          </p>
+          <h2 className="text-lg font-semibold text-gray-900 mb-6">Automatically executed agents</h2>
           
           <div className="space-y-3">
             {agents.map((agent) => {

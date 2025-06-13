@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   HubSpotProperty, 
   CONTACT_PROPERTIES, 
@@ -30,132 +30,101 @@ interface UseTableColumnsReturn {
 export function useTableColumns({
   type,
   defaultColumns,
-  storageKey = `${type}-table-columns`
+  storageKey = `table-columns-${type}`
 }: UseTableColumnsOptions): UseTableColumnsReturn {
   
-  const allProperties = type === 'contact' ? CONTACT_PROPERTIES : COMPANY_PROPERTIES;
+  const properties = type === 'contact' ? CONTACT_PROPERTIES : COMPANY_PROPERTIES;
   
-  // Initialiser les colonnes depuis le localStorage ou les colonnes par défaut
-  const initializeColumns = () => {
-    try {
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        return parsed.columns || defaultColumns;
-      }
-    } catch (error) {
-      console.warn('Failed to load columns from localStorage:', error);
+  // État des colonnes visibles
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(`${storageKey}-visible`);
+      return saved ? JSON.parse(saved) : defaultColumns;
     }
     return defaultColumns;
-  };
+  });
 
-  // Initialiser les largeurs depuis le localStorage ou les largeurs par défaut
-  const initializeWidths = () => {
-    try {
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        return parsed.widths || {};
-      }
-    } catch (error) {
-      console.warn('Failed to load column widths from localStorage:', error);
+  // État des largeurs de colonnes
+  const [columnWidths, setColumnWidths] = useState<ColumnState>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(`${storageKey}-widths`);
+      return saved ? JSON.parse(saved) : {};
     }
     return {};
-  };
+  });
 
-  const [visibleColumns, setVisibleColumns] = useState<string[]>(initializeColumns);
-  const [columnWidths, setColumnWidths] = useState<ColumnState>(initializeWidths);
-
-  // Sauvegarder dans localStorage quand les colonnes ou largeurs changent
-  useEffect(() => {
-    try {
-      const dataToSave = {
-        columns: visibleColumns,
-        widths: columnWidths,
-        lastUpdated: new Date().toISOString()
-      };
-      localStorage.setItem(storageKey, JSON.stringify(dataToSave));
-    } catch (error) {
-      console.warn('Failed to save columns to localStorage:', error);
-    }
-  }, [visibleColumns, columnWidths, storageKey]);
-
-  // Calculer les propriétés actives avec largeurs par défaut
-  const activeProperties = useMemo(() => {
-    return visibleColumns
-      .map(columnKey => getPropertyByKey(columnKey, type))
-      .filter(Boolean) as HubSpotProperty[];
-  }, [visibleColumns, type]);
-
-  // Obtenir la largeur d'une colonne (sauvegardée ou par défaut)
-  const getColumnWidth = (columnKey: string): number => {
+  // Fonction pour obtenir la largeur d'une colonne
+  const getColumnWidth = useCallback((columnKey: string): number => {
     if (columnWidths[columnKey]) {
       return columnWidths[columnKey];
     }
     
     const property = getPropertyByKey(columnKey, type);
-    return property?.width || 150; // largeur par défaut
-  };
+    return property?.width || 150;
+  }, [columnWidths, type]);
 
-  // Créer l'objet columnWidths avec toutes les colonnes visibles
-  const computedColumnWidths = useMemo(() => {
-    const widths: ColumnState = {};
-    visibleColumns.forEach(columnKey => {
-      widths[columnKey] = getColumnWidth(columnKey);
-    });
-    return widths;
-  }, [visibleColumns, columnWidths]);
+  // Sauvegarder dans localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`${storageKey}-visible`, JSON.stringify(visibleColumns));
+    }
+  }, [visibleColumns, storageKey]);
 
-  const addColumn = (columnKey: string) => {
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`${storageKey}-widths`, JSON.stringify(columnWidths));
+    }
+  }, [columnWidths, storageKey]);
+
+  // Propriétés actives (visibles) avec leurs métadonnées
+  const activeProperties = useMemo(() => {
+    return visibleColumns
+      .map(columnKey => getPropertyByKey(columnKey, type))
+      .filter((prop): prop is HubSpotProperty => prop !== undefined);
+  }, [visibleColumns, type, getColumnWidth]);
+
+  // Actions
+  const addColumn = useCallback((columnKey: string) => {
     if (!visibleColumns.includes(columnKey)) {
       setVisibleColumns(prev => [...prev, columnKey]);
-      
-      // Ajouter la largeur par défaut si elle n'existe pas
-      const property = getPropertyByKey(columnKey, type);
-      if (property?.width && !columnWidths[columnKey]) {
-        setColumnWidths(prev => ({
-          ...prev,
-          [columnKey]: property.width!
-        }));
-      }
     }
-  };
+  }, [visibleColumns]);
 
-  const removeColumn = (columnKey: string) => {
-    // Ne pas permettre de supprimer les colonnes de base essentielles
-    const essentialColumns = type === 'contact' 
+  const removeColumn = useCallback((columnKey: string) => {
+    // Protéger certaines colonnes essentielles
+    const protectedColumns = type === 'contact' 
       ? ['firstname', 'lastname', 'email'] 
       : ['name', 'domain'];
     
-    if (!essentialColumns.includes(columnKey)) {
+    if (!protectedColumns.includes(columnKey)) {
       setVisibleColumns(prev => prev.filter(col => col !== columnKey));
     }
-  };
+  }, [type]);
 
-  const updateColumnWidth = (columnKey: string, width: number) => {
+  const updateColumnWidth = useCallback((columnKey: string, width: number) => {
     setColumnWidths(prev => ({
       ...prev,
-      [columnKey]: Math.max(80, width) // largeur minimum de 80px
+      [columnKey]: Math.max(80, Math.min(500, width)) // Min 80px, Max 500px
     }));
-  };
+  }, []);
 
-  const resetColumns = () => {
+  const resetColumns = useCallback(() => {
     setVisibleColumns(defaultColumns);
     setColumnWidths({});
-  };
+  }, [defaultColumns]);
 
-  const reorderColumns = (fromIndex: number, toIndex: number) => {
+  const reorderColumns = useCallback((fromIndex: number, toIndex: number) => {
     setVisibleColumns(prev => {
       const newColumns = [...prev];
       const [removed] = newColumns.splice(fromIndex, 1);
       newColumns.splice(toIndex, 0, removed);
       return newColumns;
     });
-  };
+  }, []);
 
   return {
     visibleColumns,
-    columnWidths: computedColumnWidths,
+    columnWidths,
     activeProperties,
     addColumn,
     removeColumn,

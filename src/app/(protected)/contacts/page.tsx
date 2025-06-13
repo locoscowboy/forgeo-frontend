@@ -31,7 +31,7 @@ import {
 import AddColumnDropdown from "@/components/table/AddColumnDropdown";
 import CellRenderer from "@/components/table/CellRenderer";
 import { useTableColumns } from "@/hooks/useTableColumns";
-import { DEFAULT_CONTACT_COLUMNS, getPropertyByKey } from "@/lib/hubspot-properties";
+import { DEFAULT_CONTACT_COLUMNS } from "@/lib/hubspot-properties";
 
 // Notion-like Table Styles
 const tableStyles = `
@@ -335,10 +335,10 @@ export default function ContactsPage() {
   };
 
   // Obtenir la valeur d'une cellule depuis les données du contact
-  const getCellValue = (contact: Contact, columnKey: string) => {
+  const getCellValue = (contact: Contact, columnKey: string): string | number | boolean | null | undefined => {
     // Essayer d'abord les propriétés de base
     if (columnKey in contact && columnKey !== 'properties') {
-      return (contact as any)[columnKey];
+      return (contact as unknown as Record<string, unknown>)[columnKey] as string | number | boolean | null | undefined;
     }
     
     // Puis chercher dans les propriétés étendues
@@ -434,7 +434,6 @@ export default function ContactsPage() {
               <AddColumnDropdown
                 type="contact"
                 visibleColumns={visibleColumns}
-                onColumnToggle={() => {}} // Pas utilisé dans notre implémentation
                 onColumnAdd={addColumn}
                 onColumnRemove={removeColumn}
               />
@@ -544,7 +543,6 @@ export default function ContactsPage() {
                           <CellRenderer 
                             value={value}
                             property={property}
-                            allProperties={contact.properties}
                           />
                         </td>
                       );

@@ -1,18 +1,25 @@
 import { 
   User, Mail, Phone, Building, MapPin, Briefcase, Tag, Calendar, 
   Globe, DollarSign, BarChart3, Clock, Target, Star, Shield,
-  Linkedin, Facebook, Twitter, Github, MessageCircle, Link,
+  Linkedin, Facebook, Twitter, MessageCircle,
   Activity, TrendingUp, Users, FileText, Hash, Zap
 } from "lucide-react";
 
 export interface HubSpotProperty {
   key: string;
   label: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   category: 'basic' | 'contact' | 'social' | 'analytics' | 'dates' | 'advanced';
   type: 'text' | 'email' | 'url' | 'date' | 'number' | 'tag' | 'boolean';
   width?: number;
   description?: string;
+}
+
+export interface CategoryInfo {
+  key: string;
+  label: string;
+  color: string;
+  icon: React.ComponentType<{ className?: string }>;
 }
 
 // Configuration complète des propriétés pour les Contacts
@@ -107,15 +114,15 @@ export const COMPANY_PROPERTIES: HubSpotProperty[] = [
   { key: "timezone", label: "Time Zone", icon: Clock, category: 'advanced', type: 'text', width: 150 },
 ];
 
-// Catégories pour l'organisation du menu
-export const PROPERTY_CATEGORIES = {
-  basic: { label: "Basic Info", color: "blue" },
-  contact: { label: "Contact Details", color: "green" },
-  social: { label: "Social Media", color: "purple" },
-  analytics: { label: "Analytics", color: "orange" },
-  dates: { label: "Dates", color: "gray" },
-  advanced: { label: "Advanced", color: "red" }
-};
+// Catégories pour l'organisation du menu - STRUCTURE CORRIGÉE
+export const PROPERTY_CATEGORIES: CategoryInfo[] = [
+  { key: "basic", label: "Basic Info", color: "bg-blue-100 text-blue-800", icon: User },
+  { key: "contact", label: "Contact Details", color: "bg-green-100 text-green-800", icon: Phone },
+  { key: "social", label: "Social Media", color: "bg-purple-100 text-purple-800", icon: Linkedin },
+  { key: "analytics", label: "Analytics", color: "bg-orange-100 text-orange-800", icon: BarChart3 },
+  { key: "dates", label: "Dates", color: "bg-gray-100 text-gray-800", icon: Calendar },
+  { key: "advanced", label: "Advanced", color: "bg-red-100 text-red-800", icon: Shield }
+];
 
 // Colonnes par défaut (toujours visibles)
 export const DEFAULT_CONTACT_COLUMNS = ["firstname", "lastname", "email", "phone"];
@@ -127,7 +134,11 @@ export function getPropertyByKey(key: string, type: 'contact' | 'company'): HubS
   return properties.find(prop => prop.key === key);
 }
 
-export function getPropertiesByCategory(category: string, type: 'contact' | 'company'): HubSpotProperty[] {
+export function getPropertiesByCategory(categoryKey: string, type: 'contact' | 'company'): HubSpotProperty[] {
   const properties = type === 'contact' ? CONTACT_PROPERTIES : COMPANY_PROPERTIES;
-  return properties.filter(prop => prop.category === category);
+  return properties.filter(prop => prop.category === categoryKey);
+}
+
+export function getCategoryInfo(categoryKey: string): CategoryInfo | undefined {
+  return PROPERTY_CATEGORIES.find(cat => cat.key === categoryKey);
 } 

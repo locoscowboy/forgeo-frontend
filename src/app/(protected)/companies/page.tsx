@@ -31,7 +31,7 @@ import {
 import AddColumnDropdown from "@/components/table/AddColumnDropdown";
 import CellRenderer from "@/components/table/CellRenderer";
 import { useTableColumns } from "@/hooks/useTableColumns";
-import { DEFAULT_COMPANY_COLUMNS, getPropertyByKey } from "@/lib/hubspot-properties";
+import { DEFAULT_COMPANY_COLUMNS } from "@/lib/hubspot-properties";
 
 // Notion-like Table Styles
 const tableStyles = `
@@ -335,10 +335,10 @@ export default function CompaniesPage() {
   };
 
   // Obtenir la valeur d'une cellule depuis les données de la company
-  const getCellValue = (company: Company, columnKey: string) => {
+  const getCellValue = (company: Company, columnKey: string): string | number | boolean | null | undefined => {
     // Essayer d'abord les propriétés de base
     if (columnKey in company && columnKey !== 'properties') {
-      return (company as any)[columnKey];
+      return (company as unknown as Record<string, unknown>)[columnKey] as string | number | boolean | null | undefined;
     }
     
     // Puis chercher dans les propriétés étendues
@@ -434,7 +434,6 @@ export default function CompaniesPage() {
               <AddColumnDropdown
                 type="company"
                 visibleColumns={visibleColumns}
-                onColumnToggle={() => {}} // Pas utilisé dans notre implémentation
                 onColumnAdd={addColumn}
                 onColumnRemove={removeColumn}
               />
@@ -544,7 +543,6 @@ export default function CompaniesPage() {
                           <CellRenderer 
                             value={value}
                             property={property}
-                            allProperties={company.properties}
                           />
                         </td>
                       );

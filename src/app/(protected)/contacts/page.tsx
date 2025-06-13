@@ -245,7 +245,7 @@ export default function ContactsPage() {
     try {
       setError(null);
       if (contacts.length === 0) setLoading(true);
-
+      
       const response = await getContacts(
         token,
         searchParams.page,
@@ -254,7 +254,7 @@ export default function ContactsPage() {
         searchParams.sortField,
         searchParams.sortOrder
       );
-
+      
       setContacts(response.contacts);
       setTotal(response.total);
       setTotalPages(response.total_pages);
@@ -297,7 +297,7 @@ export default function ContactsPage() {
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
-
+    
     searchTimeoutRef.current = setTimeout(() => {
       setSearchParams(prev => ({
         ...prev,
@@ -501,7 +501,7 @@ export default function ContactsPage() {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-forgeo-600 mx-auto"></div>
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-forgeo-600 mx-auto"></div>
           <p className="mt-4 text-gray-600 font-medium">Chargement des contacts...</p>
           <p className="mt-2 text-sm text-gray-500">Veuillez patienter</p>
         </div>
@@ -516,7 +516,7 @@ export default function ContactsPage() {
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Erreur de chargement</h2>
           <p className="text-red-600 mb-4">{error}</p>
-          <Button onClick={handleRetry} className="bg-forgeo-400 hover:bg-forgeo-500 text-black">
+                        <Button onClick={handleRetry} className="bg-forgeo-400 hover:bg-forgeo-500 text-black">
             Réessayer
           </Button>
         </div>
@@ -620,7 +620,7 @@ export default function ContactsPage() {
                         <div className="notion-th-content w-full text-left">
                           <Icon className="notion-icon" />
                           <span className="font-medium">{property.label}</span>
-                        </div>
+                          </div>
                         
                         {/* Resizer */}
                         <div
@@ -670,7 +670,7 @@ export default function ContactsPage() {
                             value={value}
                             property={property}
                           />
-                        </td>
+                    </td>
                       );
                     })}
                   </tr>
@@ -696,8 +696,8 @@ export default function ContactsPage() {
         <div className="px-6 py-4 bg-white border-t border-gray-200 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="text-sm text-gray-700">
-                Affichage de {Math.min((searchParams.page - 1) * searchParams.limit + 1, total)} à {Math.min(searchParams.page * searchParams.limit, total)} sur {total.toLocaleString()} contacts
+            <div className="text-sm text-gray-700">
+              Affichage de {Math.min((searchParams.page - 1) * searchParams.limit + 1, total)} à {Math.min(searchParams.page * searchParams.limit, total)} sur {total.toLocaleString()} contacts
               </div>
               
               <Select 
@@ -741,18 +741,18 @@ export default function ContactsPage() {
                   
                   return Array.from({ length: endPage - startPage + 1 }, (_, i) => {
                     const page = startPage + i;
-                    return (
-                      <Button
+                  return (
+                    <Button
                         key={page}
                         variant={page === searchParams.page ? "default" : "outline"}
-                        size="sm"
+                      size="sm"
                         onClick={() => handlePageChange(page)}
-                        disabled={loading}
+                      disabled={loading}
                         className="px-3 py-1 text-sm"
                       >
                         {page}
-                      </Button>
-                    );
+                    </Button>
+                  );
                   });
                 })()}
               </div>

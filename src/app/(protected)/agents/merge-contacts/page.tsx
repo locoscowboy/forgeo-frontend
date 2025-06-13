@@ -12,8 +12,7 @@ import {
   CheckCircle,
   Settings,
   Play,
-  Clock,
-  AlertTriangle
+  Clock
 } from "lucide-react";
 
 export default function MergeContactsPage() {
@@ -33,7 +32,7 @@ export default function MergeContactsPage() {
       id: 2,
       name: "Analyze Conflicts",
       description: "Compare duplicate contacts and identify data conflicts that need resolution",
-      icon: AlertTriangle,
+      icon: Users,
       status: "pending",
       estimatedTime: "1-3 min",
       color: "orange"
@@ -111,19 +110,15 @@ export default function MergeContactsPage() {
             variant="ghost"
             size="sm"
             onClick={() => router.back()}
-            className="gap-2"
+            className="p-2"
           >
             <ArrowLeft className="h-4 w-4" />
-            Retour
           </Button>
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-forgeo-100 rounded-lg flex items-center justify-center">
               <Users className="h-4 w-4 text-forgeo-600" />
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">Merge Contacts Duplicates</h1>
-              <p className="text-sm text-gray-500">Agent de fusion automatique des contacts dupliqués</p>
-            </div>
+            <h1 className="text-xl font-bold text-gray-900">Merge Contacts Duplicates</h1>
           </div>
         </div>
         <div className="flex gap-2">
@@ -138,14 +133,14 @@ export default function MergeContactsPage() {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="px-4 sm:px-6 lg:px-8 py-8">
-        <div className="max-w-4xl mx-auto">
-          
+      {/* Main Content - Two Column Layout */}
+      <div className="flex h-[calc(100vh-56px)]">
+        {/* Left Column - Overview and Configuration */}
+        <div className="w-1/2 bg-white p-8 overflow-y-auto">
           {/* Overview */}
-          <div className="bg-white rounded-lg border p-6 mb-8">
+          <div className="mb-8">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Vue d&apos;ensemble</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div className="text-center p-4 bg-gray-50 rounded-lg">
                 <div className="text-2xl font-bold text-gray-900">~15 min</div>
                 <div className="text-sm text-gray-600">Temps estimé</div>
@@ -161,106 +156,96 @@ export default function MergeContactsPage() {
             </div>
           </div>
 
-          {/* Agents Pipeline */}
-          <div className="bg-white rounded-lg border">
-            <div className="p-6 border-b">
-              <h2 className="text-lg font-semibold text-gray-900">Pipeline d&apos;exécution</h2>
-              <p className="text-sm text-gray-600 mt-1">
-                Séquence d&apos;agents qui s&apos;exécuteront automatiquement pour fusionner vos contacts dupliqués
-              </p>
+          {/* Configuration Preview */}
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Configuration actuelle</h2>
+            <div className="space-y-6">
+              <div>
+                <h4 className="font-medium text-gray-900 mb-3">Critères de détection</h4>
+                <ul className="space-y-2 text-sm text-gray-600">
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    Email identique (priorité haute)
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                    Nom + Prénom similaires (priorité moyenne)
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    Téléphone identique (priorité moyenne)
+                  </li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="font-medium text-gray-900 mb-3">Règles de fusion</h4>
+                <ul className="space-y-2 text-sm text-gray-600">
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-forgeo-500 rounded-full"></div>
+                    Conserver le contact le plus récent
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-forgeo-500 rounded-full"></div>
+                    Fusionner les propriétés manquantes
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-forgeo-500 rounded-full"></div>
+                    Préserver l&apos;historique des activités
+                  </li>
+                </ul>
+              </div>
             </div>
-            
-            <div className="p-6">
-              <div className="space-y-4">
-                {agents.map((agent, index) => {
-                  const Icon = agent.icon;
-                  const isLast = index === agents.length - 1;
+          </div>
+        </div>
+
+        {/* Right Column - Pipeline */}
+        <div className="w-1/2 bg-gray-50 p-8 overflow-y-auto">
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">Pipeline d&apos;exécution</h2>
+          <p className="text-sm text-gray-600 mb-6">
+            Séquence d&apos;agents qui s&apos;exécuteront automatiquement
+          </p>
+          
+          <div className="space-y-4">
+            {agents.map((agent, index) => {
+              const Icon = agent.icon;
+              const isLast = index === agents.length - 1;
+              
+              return (
+                <div key={agent.id} className="relative">
+                  {/* Connector Line */}
+                  {!isLast && (
+                    <div className="absolute left-6 top-16 w-0.5 h-6 bg-gray-300"></div>
+                  )}
                   
-                  return (
-                    <div key={agent.id} className="relative">
-                      {/* Connector Line */}
-                      {!isLast && (
-                        <div className="absolute left-6 top-12 w-0.5 h-8 bg-gray-200"></div>
-                      )}
+                  {/* Agent Card */}
+                  <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                    <div className="flex items-start gap-4">
+                      <div className={`w-12 h-12 ${getBackgroundColor(agent.color)} rounded-lg flex items-center justify-center flex-shrink-0`}>
+                        <Icon className={`h-6 w-6 ${getIconColor(agent.color)}`} />
+                      </div>
                       
-                      {/* Agent Card */}
-                      <div className="flex items-start gap-4 p-4 rounded-lg border hover:shadow-sm transition-shadow">
-                        <div className={`w-12 h-12 ${getBackgroundColor(agent.color)} rounded-lg flex items-center justify-center flex-shrink-0`}>
-                          <Icon className={`h-6 w-6 ${getIconColor(agent.color)}`} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="text-lg font-semibold text-gray-900">{agent.name}</h3>
+                          {getStatusBadge(agent.status)}
                         </div>
-                        
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-lg font-semibold text-gray-900">{agent.name}</h3>
-                            {getStatusBadge(agent.status)}
+                        <p className="text-gray-600 mb-3 text-sm leading-relaxed">{agent.description}</p>
+                        <div className="flex items-center gap-4 text-sm text-gray-500">
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-4 w-4" />
+                            <span>{agent.estimatedTime}</span>
                           </div>
-                          <p className="text-gray-600 mb-3">{agent.description}</p>
-                          <div className="flex items-center gap-4 text-sm text-gray-500">
-                            <div className="flex items-center gap-1">
-                              <Clock className="h-4 w-4" />
-                              <span>{agent.estimatedTime}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <span>Étape {agent.id}/4</span>
-                            </div>
+                          <div className="flex items-center gap-1">
+                            <span>Étape {agent.id}/4</span>
                           </div>
                         </div>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* Configuration Preview */}
-          <div className="bg-white rounded-lg border mt-8">
-            <div className="p-6 border-b">
-              <h2 className="text-lg font-semibold text-gray-900">Configuration actuelle</h2>
-              <p className="text-sm text-gray-600 mt-1">
-                Paramètres qui seront utilisés pour la fusion des contacts
-              </p>
-            </div>
-            
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Critères de détection</h4>
-                  <ul className="space-y-2 text-sm text-gray-600">
-                    <li className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      Email identique (priorité haute)
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                      Nom + Prénom similaires (priorité moyenne)
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      Téléphone identique (priorité moyenne)
-                    </li>
-                  </ul>
+                  </div>
                 </div>
-                
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Règles de fusion</h4>
-                  <ul className="space-y-2 text-sm text-gray-600">
-                    <li className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-forgeo-500 rounded-full"></div>
-                      Conserver le contact le plus récent
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-forgeo-500 rounded-full"></div>
-                      Fusionner les propriétés manquantes
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-forgeo-500 rounded-full"></div>
-                      Préserver l&apos;historique des activités
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
+              );
+            })}
           </div>
         </div>
       </div>

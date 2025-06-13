@@ -145,13 +145,15 @@ export default function MergeContactsPage() {
                 <div className="text-2xl font-bold text-gray-900">~15 min</div>
                 <div className="text-sm text-gray-600">Temps estimé</div>
               </div>
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <div className="text-2xl font-bold text-gray-900">4</div>
-                <div className="text-sm text-gray-600">Étapes automatisées</div>
-              </div>
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <div className="text-2xl font-bold text-gray-900">0</div>
-                <div className="text-sm text-gray-600">Interventions manuelles</div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-4 bg-gray-50 rounded-lg">
+                  <div className="text-2xl font-bold text-gray-900">4</div>
+                  <div className="text-sm text-gray-600">Étapes automatisées</div>
+                </div>
+                <div className="text-center p-4 bg-gray-50 rounded-lg">
+                  <div className="text-2xl font-bold text-gray-900">0</div>
+                  <div className="text-sm text-gray-600">Interventions manuelles</div>
+                </div>
               </div>
             </div>
           </div>
@@ -206,34 +208,28 @@ export default function MergeContactsPage() {
             Séquence d&apos;agents qui s&apos;exécuteront automatiquement
           </p>
           
-          <div className="space-y-4">
+          <div className="space-y-3">
             {agents.map((agent, index) => {
               const Icon = agent.icon;
-              const isLast = index === agents.length - 1;
               
               return (
-                <div key={agent.id} className="relative">
-                  {/* Connector Line */}
-                  {!isLast && (
-                    <div className="absolute left-6 top-16 w-0.5 h-6 bg-gray-300"></div>
-                  )}
-                  
+                <div key={agent.id}>
                   {/* Agent Card */}
-                  <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-                    <div className="flex items-start gap-4">
-                      <div className={`w-12 h-12 ${getBackgroundColor(agent.color)} rounded-lg flex items-center justify-center flex-shrink-0`}>
-                        <Icon className={`h-6 w-6 ${getIconColor(agent.color)}`} />
+                  <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                    <div className="flex items-start gap-3">
+                      <div className={`w-10 h-10 ${getBackgroundColor(agent.color)} rounded-lg flex items-center justify-center flex-shrink-0`}>
+                        <Icon className={`h-5 w-5 ${getIconColor(agent.color)}`} />
                       </div>
                       
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900">{agent.name}</h3>
+                        <div className="flex items-center justify-between mb-1">
+                          <h3 className="text-base font-semibold text-gray-900">{agent.name}</h3>
                           {getStatusBadge(agent.status)}
                         </div>
-                        <p className="text-gray-600 mb-3 text-sm leading-relaxed">{agent.description}</p>
-                        <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <p className="text-gray-600 mb-2 text-sm leading-relaxed">{agent.description}</p>
+                        <div className="flex items-center gap-4 text-xs text-gray-500">
                           <div className="flex items-center gap-1">
-                            <Clock className="h-4 w-4" />
+                            <Clock className="h-3 w-3" />
                             <span>{agent.estimatedTime}</span>
                           </div>
                           <div className="flex items-center gap-1">

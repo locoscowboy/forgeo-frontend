@@ -1,7 +1,7 @@
 import React from 'react';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ExternalLink, Mail, Phone, Check, X, Linkedin } from 'lucide-react';
+import { ExternalLink, Mail, Check, X, Linkedin } from 'lucide-react';
 import { HubSpotProperty } from '@/lib/hubspot-properties';
 import { Badge } from '@/components/ui/badge';
 

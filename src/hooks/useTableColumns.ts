@@ -33,8 +33,6 @@ export function useTableColumns({
   storageKey = `table-columns-${type}`
 }: UseTableColumnsOptions): UseTableColumnsReturn {
   
-  const properties = type === 'contact' ? CONTACT_PROPERTIES : COMPANY_PROPERTIES;
-  
   // État des colonnes visibles
   const [visibleColumns, setVisibleColumns] = useState<string[]>(() => {
     if (typeof window !== 'undefined') {
@@ -81,7 +79,7 @@ export function useTableColumns({
     return visibleColumns
       .map(columnKey => getPropertyByKey(columnKey, type))
       .filter((prop): prop is HubSpotProperty => prop !== undefined);
-  }, [visibleColumns, type, getColumnWidth]);
+  }, [visibleColumns, type]);
 
   // Actions
   const addColumn = useCallback((columnKey: string) => {

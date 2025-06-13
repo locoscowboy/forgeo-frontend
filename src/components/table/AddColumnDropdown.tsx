@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, ChevronDown, Check } from 'lucide-react';
+import { Plus, ChevronDown, Check, RotateCcw } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,6 +28,7 @@ interface AddColumnDropdownProps {
   visibleColumns: string[];
   onColumnAdd: (columnKey: string) => void;
   onColumnRemove: (columnKey: string) => void;
+  onReset: () => void;
 }
 
 const AddColumnDropdown: React.FC<AddColumnDropdownProps> = ({
@@ -35,6 +36,7 @@ const AddColumnDropdown: React.FC<AddColumnDropdownProps> = ({
   visibleColumns,
   onColumnAdd,
   onColumnRemove,
+  onReset,
 }) => {
   const [open, setOpen] = useState(false);
   
@@ -93,6 +95,18 @@ const AddColumnDropdown: React.FC<AddColumnDropdownProps> = ({
             {totalVisible} visible • {totalHidden} hidden
           </span>
         </DropdownMenuLabel>
+        
+        {/* Bouton Reset */}
+        <DropdownMenuItem 
+          onClick={() => {
+            onReset();
+            setOpen(false);
+          }}
+          className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 font-medium"
+        >
+          <RotateCcw className="h-4 w-4 mr-2" />
+          Reset to default columns
+        </DropdownMenuItem>
         
         <DropdownMenuSeparator />
         

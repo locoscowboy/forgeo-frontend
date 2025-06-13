@@ -23,8 +23,7 @@ import {
   Download,
   Plus,
   AlertCircle,
-  User,
-  RotateCcw
+  User
 } from "lucide-react";
 
 // Nos nouveaux composants
@@ -470,18 +469,8 @@ export default function ContactsPage() {
                 visibleColumns={visibleColumns}
                 onColumnAdd={addColumn}
                 onColumnRemove={removeColumn}
+                onReset={resetColumns}
               />
-              
-              {/* Bouton Reset */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={resetColumns}
-                className="gap-2 text-gray-600 hover:text-gray-700"
-                title="Réinitialiser les colonnes"
-              >
-                <RotateCcw className="h-4 w-4" />
-              </Button>
               
               <Select 
                 value={searchParams.limit.toString()} 

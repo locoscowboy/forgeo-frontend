@@ -22,7 +22,7 @@ export default function MergeContactsPage() {
     {
       id: 1,
       name: "Duplicate Detector",
-      description: "Detect duplicates based on exact rules (email, phone) and fuzzy logic (first name/last name). Uses normalization and similarity matching for broad coverage.",
+      description: "Finds duplicates using exact (email, phone) and fuzzy (name) matching.",
       icon: Search,
       status: "ready",
       estimatedTime: "1–3 min",
@@ -31,7 +31,7 @@ export default function MergeContactsPage() {
     {
       id: 2,
       name: "Primary Record Selector",
-      description: "Intelligently select the primary contact to keep among duplicates. Prioritizes based on: assigned owner, engagement, data completeness, and record age.",
+      description: "Chooses the best record to keep based on owner, activity, and completeness.",
       icon: Users,
       status: "pending",
       estimatedTime: "1–2 min",
@@ -40,7 +40,7 @@ export default function MergeContactsPage() {
     {
       id: 3,
       name: "Record Merger",
-      description: "Automatically merge contact data using a field-by-field logic. Applies configurable strategies for each property (concat, priority rules, fill missing values).",
+      description: "Merges records using field-specific rules like concat, priority, or fill.",
       icon: GitMerge,
       status: "pending",
       estimatedTime: "3–5 min",
@@ -49,7 +49,7 @@ export default function MergeContactsPage() {
     {
       id: 4,
       name: "Merge Audit Logger",
-      description: "Validate and log the merge process. Ensures integrity of merged records and archives decisions (detected duplicates, selected primary, merged fields).",
+      description: "Logs merges and checks data integrity after consolidation.",
       icon: CheckCircle,
       status: "pending",
       estimatedTime: "1–2 min",

@@ -209,7 +209,7 @@ export default function MergeContactsPage() {
           </p>
           
           <div className="space-y-3">
-            {agents.map((agent, index) => {
+            {agents.map((agent) => {
               const Icon = agent.icon;
               
               return (

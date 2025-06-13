@@ -194,6 +194,7 @@ export default function ContactsPage() {
   
   // États principaux
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [filteredAndSortedContacts, setFilteredAndSortedContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -271,6 +272,19 @@ export default function ContactsPage() {
     loadContacts();
   }, [loadContacts]);
 
+  // Appliquer les filtres et tris côté frontend
+  useEffect(() => {
+    let processedData = [...contacts];
+    
+    // Appliquer les filtres
+    processedData = applyFilters(processedData, filterGroups);
+    
+    // Appliquer les tris supplémentaires (le premier est déjà fait par l'API)
+    processedData = applySorting(processedData, sortCriteria);
+    
+    setFilteredAndSortedContacts(processedData);
+  }, [contacts, filterGroups, sortCriteria]);
+
   // Gestionnaires d'événements
   const handleRetry = () => {
     setError(null);
@@ -319,8 +333,81 @@ export default function ContactsPage() {
   // Gestionnaire pour les filtres  
   const handleFilterChange = (newFilterGroups: FilterGroup[]) => {
     setFilterGroups(newFilterGroups);
-    // TODO: Implémenter la logique de filtrage avec l'API
     setSearchParams(prev => ({ ...prev, page: 1 }));
+  };
+
+  // Fonction pour appliquer les filtres côté frontend
+  const applyFilters = (data: Contact[], filterGroups: FilterGroup[]): Contact[] => {
+    if (filterGroups.length === 0) return data;
+
+    return data.filter(contact => {
+      return filterGroups.some(group => {
+        return group.filters.every(filter => {
+          const value = getCellValue(contact, filter.field);
+          const stringValue = value?.toString().toLowerCase() || '';
+          const filterValue = filter.value.toLowerCase();
+
+          switch (filter.operator) {
+            case 'contains':
+              return stringValue.includes(filterValue);
+            case 'equals':
+              return stringValue === filterValue;
+            case 'not_equals':
+              return stringValue !== filterValue;
+            case 'starts_with':
+              return stringValue.startsWith(filterValue);
+            case 'ends_with':
+              return stringValue.endsWith(filterValue);
+            case 'is_empty':
+              return !value || value === '';
+            case 'is_not_empty':
+              return value && value !== '';
+            default:
+              return true;
+          }
+        });
+      });
+    });
+  };
+
+  // Fonction pour appliquer le tri multiple côté frontend
+  const applySorting = (data: Contact[], sortCriteria: SortCriteria[]): Contact[] => {
+    if (sortCriteria.length <= 1) return data; // Le premier tri est déjà fait par l'API
+
+    const sortedData = [...data];
+    
+    // Appliquer les critères de tri supplémentaires (à partir du 2ème)
+    const additionalSorts = sortCriteria.slice(1);
+    
+    sortedData.sort((a, b) => {
+      for (const criteria of additionalSorts) {
+        const aValue = getCellValue(a, criteria.field);
+        const bValue = getCellValue(b, criteria.field);
+        
+        // Conversion en string pour comparaison
+        const aStr = aValue?.toString() || '';
+        const bStr = bValue?.toString() || '';
+        
+        let comparison = 0;
+        
+        // Essayer de comparer comme nombres si possible
+        const aNum = parseFloat(aStr);
+        const bNum = parseFloat(bStr);
+        
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+          comparison = aNum - bNum;
+        } else {
+          comparison = aStr.localeCompare(bStr);
+        }
+        
+        if (comparison !== 0) {
+          return criteria.order === 'asc' ? comparison : -comparison;
+        }
+      }
+      return 0;
+    });
+    
+    return sortedData;
   };
 
   const handlePageChange = (newPage: number) => {
@@ -548,21 +635,26 @@ export default function ContactsPage() {
 
               {/* Body */}
               <tbody>
-                {!loading && contacts.length === 0 && !error ? (
+                {!loading && filteredAndSortedContacts.length === 0 && !error ? (
                   <tr className="border-0">
                     <td colSpan={activeProperties.length} className="border-0 bg-transparent py-16 text-center">
                       <div className="flex flex-col items-center justify-center gap-4 text-gray-500">
                         <User className="h-16 w-16 text-gray-300" />
                         <div className="space-y-2">
                           <h3 className="text-lg font-semibold text-gray-900">Aucun contact trouvé</h3>
-                          <p className="text-sm text-gray-600 max-w-md">Commencez par créer votre premier contact ou ajustez vos filtres de recherche.</p>
+                          <p className="text-sm text-gray-600 max-w-md">
+                            {filterGroups.length > 0 || sortCriteria.length > 0 
+                              ? "Aucun contact ne correspond aux critères de filtrage ou de tri."
+                              : "Commencez par créer votre premier contact ou ajustez vos filtres de recherche."
+                            }
+                          </p>
                         </div>
                       </div>
                     </td>
                   </tr>
                 ) : null}
                 
-                {contacts.map((contact) => (
+                {filteredAndSortedContacts.map((contact) => (
                   <tr key={contact.id} className="notion-tr">
                     {activeProperties.map((property) => {
                       const width = columnWidths[property.key] || property.width || 150;
@@ -585,7 +677,7 @@ export default function ContactsPage() {
                 ))}
                 
                 {/* Ligne de loading pendant la mise à jour */}
-                {loading && contacts.length > 0 && (
+                {loading && filteredAndSortedContacts.length > 0 && (
                   <tr className="notion-tr">
                     <td colSpan={activeProperties.length} className="notion-td text-center py-4">
                       <div className="flex items-center justify-center gap-2 text-gray-500">

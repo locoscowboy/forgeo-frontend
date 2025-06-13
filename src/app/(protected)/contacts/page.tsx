@@ -16,9 +16,6 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Search, 
-  Filter,
-  Download,
-  Plus,
   AlertCircle,
   User
 } from "lucide-react";
@@ -449,19 +446,9 @@ export default function ContactsPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Contacts</h1>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="gap-2">
-              <Filter className="h-4 w-4" />
-              Filter
-            </Button>
-            <Button variant="outline" size="sm" className="gap-2">
-              <Download className="h-4 w-4" />
-              Export
-            </Button>
-            <Button size="sm" className="gap-2 bg-forgeo-400 hover:bg-forgeo-500 text-black">
-              <Plus className="h-4 w-4" />
-              New
-            </Button>
+          <div className="text-sm text-gray-600">
+            {total.toLocaleString()} contacts • Page {searchParams.page} of {totalPages}
+            {loading && " • Mise à jour..."}
           </div>
         </div>
 
@@ -514,11 +501,6 @@ export default function ContactsPage() {
                 onColumnRemove={removeColumn}
                 onReset={resetColumns}
               />
-              
-              <div className="text-sm text-gray-600">
-                {total.toLocaleString()} contacts • Page {searchParams.page} of {totalPages}
-                {loading && " • Mise à jour..."}
-              </div>
             </div>
           </div>
         </div>

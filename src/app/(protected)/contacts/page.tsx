@@ -16,9 +16,6 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Search, 
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
   Filter,
   Download,
   Plus,
@@ -28,6 +25,8 @@ import {
 
 // Nos nouveaux composants
 import AddColumnDropdown from "@/components/table/AddColumnDropdown";
+import SortDropdown from "@/components/table/SortDropdown";
+import FilterDropdown from "@/components/table/FilterDropdown";
 import CellRenderer from "@/components/table/CellRenderer";
 import { useTableColumns } from "@/hooks/useTableColumns";
 import { DEFAULT_CONTACT_COLUMNS } from "@/lib/hubspot-properties";
@@ -167,13 +166,30 @@ const tableStyles = `
   }
 `;
 
-// Interface pour les paramètres de recherche
+// Interfaces pour les paramètres de recherche et tri
 interface SearchParams {
   page: number;
   limit: number;
   search: string;
   sortField: string;
   sortOrder: 'asc' | 'desc';
+}
+
+interface SortCriteria {
+  field: string;
+  order: 'asc' | 'desc';
+}
+
+interface FilterCriteria {
+  field: string;
+  operator: 'contains' | 'equals' | 'not_equals' | 'starts_with' | 'ends_with' | 'is_empty' | 'is_not_empty';
+  value: string;
+  connector?: 'and' | 'or';
+}
+
+interface FilterGroup {
+  filters: FilterCriteria[];
+  connector: 'and' | 'or';
 }
 
 export default function ContactsPage() {
@@ -216,6 +232,8 @@ export default function ContactsPage() {
   const [resizingColumn, setResizingColumn] = useState<string | null>(null);
   const [draggedColumn, setDraggedColumn] = useState<number | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<number | null>(null);
+  const [sortCriteria, setSortCriteria] = useState<SortCriteria[]>([]);
+  const [filterGroups, setFilterGroups] = useState<FilterGroup[]>([]);
   const tableRef = useRef<HTMLTableElement>(null);
 
   // Debounce pour la recherche
@@ -278,13 +296,34 @@ export default function ContactsPage() {
     }, 300);
   };
 
-  const handleSort = (field: string) => {
-    setSearchParams(prev => ({
-      ...prev,
-      sortField: field,
-      sortOrder: prev.sortField === field && prev.sortOrder === 'asc' ? 'desc' : 'asc',
-      page: 1
-    }));
+  // Gestionnaire pour les nouveaux critères de tri
+  const handleSortChange = (newSortCriteria: SortCriteria[]) => {
+    setSortCriteria(newSortCriteria);
+    
+    // Appliquer le premier critère de tri aux paramètres de recherche pour l'API
+    if (newSortCriteria.length > 0) {
+      const firstSort = newSortCriteria[0];
+      setSearchParams(prev => ({
+        ...prev,
+        sortField: firstSort.field,
+        sortOrder: firstSort.order,
+        page: 1
+      }));
+    } else {
+      setSearchParams(prev => ({
+        ...prev,
+        sortField: "firstname",
+        sortOrder: "asc",
+        page: 1
+      }));
+    }
+  };
+
+  // Gestionnaire pour les filtres  
+  const handleFilterChange = (newFilterGroups: FilterGroup[]) => {
+    setFilterGroups(newFilterGroups);
+    // TODO: Implémenter la logique de filtrage avec l'API
+    setSearchParams(prev => ({ ...prev, page: 1 }));
   };
 
   const handlePageChange = (newPage: number) => {
@@ -299,16 +338,7 @@ export default function ContactsPage() {
     }));
   };
 
-  // Fonctions utilitaires
-  const getSortIcon = (field: string) => {
-    const isActive = searchParams.sortField === field;
-    const className = `sort-icon ${isActive ? 'active' : ''}`;
-    
-    if (!isActive) return <ArrowUpDown className={className} />;
-    return searchParams.sortOrder === "asc" ? 
-      <ArrowUp className={className} /> : 
-      <ArrowDown className={className} />;
-  };
+  // Fonctions utilitaires supprimées (tri maintenant géré par SortDropdown)
 
   // Fonctions de redimensionnement des colonnes
   const handleMouseDown = (e: React.MouseEvent, columnKey: string) => {
@@ -463,7 +493,20 @@ export default function ContactsPage() {
             </div>
             
             <div className="flex items-center gap-4">
-              {/* Nouveau bouton Add Column */}
+              {/* Nouveaux boutons de tri et filtrage */}
+              <SortDropdown
+                activeProperties={activeProperties}
+                sortCriteria={sortCriteria}
+                onSortChange={handleSortChange}
+              />
+              
+              <FilterDropdown
+                activeProperties={activeProperties}
+                filterGroups={filterGroups}
+                onFilterChange={handleFilterChange}
+              />
+              
+              {/* Bouton Add Column */}
               <AddColumnDropdown
                 type="contact"
                 visibleColumns={visibleColumns}
@@ -471,21 +514,6 @@ export default function ContactsPage() {
                 onColumnRemove={removeColumn}
                 onReset={resetColumns}
               />
-              
-              <Select 
-                value={searchParams.limit.toString()} 
-                onValueChange={(value) => handleLimitChange(Number(value))}
-                disabled={loading}
-              >
-                <SelectTrigger className="w-40 border-gray-300">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="25">25 lignes</SelectItem>
-                  <SelectItem value="50">50 lignes</SelectItem>
-                  <SelectItem value="100">100 lignes</SelectItem>
-                </SelectContent>
-              </Select>
               
               <div className="text-sm text-gray-600">
                 {total.toLocaleString()} contacts • Page {searchParams.page} of {totalPages}
@@ -520,17 +548,10 @@ export default function ContactsPage() {
                         onDrop={(e) => handleDrop(e, index)}
                         onDragEnd={handleDragEnd}
                       >
-                        <button
-                          onClick={() => handleSort(property.key)}
-                          className="notion-th-content w-full text-left"
-                          disabled={loading}
-                        >
+                        <div className="notion-th-content w-full text-left">
                           <Icon className="notion-icon" />
                           <span className="font-medium">{property.label}</span>
-                          <div className="ml-auto">
-                            {getSortIcon(property.key)}
-                          </div>
-                        </button>
+                        </div>
                         
                         {/* Resizer */}
                         <div
@@ -600,8 +621,25 @@ export default function ContactsPage() {
         {/* Footer/Pagination */}
         <div className="px-6 py-4 bg-white border-t border-gray-200 flex-shrink-0">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-700">
-              Affichage de {Math.min((searchParams.page - 1) * searchParams.limit + 1, total)} à {Math.min(searchParams.page * searchParams.limit, total)} sur {total.toLocaleString()} contacts
+            <div className="flex items-center gap-4">
+              <div className="text-sm text-gray-700">
+                Affichage de {Math.min((searchParams.page - 1) * searchParams.limit + 1, total)} à {Math.min(searchParams.page * searchParams.limit, total)} sur {total.toLocaleString()} contacts
+              </div>
+              
+              <Select 
+                value={searchParams.limit.toString()} 
+                onValueChange={(value) => handleLimitChange(Number(value))}
+                disabled={loading}
+              >
+                <SelectTrigger className="w-28 border-gray-300 h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             
             <div className="flex items-center gap-2">

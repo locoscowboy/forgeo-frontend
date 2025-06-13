@@ -589,7 +589,7 @@ export default function CompaniesPage() {
                   const maxVisiblePages = Math.min(5, totalPages);
                   const halfVisible = Math.floor(maxVisiblePages / 2);
                   let startPage = Math.max(1, searchParams.page - halfVisible);
-                  let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+                  const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
                   
                   // Ajuster startPage si endPage est trop proche de totalPages
                   if (endPage - startPage + 1 < maxVisiblePages) {

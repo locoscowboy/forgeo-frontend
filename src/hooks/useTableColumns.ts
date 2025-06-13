@@ -1,8 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   HubSpotProperty, 
-  CONTACT_PROPERTIES, 
-  COMPANY_PROPERTIES,
   getPropertyByKey
 } from '@/lib/hubspot-properties';
 
@@ -50,16 +48,6 @@ export function useTableColumns({
     }
     return {};
   });
-
-  // Fonction pour obtenir la largeur d'une colonne
-  const getColumnWidth = useCallback((columnKey: string): number => {
-    if (columnWidths[columnKey]) {
-      return columnWidths[columnKey];
-    }
-    
-    const property = getPropertyByKey(columnKey, type);
-    return property?.width || 150;
-  }, [columnWidths, type]);
 
   // Sauvegarder dans localStorage
   useEffect(() => {

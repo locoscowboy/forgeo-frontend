@@ -206,7 +206,8 @@ export default function CompaniesPage() {
     addColumn,
     removeColumn,
     updateColumnWidth,
-    resetColumns
+    resetColumns,
+    reorderColumns
   } = useTableColumns({
     type: 'company',
     defaultColumns: [...DEFAULT_COMPANY_COLUMNS, 'phone', 'city', 'founded_year', 'numberofemployees', 'linkedin_company_page']
@@ -214,6 +215,8 @@ export default function CompaniesPage() {
   
   const [isResizing, setIsResizing] = useState(false);
   const [resizingColumn, setResizingColumn] = useState<string | null>(null);
+  const [draggedColumn, setDraggedColumn] = useState<number | null>(null);
+  const [dragOverColumn, setDragOverColumn] = useState<number | null>(null);
   const tableRef = useRef<HTMLTableElement>(null);
 
   // Debounce pour la recherche
@@ -332,6 +335,37 @@ export default function CompaniesPage() {
 
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  // Fonctions de drag & drop des colonnes
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedColumn(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', '');
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverColumn(index);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverColumn(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedColumn !== null && draggedColumn !== index) {
+      reorderColumns(draggedColumn, index);
+    }
+    setDraggedColumn(null);
+    setDragOverColumn(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedColumn(null);
+    setDragOverColumn(null);
   };
 
   // Obtenir la valeur d'une cellule depuis les données de la company
@@ -479,15 +513,23 @@ export default function CompaniesPage() {
               {/* Header */}
               <thead>
                 <tr className="notion-tr">
-                  {activeProperties.map((property) => {
+                  {activeProperties.map((property, index) => {
                     const Icon = property.icon;
                     const width = columnWidths[property.key] || property.width || 150;
+                    const isDragging = draggedColumn === index;
+                    const isDragOver = dragOverColumn === index;
                     
                     return (
                       <th
                         key={property.key}
-                        className="notion-th"
+                        className={`notion-th ${isDragging ? 'dragging' : ''} ${isDragOver ? 'drag-over' : ''}`}
                         style={{ width: `${width}px` }}
+                        draggable={!isResizing}
+                        onDragStart={(e) => handleDragStart(e, index)}
+                        onDragOver={(e) => handleDragOver(e, index)}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => handleDrop(e, index)}
+                        onDragEnd={handleDragEnd}
                       >
                         <button
                           onClick={() => handleSort(property.key)}

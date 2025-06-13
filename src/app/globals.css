@@ -97,4 +97,32 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Styles pour le drag & drop des colonnes */
+.notion-th.dragging {
+  opacity: 0.5;
+  transform: rotate(2deg);
+  z-index: 1000;
+  background-color: #f8fafc;
+  border: 2px dashed #facc15;
+}
+
+.notion-th.drag-over {
+  background-color: #fef3c7;
+  border-left: 3px solid #facc15;
+  transform: scale(1.02);
+  transition: all 0.2s ease;
+}
+
+.notion-th[draggable="true"] {
+  cursor: grab;
+}
+
+.notion-th[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.notion-th.dragging {
+  cursor: grabbing;
 } 

@@ -585,21 +585,33 @@ export default function ContactsPage() {
               </Button>
               
               <div className="flex items-center gap-1">
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  const page = Math.max(1, Math.min(totalPages, searchParams.page - 2 + i));
-                  return (
-                    <Button
-                      key={page}
-                      variant={page === searchParams.page ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handlePageChange(page)}
-                      disabled={loading}
-                      className="px-3 py-1 text-sm"
-                    >
-                      {page}
-                    </Button>
-                  );
-                })}
+                {(() => {
+                  const maxVisiblePages = Math.min(5, totalPages);
+                  const halfVisible = Math.floor(maxVisiblePages / 2);
+                  let startPage = Math.max(1, searchParams.page - halfVisible);
+                  let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+                  
+                  // Ajuster startPage si endPage est trop proche de totalPages
+                  if (endPage - startPage + 1 < maxVisiblePages) {
+                    startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                  }
+                  
+                  return Array.from({ length: endPage - startPage + 1 }, (_, i) => {
+                    const page = startPage + i;
+                    return (
+                      <Button
+                        key={page}
+                        variant={page === searchParams.page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handlePageChange(page)}
+                        disabled={loading}
+                        className="px-3 py-1 text-sm"
+                      >
+                        {page}
+                      </Button>
+                    );
+                  });
+                })()}
               </div>
               
               <Button

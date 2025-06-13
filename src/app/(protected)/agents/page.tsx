@@ -3,10 +3,10 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Sparkles,
-  MessageCircle,
-  Zap,
-  HandshakeIcon
+  Users,
+  Building2,
+  Handshake,
+  GitBranch
 } from "lucide-react";
 
 export default function AgentsPage() {
@@ -29,7 +29,7 @@ export default function AgentsPage() {
           <div className="bg-white p-6 rounded-lg border border-gray-200 hover:shadow-md transition-shadow cursor-pointer">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 bg-forgeo-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Sparkles className="h-5 w-5 text-forgeo-600" />
+                <Users className="h-5 w-5 text-forgeo-600" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900">Merge Contacts Duplicates</h3>
             </div>
@@ -39,7 +39,7 @@ export default function AgentsPage() {
           <div className="bg-white p-6 rounded-lg border border-gray-200 hover:shadow-md transition-shadow cursor-pointer">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <MessageCircle className="h-5 w-5 text-green-600" />
+                <Building2 className="h-5 w-5 text-green-600" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900">Merge Companies Duplicate</h3>
             </div>
@@ -49,7 +49,7 @@ export default function AgentsPage() {
           <div className="bg-white p-6 rounded-lg border border-gray-200 hover:shadow-md transition-shadow cursor-pointer">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <HandshakeIcon className="h-5 w-5 text-blue-600" />
+                <Handshake className="h-5 w-5 text-blue-600" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900">Merge Deals Duplicate</h3>
             </div>
@@ -59,7 +59,7 @@ export default function AgentsPage() {
           <div className="bg-white p-6 rounded-lg border border-gray-200 hover:shadow-md transition-shadow cursor-pointer">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Zap className="h-5 w-5 text-purple-600" />
+                <GitBranch className="h-5 w-5 text-purple-600" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900">Associate Parent/Child Companies</h3>
             </div>

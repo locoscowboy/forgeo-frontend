@@ -142,19 +142,24 @@ const criteriaLabels: Record<string, string> = {
   "duplicate_email": "Contacts avec email en double",
   "missing_firstname": "Contacts sans prénom",
   "missing_lastname": "Contacts sans nom",
+  "missing_owner": "Contacts sans propriétaire",
   "inactive_30days": "Contacts inactifs (180 jours)",
   
   // Companies
-  "empty_name": "Entreprises sans nom",
-  "empty_domain": "Entreprises sans domaine",
+  "missing_name": "Entreprises sans nom",
+  "missing_domain": "Entreprises sans domaine",
   "duplicate_domain": "Entreprises avec domaine en double",
   "missing_industry": "Entreprises sans secteur",
-  "missing_owner_company": "Entreprises sans propriétaire",
   
   // Deals
   "missing_amount": "Transactions sans montant",
   "missing_stage": "Transactions sans étape",
   "missing_closedate": "Transactions sans date de fermeture",
+  
+  // Fallback pour les anciens critères du backend
+  "empty_name": "Entreprises sans nom",
+  "empty_domain": "Entreprises sans domaine",
+  "missing_owner_company": "Entreprises sans propriétaire",
   "missing_owner_deal": "Transactions sans propriétaire"
 };
 

@@ -52,10 +52,7 @@ const SortDropdown: React.FC<SortDropdownProps> = ({
     onSortChange(newCriteria);
   };
 
-  const getPropertyLabel = (fieldKey: string) => {
-    const property = activeProperties.find(prop => prop.key === fieldKey);
-    return property?.label || fieldKey;
-  };
+  // Fonction utilitaire supprimée car non utilisée
 
   const sortCount = sortCriteria.length;
 
@@ -88,8 +85,8 @@ const SortDropdown: React.FC<SortDropdownProps> = ({
         {sortCriteria.length === 0 ? (
           <div className="p-4 text-center text-gray-500">
             <ArrowUpDown className="h-8 w-8 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">No sorting applied</p>
-            <p className="text-xs text-gray-400">Click "Add sort" to get started</p>
+                         <p className="text-sm">No sorting applied</p>
+             <p className="text-xs text-gray-400">Click &quot;Add sort&quot; to get started</p>
           </div>
         ) : (
           <div className="space-y-2 p-2">

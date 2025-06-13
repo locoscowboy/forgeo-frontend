@@ -98,10 +98,7 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({
     onFilterChange([]);
   };
 
-  const getPropertyLabel = (fieldKey: string) => {
-    const property = activeProperties.find(prop => prop.key === fieldKey);
-    return property?.label || fieldKey;
-  };
+  // Fonction utilitaire supprimée car non utilisée
 
   const totalFilterCount = filterGroups.reduce((acc, group) => acc + group.filters.length, 0);
 
@@ -144,8 +141,8 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({
         {filterGroups.length === 0 ? (
           <div className="p-4 text-center text-gray-500">
             <Filter className="h-8 w-8 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">No filters applied</p>
-            <p className="text-xs text-gray-400">Click "Add filter" to get started</p>
+                         <p className="text-sm">No filters applied</p>
+             <p className="text-xs text-gray-400">Click &quot;Add filter&quot; to get started</p>
           </div>
         ) : (
           <div className="space-y-4 p-2">
@@ -193,10 +190,10 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({
                           </SelectContent>
                         </Select>
                         
-                        <Select 
-                          value={filter.operator}
-                          onValueChange={(value: any) => updateFilter(groupIndex, filterIndex, { operator: value })}
-                        >
+                                                 <Select 
+                           value={filter.operator}
+                           onValueChange={(value: FilterCriteria['operator']) => updateFilter(groupIndex, filterIndex, { operator: value })}
+                         >
                           <SelectTrigger className="h-8 text-sm w-32">
                             <SelectValue />
                           </SelectTrigger>

@@ -23,15 +23,15 @@ import {
   Download,
   Plus,
   Building,
-  Globe,
-  Phone,
-  MapPin,
-  Users,
-  Calendar,
-  FileText,
   AlertCircle,
-  Linkedin
+  RotateCcw
 } from "lucide-react";
+
+// Nos nouveaux composants
+import AddColumnDropdown from "@/components/table/AddColumnDropdown";
+import CellRenderer from "@/components/table/CellRenderer";
+import { useTableColumns } from "@/hooks/useTableColumns";
+import { DEFAULT_COMPANY_COLUMNS, getPropertyByKey } from "@/lib/hubspot-properties";
 
 // Notion-like Table Styles
 const tableStyles = `
@@ -198,23 +198,18 @@ export default function CompaniesPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [total, setTotal] = useState(0);
   
-  // États de l'interface
-  const [columnWidths, setColumnWidths] = useState({
-    name: 200,
-    domain: 180,
-    website: 200,
-    industry: 150,
-    phone: 150,
-    address: 200,
-    city: 120,
-    state: 100,
-    zip: 80,
-    country: 120,
-    description: 250,
-    founded_year: 100,
-    numberofemployees: 120,
-    lastmodifieddate: 150,
-    linkedin: 200
+  // Notre nouveau système de colonnes
+  const {
+    visibleColumns,
+    columnWidths,
+    activeProperties,
+    addColumn,
+    removeColumn,
+    updateColumnWidth,
+    resetColumns
+  } = useTableColumns({
+    type: 'company',
+    defaultColumns: [...DEFAULT_COMPANY_COLUMNS, 'phone', 'city', 'founded_year', 'numberofemployees', 'linkedin_company_page']
   });
   
   const [isResizing, setIsResizing] = useState(false);
@@ -225,134 +220,84 @@ export default function CompaniesPage() {
   const [searchValue, setSearchValue] = useState("");
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Fonction principale de récupération des companies
-  const fetchCompanies = useCallback(async (params: SearchParams) => {
-    if (!token) {
-      console.log('❌ No token available');
-      setError("Session expirée. Veuillez vous reconnecter.");
-      return;
-    }
-    
-    setLoading(true);
-    setError(null);
-    
+  // Fonctions de chargement des données
+  const loadCompanies = useCallback(async () => {
+    if (!token) return;
+
     try {
-      console.log('🔥 Fetching companies with params:', params);
-      
+      setError(null);
+      if (companies.length === 0) setLoading(true);
+
       const response = await getCompanies(
         token,
-        params.page,
-        params.limit,
-        params.search || undefined,
-        params.sortField,
-        params.sortOrder
+        searchParams.page,
+        searchParams.limit,
+        searchParams.search,
+        searchParams.sortField,
+        searchParams.sortOrder
       );
-      
+
       setCompanies(response.companies);
-      setTotalPages(response.total_pages);
       setTotal(response.total);
-      
-      console.log('✅ Companies loaded successfully:', {
-        count: response.companies.length,
-        total: response.total,
-        page: response.page
-      });
-      
+      setTotalPages(response.total_pages);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Erreur lors du chargement des companies";
+      console.error('Error loading companies:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Une erreur est survenue';
       setError(errorMessage);
-      console.error('💥 Error fetching companies:', err);
-      
-      // Si c'est une erreur d'authentification, ne pas garder des données obsolètes
-      if (errorMessage.includes('Session expirée') || errorMessage.includes('non autorisé')) {
-        setCompanies([]);
-      }
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, searchParams, companies.length]);
 
-  // Effect principal pour charger les companies
+  // Chargement initial et lors des changements de paramètres
   useEffect(() => {
-    if (token) {
-      fetchCompanies(searchParams);
-    }
-  }, [token, searchParams, fetchCompanies]);
-
-  // Fonction pour mettre à jour les paramètres de recherche
-  const updateSearchParams = useCallback((updates: Partial<SearchParams>) => {
-    setSearchParams(prev => {
-      const newParams = { ...prev, ...updates };
-      
-      // Si on change autre chose que la page, remettre à la page 1
-      if ('search' in updates || 'sortField' in updates || 'sortOrder' in updates || 'limit' in updates) {
-        newParams.page = 1;
-      }
-      
-      return newParams;
-    });
-  }, []);
+    loadCompanies();
+  }, [loadCompanies]);
 
   // Gestionnaires d'événements
-  const handleSort = useCallback((field: string) => {
-    console.log('🎯 Sort clicked:', field);
-    
-    updateSearchParams({
-      sortField: field,
-      sortOrder: searchParams.sortField === field && searchParams.sortOrder === "asc" ? "desc" : "asc"
-    });
-  }, [searchParams.sortField, searchParams.sortOrder, updateSearchParams]);
+  const handleRetry = () => {
+    setError(null);
+    loadCompanies();
+  };
 
-  const handleSearch = useCallback((value: string) => {
+  const handleSearch = (value: string) => {
     setSearchValue(value);
     
-    // Débounce de 300ms pour éviter trop d'appels API
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
-    
+
     searchTimeoutRef.current = setTimeout(() => {
-      console.log('🔍 Search:', value);
-      updateSearchParams({ search: value });
+      setSearchParams(prev => ({
+        ...prev,
+        page: 1,
+        search: value
+      }));
     }, 300);
-  }, [updateSearchParams]);
-
-  const handlePageChange = useCallback((newPage: number) => {
-    updateSearchParams({ page: newPage });
-  }, [updateSearchParams]);
-
-  const handleLimitChange = useCallback((newLimit: number) => {
-    updateSearchParams({ limit: newLimit });
-  }, [updateSearchParams]);
-
-  const handleRetry = useCallback(() => {
-    fetchCompanies(searchParams);
-  }, [fetchCompanies, searchParams]);
-
-  // Cleanup du timeout lors du démontage
-  useEffect(() => {
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-        searchTimeoutRef.current = null;
-      }
-    };
-  }, []);
-
-  // Fonctions utilitaires
-  const getIndustryColor = (industry: string) => {
-    const colors: { [key: string]: string } = {
-      technology: "bg-forgeo-50 text-forgeo-700 border-forgeo-200",
-      finance: "bg-green-50 text-green-700 border-green-200",
-      healthcare: "bg-purple-50 text-purple-700 border-purple-200",
-      education: "bg-orange-50 text-orange-700 border-orange-200",
-      manufacturing: "bg-gray-50 text-gray-700 border-gray-200",
-      retail: "bg-pink-50 text-pink-700 border-pink-200",
-      other: "bg-gray-50 text-gray-700 border-gray-200",
-    };
-    return colors[industry?.toLowerCase()] || colors.other;
   };
 
+  const handleSort = (field: string) => {
+    setSearchParams(prev => ({
+      ...prev,
+      sortField: field,
+      sortOrder: prev.sortField === field && prev.sortOrder === 'asc' ? 'desc' : 'asc',
+      page: 1
+    }));
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setSearchParams(prev => ({ ...prev, page: newPage }));
+  };
+
+  const handleLimitChange = (newLimit: number) => {
+    setSearchParams(prev => ({ 
+      ...prev, 
+      limit: newLimit, 
+      page: 1 
+    }));
+  };
+
+  // Fonctions utilitaires
   const getSortIcon = (field: string) => {
     const isActive = searchParams.sortField === field;
     const className = `sort-icon ${isActive ? 'active' : ''}`;
@@ -363,20 +308,6 @@ export default function CompaniesPage() {
       <ArrowDown className={className} />;
   };
 
-  const columns = [
-    { key: "name", label: "Name", icon: Building },
-    { key: "domain", label: "Domain", icon: Globe },
-    { key: "website", label: "Website", icon: Globe },
-    { key: "industry", label: "Industry", icon: FileText },
-    { key: "phone", label: "Phone", icon: Phone },
-    { key: "city", label: "City", icon: MapPin },
-    { key: "state", label: "State", icon: MapPin },
-    { key: "country", label: "Country", icon: MapPin },
-    { key: "founded_year", label: "Founded", icon: Calendar },
-    { key: "numberofemployees", label: "Employees", icon: Users },
-    { key: "linkedin", label: "LinkedIn", icon: Linkedin }
-  ];
-
   // Fonctions de redimensionnement des colonnes
   const handleMouseDown = (e: React.MouseEvent, columnKey: string) => {
     e.preventDefault();
@@ -384,16 +315,12 @@ export default function CompaniesPage() {
     setResizingColumn(columnKey);
     
     const startX = e.clientX;
-    const startWidth = columnWidths[columnKey as keyof typeof columnWidths];
+    const startWidth = columnWidths[columnKey] || 150;
 
     const handleMouseMove = (e: MouseEvent) => {
       const diff = e.clientX - startX;
       const newWidth = Math.max(80, startWidth + diff);
-      
-      setColumnWidths(prev => ({
-        ...prev,
-        [columnKey]: newWidth
-      }));
+      updateColumnWidth(columnKey, newWidth);
     };
 
     const handleMouseUp = () => {
@@ -407,12 +334,27 @@ export default function CompaniesPage() {
     document.addEventListener('mouseup', handleMouseUp);
   };
 
+  // Obtenir la valeur d'une cellule depuis les données de la company
+  const getCellValue = (company: Company, columnKey: string) => {
+    // Essayer d'abord les propriétés de base
+    if (columnKey in company && columnKey !== 'properties') {
+      return (company as any)[columnKey];
+    }
+    
+    // Puis chercher dans les propriétés étendues
+    if (company.properties && columnKey in company.properties) {
+      return company.properties[columnKey];
+    }
+    
+    return null;
+  };
+
   // Composants de rendu conditionnel
   if (loading && companies.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-forgeo-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-forgeo-600 mx-auto"></div>
           <p className="mt-4 text-gray-600 font-medium">Chargement des companies...</p>
           <p className="mt-2 text-sm text-gray-500">Veuillez patienter</p>
         </div>
@@ -427,7 +369,7 @@ export default function CompaniesPage() {
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Erreur de chargement</h2>
           <p className="text-red-600 mb-4">{error}</p>
-                        <Button onClick={handleRetry} className="bg-forgeo-400 hover:bg-forgeo-500 text-black">
+          <Button onClick={handleRetry} className="bg-forgeo-400 hover:bg-forgeo-500 text-black">
             Réessayer
           </Button>
         </div>
@@ -488,6 +430,26 @@ export default function CompaniesPage() {
             </div>
             
             <div className="flex items-center gap-4">
+              {/* Nouveau bouton Add Column */}
+              <AddColumnDropdown
+                type="company"
+                visibleColumns={visibleColumns}
+                onColumnToggle={() => {}} // Pas utilisé dans notre implémentation
+                onColumnAdd={addColumn}
+                onColumnRemove={removeColumn}
+              />
+              
+              {/* Bouton Reset */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={resetColumns}
+                className="gap-2 text-gray-600 hover:text-gray-700"
+                title="Réinitialiser les colonnes"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </Button>
+              
               <Select 
                 value={searchParams.limit.toString()} 
                 onValueChange={(value) => handleLimitChange(Number(value))}
@@ -518,32 +480,32 @@ export default function CompaniesPage() {
               {/* Header */}
               <thead>
                 <tr className="notion-tr">
-                  {columns.map((column) => {
-                    const Icon = column.icon;
-                    const width = columnWidths[column.key as keyof typeof columnWidths];
+                  {activeProperties.map((property) => {
+                    const Icon = property.icon;
+                    const width = columnWidths[property.key] || property.width || 150;
                     
                     return (
                       <th
-                        key={column.key}
+                        key={property.key}
                         className="notion-th"
                         style={{ width: `${width}px` }}
                       >
                         <button
-                          onClick={() => handleSort(column.key)}
+                          onClick={() => handleSort(property.key)}
                           className="notion-th-content w-full text-left"
                           disabled={loading}
                         >
                           <Icon className="notion-icon" />
-                          <span className="font-medium">{column.label}</span>
+                          <span className="font-medium">{property.label}</span>
                           <div className="ml-auto">
-                            {getSortIcon(column.key)}
+                            {getSortIcon(property.key)}
                           </div>
                         </button>
                         
                         {/* Resizer */}
                         <div
-                          className={`resizer ${resizingColumn === column.key ? 'isResizing' : ''}`}
-                          onMouseDown={(e) => handleMouseDown(e, column.key)}
+                          className={`resizer ${resizingColumn === property.key ? 'isResizing' : ''}`}
+                          onMouseDown={(e) => handleMouseDown(e, property.key)}
                         />
                       </th>
                     );
@@ -555,7 +517,7 @@ export default function CompaniesPage() {
               <tbody>
                 {!loading && companies.length === 0 && !error ? (
                   <tr className="border-0">
-                    <td colSpan={columns.length} className="border-0 bg-transparent py-16 text-center">
+                    <td colSpan={activeProperties.length} className="border-0 bg-transparent py-16 text-center">
                       <div className="flex flex-col items-center justify-center gap-4 text-gray-500">
                         <Building className="h-16 w-16 text-gray-300" />
                         <div className="space-y-2">
@@ -569,89 +531,31 @@ export default function CompaniesPage() {
                 
                 {companies.map((company) => (
                   <tr key={company.id} className="notion-tr">
-                    <td className="notion-td" style={{ width: `${columnWidths.name}px` }}>
-                      {company.name || <span className="text-gray-400">—</span>}
-                    </td>
-                    
-                    <td className="notion-td" style={{ width: `${columnWidths.domain}px` }}>
-                      {company.domain || <span className="text-gray-400">—</span>}
-                    </td>
-                    
-                    <td className="notion-td" style={{ width: `${columnWidths.website}px` }}>
-                      {company.website ? (
-                        <a 
-                          href={company.website.startsWith('http') ? company.website : `https://${company.website}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-forgeo-600 hover:text-forgeo-800 hover:underline"
+                    {activeProperties.map((property) => {
+                      const width = columnWidths[property.key] || property.width || 150;
+                      const value = getCellValue(company, property.key);
+                      
+                      return (
+                        <td 
+                          key={property.key} 
+                          className="notion-td" 
+                          style={{ width: `${width}px` }}
                         >
-                          {company.website}
-                        </a>
-                      ) : (
-                        <span className="text-gray-400">—</span>
-                      )}
-                    </td>
-                    
-                    <td className="notion-td" style={{ width: `${columnWidths.industry}px` }}>
-                      {company.industry ? (
-                        <span className={`notion-tag ${getIndustryColor(company.industry)}`}>
-                          {company.industry}
-                        </span>
-                      ) : (
-                        <span className="text-gray-400">—</span>
-                      )}
-                    </td>
-                    
-                    <td className="notion-td" style={{ width: `${columnWidths.phone}px` }}>
-                      {company.phone || <span className="text-gray-400">—</span>}
-                    </td>
-                    
-                    <td className="notion-td" style={{ width: `${columnWidths.city}px` }}>
-                      {company.city || <span className="text-gray-400">—</span>}
-                    </td>
-                    
-                    <td className="notion-td" style={{ width: `${columnWidths.state}px` }}>
-                      {company.state || <span className="text-gray-400">—</span>}
-                    </td>
-                    
-                    <td className="notion-td" style={{ width: `${columnWidths.country}px` }}>
-                      {company.country || <span className="text-gray-400">—</span>}
-                    </td>
-                    
-                    <td className="notion-td" style={{ width: `${columnWidths.founded_year}px` }}>
-                      {company.founded_year || <span className="text-gray-400">—</span>}
-                    </td>
-                    
-                    <td className="notion-td" style={{ width: `${columnWidths.numberofemployees}px` }}>
-                      {company.numberofemployees ? (
-                        <span className="text-gray-700">{parseInt(company.numberofemployees).toLocaleString()}</span>
-                      ) : (
-                        <span className="text-gray-400">—</span>
-                      )}
-                    </td>
-                    
-                    <td className="notion-td" style={{ width: `${columnWidths.linkedin}px` }}>
-                      {company.properties?.linkedin_company_page ? (
-                        <a 
-                          href={company.properties.linkedin_company_page}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 text-blue-600 hover:text-blue-800 hover:underline"
-                        >
-                          <Linkedin className="h-4 w-4" />
-                          <span>LinkedIn</span>
-                        </a>
-                      ) : (
-                        <span className="text-gray-400">—</span>
-                      )}
-                    </td>
+                          <CellRenderer 
+                            value={value}
+                            property={property}
+                            allProperties={company.properties}
+                          />
+                        </td>
+                      );
+                    })}
                   </tr>
                 ))}
                 
                 {/* Ligne de loading pendant la mise à jour */}
                 {loading && companies.length > 0 && (
                   <tr className="notion-tr">
-                    <td colSpan={columns.length} className="notion-td text-center py-4">
+                    <td colSpan={activeProperties.length} className="notion-td text-center py-4">
                       <div className="flex items-center justify-center gap-2 text-gray-500">
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-forgeo-600"></div>
                         <span>Mise à jour des données...</span>
@@ -683,24 +587,18 @@ export default function CompaniesPage() {
               </Button>
               
               <div className="flex items-center gap-1">
-                {[...Array(Math.min(5, totalPages))].map((_, i) => {
-                  const pageNum = Math.max(1, Math.min(totalPages - 4, searchParams.page - 2)) + i;
-                  if (pageNum > totalPages) return null;
-                  
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  const page = Math.max(1, Math.min(totalPages, searchParams.page - 2 + i));
                   return (
                     <Button
-                      key={pageNum}
-                      variant={pageNum === searchParams.page ? "default" : "outline"}
+                      key={page}
+                      variant={page === searchParams.page ? "default" : "outline"}
                       size="sm"
-                      onClick={() => handlePageChange(pageNum)}
+                      onClick={() => handlePageChange(page)}
                       disabled={loading}
-                      className={`px-3 py-1 text-sm ${
-                                              pageNum === searchParams.page 
-                        ? "bg-forgeo-400 text-black hover:bg-forgeo-500" 
-                        : "border-gray-300 text-gray-700 hover:bg-gray-50"
-                      }`}
+                      className="px-3 py-1 text-sm"
                     >
-                      {pageNum}
+                      {page}
                     </Button>
                   );
                 })}

@@ -272,7 +272,81 @@ export default function ContactsPage() {
     loadContacts();
   }, [loadContacts]);
 
-  // Appliquer les filtres et tris côté frontend
+  // Fonction pour appliquer les filtres côté frontend
+  const applyFilters = useCallback((data: Contact[], filterGroups: FilterGroup[]): Contact[] => {
+    if (filterGroups.length === 0) return data;
+
+    return data.filter(contact => {
+      return filterGroups.some(group => {
+        return group.filters.every(filter => {
+          const value = getCellValue(contact, filter.field);
+          const stringValue = value?.toString().toLowerCase() || '';
+          const filterValue = filter.value.toLowerCase();
+
+          switch (filter.operator) {
+            case 'contains':
+              return stringValue.includes(filterValue);
+            case 'equals':
+              return stringValue === filterValue;
+            case 'not_equals':
+              return stringValue !== filterValue;
+            case 'starts_with':
+              return stringValue.startsWith(filterValue);
+            case 'ends_with':
+              return stringValue.endsWith(filterValue);
+            case 'is_empty':
+              return !value || value === '';
+            case 'is_not_empty':
+              return value && value !== '';
+            default:
+              return true;
+          }
+        });
+      });
+    });
+  }, []);
+
+  // Fonction pour appliquer le tri multiple côté frontend
+  const applySorting = useCallback((data: Contact[], sortCriteria: SortCriteria[]): Contact[] => {
+    if (sortCriteria.length <= 1) return data; // Le premier tri est déjà fait par l'API
+
+    const sortedData = [...data];
+    
+    // Appliquer les critères de tri supplémentaires (à partir du 2ème)
+    const additionalSorts = sortCriteria.slice(1);
+    
+    sortedData.sort((a, b) => {
+      for (const criteria of additionalSorts) {
+        const aValue = getCellValue(a, criteria.field);
+        const bValue = getCellValue(b, criteria.field);
+        
+        // Conversion en string pour comparaison
+        const aStr = aValue?.toString() || '';
+        const bStr = bValue?.toString() || '';
+        
+        let comparison = 0;
+        
+        // Essayer de comparer comme nombres si possible
+        const aNum = parseFloat(aStr);
+        const bNum = parseFloat(bStr);
+        
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+          comparison = aNum - bNum;
+        } else {
+          comparison = aStr.localeCompare(bStr);
+        }
+        
+        if (comparison !== 0) {
+          return criteria.order === 'asc' ? comparison : -comparison;
+        }
+      }
+      return 0;
+    });
+    
+    return sortedData;
+  }, []);
+
+  // Effet pour traiter les données filtrées et triées
   useEffect(() => {
     let processedData = [...contacts];
     
@@ -283,7 +357,7 @@ export default function ContactsPage() {
     processedData = applySorting(processedData, sortCriteria);
     
     setFilteredAndSortedContacts(processedData);
-  }, [contacts, filterGroups, sortCriteria]);
+  }, [contacts, filterGroups, sortCriteria, applyFilters, applySorting]);
 
   // Gestionnaires d'événements
   const handleRetry = () => {
@@ -336,80 +410,6 @@ export default function ContactsPage() {
     setSearchParams(prev => ({ ...prev, page: 1 }));
   };
 
-  // Fonction pour appliquer les filtres côté frontend
-  const applyFilters = (data: Contact[], filterGroups: FilterGroup[]): Contact[] => {
-    if (filterGroups.length === 0) return data;
-
-    return data.filter(contact => {
-      return filterGroups.some(group => {
-        return group.filters.every(filter => {
-          const value = getCellValue(contact, filter.field);
-          const stringValue = value?.toString().toLowerCase() || '';
-          const filterValue = filter.value.toLowerCase();
-
-          switch (filter.operator) {
-            case 'contains':
-              return stringValue.includes(filterValue);
-            case 'equals':
-              return stringValue === filterValue;
-            case 'not_equals':
-              return stringValue !== filterValue;
-            case 'starts_with':
-              return stringValue.startsWith(filterValue);
-            case 'ends_with':
-              return stringValue.endsWith(filterValue);
-            case 'is_empty':
-              return !value || value === '';
-            case 'is_not_empty':
-              return value && value !== '';
-            default:
-              return true;
-          }
-        });
-      });
-    });
-  };
-
-  // Fonction pour appliquer le tri multiple côté frontend
-  const applySorting = (data: Contact[], sortCriteria: SortCriteria[]): Contact[] => {
-    if (sortCriteria.length <= 1) return data; // Le premier tri est déjà fait par l'API
-
-    const sortedData = [...data];
-    
-    // Appliquer les critères de tri supplémentaires (à partir du 2ème)
-    const additionalSorts = sortCriteria.slice(1);
-    
-    sortedData.sort((a, b) => {
-      for (const criteria of additionalSorts) {
-        const aValue = getCellValue(a, criteria.field);
-        const bValue = getCellValue(b, criteria.field);
-        
-        // Conversion en string pour comparaison
-        const aStr = aValue?.toString() || '';
-        const bStr = bValue?.toString() || '';
-        
-        let comparison = 0;
-        
-        // Essayer de comparer comme nombres si possible
-        const aNum = parseFloat(aStr);
-        const bNum = parseFloat(bStr);
-        
-        if (!isNaN(aNum) && !isNaN(bNum)) {
-          comparison = aNum - bNum;
-        } else {
-          comparison = aStr.localeCompare(bStr);
-        }
-        
-        if (comparison !== 0) {
-          return criteria.order === 'asc' ? comparison : -comparison;
-        }
-      }
-      return 0;
-    });
-    
-    return sortedData;
-  };
-
   const handlePageChange = (newPage: number) => {
     setSearchParams(prev => ({ ...prev, page: newPage }));
   };
@@ -421,8 +421,6 @@ export default function ContactsPage() {
       page: 1 
     }));
   };
-
-  // Fonctions utilitaires supprimées (tri maintenant géré par SortDropdown)
 
   // Fonctions de redimensionnement des colonnes
   const handleMouseDown = (e: React.MouseEvent, columnKey: string) => {

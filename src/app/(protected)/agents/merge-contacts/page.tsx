@@ -133,7 +133,7 @@ export default function MergeContactsPage() {
           </Button>
           <Button size="sm" className="gap-2 bg-forgeo-400 hover:bg-forgeo-500 text-black">
             <Play className="h-4 w-4" />
-            Lancer l'Agent
+            Lancer l&apos;Agent
           </Button>
         </div>
       </div>
@@ -144,7 +144,7 @@ export default function MergeContactsPage() {
           
           {/* Overview */}
           <div className="bg-white rounded-lg border p-6 mb-8">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Vue d'ensemble</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Vue d&apos;ensemble</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="text-center p-4 bg-gray-50 rounded-lg">
                 <div className="text-2xl font-bold text-gray-900">~15 min</div>
@@ -164,9 +164,9 @@ export default function MergeContactsPage() {
           {/* Agents Pipeline */}
           <div className="bg-white rounded-lg border">
             <div className="p-6 border-b">
-              <h2 className="text-lg font-semibold text-gray-900">Pipeline d'exécution</h2>
+              <h2 className="text-lg font-semibold text-gray-900">Pipeline d&apos;exécution</h2>
               <p className="text-sm text-gray-600 mt-1">
-                Séquence d'agents qui s'exécuteront automatiquement pour fusionner vos contacts dupliqués
+                Séquence d&apos;agents qui s&apos;exécuteront automatiquement pour fusionner vos contacts dupliqués
               </p>
             </div>
             
@@ -255,7 +255,7 @@ export default function MergeContactsPage() {
                     </li>
                     <li className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-forgeo-500 rounded-full"></div>
-                      Préserver l'historique des activités
+                      Préserver l&apos;historique des activités
                     </li>
                   </ul>
                 </div>

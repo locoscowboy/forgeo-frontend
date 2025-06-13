@@ -21,38 +21,38 @@ export default function MergeContactsPage() {
   const agents = [
     {
       id: 1,
-      name: "Detect Duplicates",
-      description: "Identify potential duplicate contacts based on email, name, and phone similarities",
+      name: "Duplicate Detector",
+      description: "Detect duplicates based on exact rules (email, phone) and fuzzy logic (first name/last name). Uses normalization and similarity matching for broad coverage.",
       icon: Search,
       status: "ready",
-      estimatedTime: "2-5 min",
+      estimatedTime: "1–3 min",
       color: "blue"
     },
     {
       id: 2,
-      name: "Analyze Conflicts",
-      description: "Compare duplicate contacts and identify data conflicts that need resolution",
+      name: "Primary Record Selector",
+      description: "Intelligently select the primary contact to keep among duplicates. Prioritizes based on: assigned owner, engagement, data completeness, and record age.",
       icon: Users,
       status: "pending",
-      estimatedTime: "1-3 min",
+      estimatedTime: "1–2 min",
       color: "orange"
     },
     {
       id: 3,
-      name: "Smart Merge",
-      description: "Automatically merge contacts using intelligent data consolidation rules",
+      name: "Record Merger",
+      description: "Automatically merge contact data using a field-by-field logic. Applies configurable strategies for each property (concat, priority rules, fill missing values).",
       icon: GitMerge,
       status: "pending",
-      estimatedTime: "3-8 min",
+      estimatedTime: "3–5 min",
       color: "green"
     },
     {
       id: 4,
-      name: "Validate Results",
-      description: "Verify merged contacts and ensure data integrity across HubSpot",
+      name: "Merge Audit Logger",
+      description: "Validate and log the merge process. Ensures integrity of merged records and archives decisions (detected duplicates, selected primary, merged fields).",
       icon: CheckCircle,
       status: "pending",
-      estimatedTime: "1-2 min",
+      estimatedTime: "1–2 min",
       color: "purple"
     }
   ];

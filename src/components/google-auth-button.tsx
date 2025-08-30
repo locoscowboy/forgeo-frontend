@@ -4,11 +4,10 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 interface GoogleAuthButtonProps {
-  onSuccess?: (token: string) => void;
   onError?: (error: string) => void;
 }
 
-export function GoogleAuthButton({ onSuccess, onError }: GoogleAuthButtonProps) {
+export function GoogleAuthButton({ onError }: GoogleAuthButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleGoogleAuth = async () => {
@@ -21,7 +20,7 @@ export function GoogleAuthButton({ onSuccess, onError }: GoogleAuthButtonProps) 
       
       // Rediriger vers Google OAuth
       window.location.href = data.authorization_url;
-    } catch (error) {
+    } catch {
       setIsLoading(false);
       onError?.('Erreur lors de la connexion Google');
     }

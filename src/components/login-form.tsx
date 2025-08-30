@@ -106,9 +106,6 @@ export function LoginForm({
               </div>
               
               <GoogleAuthButton 
-                onSuccess={(token) => {
-                  loginUser(token);
-                }}
                 onError={(error) => {
                   setError(error);
                 }}

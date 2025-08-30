@@ -22,7 +22,7 @@ export function GoogleAuthButton({ onError }: GoogleAuthButtonProps) {
       window.location.href = data.authorization_url;
     } catch {
       setIsLoading(false);
-      onError?.('Erreur lors de la connexion Google');
+      onError?.("Erreur lors de la connexion Google");
     }
   };
 

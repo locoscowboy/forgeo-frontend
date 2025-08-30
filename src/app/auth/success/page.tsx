@@ -58,7 +58,7 @@ function LoadingFallback() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
           <p className="text-sm text-gray-600">
-            Traitement de l'authentification...
+            Traitement de l&apos;authentification...
           </p>
         </CardContent>
       </Card>

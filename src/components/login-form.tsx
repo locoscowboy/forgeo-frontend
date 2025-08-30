@@ -34,7 +34,7 @@ export function LoginForm({
       const response = await login(credentials);
       loginUser(response.access_token);
     } catch {
-      setError('Email ou mot de passe incorrect');
+      setError("Email ou mot de passe incorrect");
     } finally {
       setIsLoading(false);
     }
@@ -90,7 +90,7 @@ export function LoginForm({
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? 'Connexion...' : 'Se connecter'}
+                  {isLoading ? "Connexion..." : "Se connecter"}
                 </Button>
               </div>
               

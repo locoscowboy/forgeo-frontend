@@ -46,13 +46,13 @@ export function RegisterForm({
 
     // Validation simple
     if (formData.password !== formData.confirmPassword) {
-      setError('Les mots de passe ne correspondent pas');
+      setError("Les mots de passe ne correspondent pas");
       setIsLoading(false);
       return;
     }
 
     if (formData.password.length < 6) {
-      setError('Le mot de passe doit contenir au moins 6 caractères');
+      setError("Le mot de passe doit contenir au moins 6 caractères");
       setIsLoading(false);
       return;
     }
@@ -71,7 +71,7 @@ export function RegisterForm({
       // Note: La redirection se fera automatiquement via l'AuthContext
     } catch (error) {
       console.error('Registration error:', error);
-      setError('Erreur lors de la création du compte. Cet email existe peut-être déjà.');
+      setError("Erreur lors de la création du compte. Cet email existe peut-être déjà.");
     } finally {
       setIsLoading(false);
     }
@@ -153,7 +153,7 @@ export function RegisterForm({
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? 'Création du compte...' : 'Créer mon compte'}
+                  {isLoading ? "Création du compte..." : "Créer mon compte"}
                 </Button>
               </div>
               

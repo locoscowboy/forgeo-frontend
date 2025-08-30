@@ -36,6 +36,24 @@ export function RegisterForm({
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Fonction pour vérifier la force du mot de passe
+  const checkPasswordStrength = (password: string) => {
+    const checks = {
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /\d/.test(password),
+      special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+    };
+    
+    const score = Object.values(checks).filter(Boolean).length;
+    const isValid = Object.values(checks).every(Boolean);
+    
+    return { checks, score, isValid };
+  };
+  
+  const passwordStrength = checkPasswordStrength(formData.password);
   const { login: loginUser } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -152,6 +170,67 @@ export function RegisterForm({
                     disabled={isLoading}
                   />
                 </div>
+                
+                {/* Indicateur de force du mot de passe */}
+                {formData.password && (
+                  <div className="space-y-3 p-4 bg-gray-50 rounded-md border">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Force du mot de passe</span>
+                      <span className={`text-sm font-medium ${
+                        passwordStrength.isValid ? 'text-green-600' : 
+                        passwordStrength.score >= 3 ? 'text-yellow-600' : 'text-red-600'
+                      }`}>
+                        {passwordStrength.isValid ? 'Excellent' : 
+                         passwordStrength.score >= 3 ? 'Moyen' : 'Faible'}
+                      </span>
+                    </div>
+                    
+                    {/* Barre de progression */}
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className={`h-2 rounded-full transition-all duration-300 ${
+                          passwordStrength.isValid ? 'bg-green-500' :
+                          passwordStrength.score >= 3 ? 'bg-yellow-500' : 'bg-red-500'
+                        }`}
+                        style={{ width: `${(passwordStrength.score / 5) * 100}%` }}
+                      />
+                    </div>
+                    
+                    {/* Liste des critères */}
+                    <div className="space-y-1">
+                      <div className={`flex items-center text-sm ${
+                        passwordStrength.checks.length ? 'text-green-600' : 'text-gray-500'
+                      }`}>
+                        <span className="mr-2">{passwordStrength.checks.length ? '✓' : '○'}</span>
+                        Au moins 8 caractères
+                      </div>
+                      <div className={`flex items-center text-sm ${
+                        passwordStrength.checks.uppercase ? 'text-green-600' : 'text-gray-500'
+                      }`}>
+                        <span className="mr-2">{passwordStrength.checks.uppercase ? '✓' : '○'}</span>
+                        Une lettre majuscule
+                      </div>
+                      <div className={`flex items-center text-sm ${
+                        passwordStrength.checks.lowercase ? 'text-green-600' : 'text-gray-500'
+                      }`}>
+                        <span className="mr-2">{passwordStrength.checks.lowercase ? '✓' : '○'}</span>
+                        Une lettre minuscule
+                      </div>
+                      <div className={`flex items-center text-sm ${
+                        passwordStrength.checks.number ? 'text-green-600' : 'text-gray-500'
+                      }`}>
+                        <span className="mr-2">{passwordStrength.checks.number ? '✓' : '○'}</span>
+                        Un chiffre
+                      </div>
+                      <div className={`flex items-center text-sm ${
+                        passwordStrength.checks.special ? 'text-green-600' : 'text-gray-500'
+                      }`}>
+                        <span className="mr-2">{passwordStrength.checks.special ? '✓' : '○'}</span>
+                        Un caractère spécial (!@#$%^&*...)
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Création du compte..." : "Créer mon compte"}
                 </Button>

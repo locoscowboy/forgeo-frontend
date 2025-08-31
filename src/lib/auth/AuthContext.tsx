@@ -3,13 +3,19 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCurrentUser, User } from '../api/auth';
+import { getHubSpotStatus, HubSpotConnectionStatus } from '../api/integrations';
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
   isLoading: boolean;
+  needsOnboarding: boolean;
+  onboardingStep: 'selection' | 'connecting' | 'syncing' | 'completed';
+  hubspotStatus: HubSpotConnectionStatus | null;
   login: (token: string) => void;
   logout: () => void;
+  checkOnboardingStatus: () => Promise<void>;
+  setOnboardingStep: (step: 'selection' | 'connecting' | 'syncing' | 'completed') => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,6 +24,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState<'selection' | 'connecting' | 'syncing' | 'completed'>('selection');
+  const [hubspotStatus, setHubspotStatus] = useState<HubSpotConnectionStatus | null>(null);
   const router = useRouter();
 
   function getCookieValue(name: string) {
@@ -33,6 +42,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; secure; samesite=strict`;
   }
 
+  const checkOnboardingStatus = async () => {
+    if (!token) return;
+    
+    try {
+      const status = await getHubSpotStatus(token);
+      setHubspotStatus(status);
+      
+      // Déterminer si l'onboarding est nécessaire
+      const hasConnection = status.isConnected;
+      const hasData = status.dataStats && (
+        (status.dataStats.contacts && status.dataStats.contacts > 0) ||
+        (status.dataStats.companies && status.dataStats.companies > 0) ||
+        (status.dataStats.deals && status.dataStats.deals > 0)
+      );
+      
+      const needsOnboardingNow = !hasConnection || !hasData;
+      setNeedsOnboarding(needsOnboardingNow);
+      
+      // Définir l'étape d'onboarding
+      if (!hasConnection) {
+        setOnboardingStep('selection');
+      } else if (!hasData) {
+        setOnboardingStep('syncing');
+      } else {
+        setOnboardingStep('completed');
+      }
+      
+    } catch (error) {
+      console.error('❌ Erreur lors de la vérification du statut d\'onboarding:', error);
+      // En cas d'erreur, on considère que l'onboarding est nécessaire
+      setNeedsOnboarding(true);
+      setOnboardingStep('selection');
+    }
+  };
+
   useEffect(() => {
     async function fetchUser(authToken: string) {
       console.log('🔄 Fetching user data with token...');
@@ -40,6 +84,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const userData = await getCurrentUser(authToken);
         console.log('✅ User data fetched successfully:', userData);
         setUser(userData);
+        
+        // Vérifier le statut d'onboarding après avoir récupéré l'utilisateur
+        await checkOnboardingStatus();
+        
         setIsLoading(false);
       } catch (error) {
         console.error('❌ Failed to fetch user:', error);
@@ -70,6 +118,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const userData = await getCurrentUser(authToken);
         setUser(userData);
+        
+        // Vérifier le statut d'onboarding après connexion
+        await checkOnboardingStatus();
+        
         setIsLoading(false);
       } catch (error) {
         console.error('❌ Failed to fetch user after login:', error);
@@ -97,7 +149,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      token, 
+      isLoading, 
+      needsOnboarding,
+      onboardingStep,
+      hubspotStatus,
+      login, 
+      logout,
+      checkOnboardingStatus,
+      setOnboardingStep
+    }}>
       {children}
     </AuthContext.Provider>
   );

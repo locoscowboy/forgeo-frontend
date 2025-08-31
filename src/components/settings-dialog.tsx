@@ -61,8 +61,7 @@ import {
   disconnectHubSpot,
   HubSpotConnectionStatus 
 } from "@/lib/api/integrations"
-import { useSyncStats } from "@/hooks/useSmartSync"
-import { SyncStatusIndicator } from "@/components/sync-status-indicator"
+import { SyncStatusIndicator, useSyncStats } from "@/components/sync-status-indicator"
 
 const forgeoSettingsData = {
   nav: [
@@ -251,8 +250,8 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
     }
   }
 
-  // Hooks Smart Sync
-  const { stats } = useSyncStats()
+  // Hooks Smart Sync 
+  const { stats, totalRecords } = useSyncStats()
 
   const renderSettingsContent = () => {
     switch (activeSection) {
@@ -343,7 +342,7 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
                     />
 
                     {/* Smart Sync Data Overview */}
-                    {(stats.totalRecords > 0 || hubspotConnection.dataStats) && (
+                    {(totalRecords > 0 || hubspotConnection.dataStats) && (
                       <div className="grid grid-cols-3 gap-3">
                         <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-100">
                           <Users className="w-6 h-6 mx-auto mb-2 text-blue-600" />

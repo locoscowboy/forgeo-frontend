@@ -217,7 +217,7 @@ export function PageSyncHeader({
 }
 
 // Hook pour utiliser les statistiques de sync (déplacé ici depuis useSmartSync)
-function useSyncStats() {
+export function useSyncStats() {
   const { state } = useSync();
 
   const stats = {

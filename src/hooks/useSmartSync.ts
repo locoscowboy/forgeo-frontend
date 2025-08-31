@@ -13,15 +13,15 @@ import {
  * Hook principal pour la gestion Smart Sync
  */
 export function useSmartSync() {
-  const { state, checkSyncStatus, startSync, refreshStatus } = useSync();
+  const { state, checkSyncStatus, startSync, refreshStatus, isStale } = useSync();
   const { token } = useAuth();
 
   // Auto-vérification au montage si token disponible
   useEffect(() => {
-    if (token && state.isStale()) {
+    if (token && isStale()) {
       checkSyncStatus(token);
     }
-  }, [token, checkSyncStatus, state]);
+  }, [token, checkSyncStatus, isStale]);
 
   // Démarrer une sync avec options
   const handleStartSync = useCallback(async (options?: SyncOptions) => {

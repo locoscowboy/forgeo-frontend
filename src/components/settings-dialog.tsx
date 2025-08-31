@@ -61,7 +61,7 @@ import {
   disconnectHubSpot,
   HubSpotConnectionStatus 
 } from "@/lib/api/integrations"
-import { useSyncActions, useSyncStats } from "@/hooks/useSmartSync"
+import { useSyncStats } from "@/hooks/useSmartSync"
 import { SyncStatusIndicator } from "@/components/sync-status-indicator"
 
 const forgeoSettingsData = {

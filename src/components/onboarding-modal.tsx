@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Building2, CheckCircle, Loader2, ArrowRight } from "lucide-react"
+import { CheckCircle, Loader2, ArrowRight } from "lucide-react"
 import { useAuth } from "@/lib/auth/AuthContext"
 import { getHubSpotAuthUrl, syncHubSpotData, getSyncStatus } from "@/lib/api/integrations"
 
@@ -55,8 +55,7 @@ export function OnboardingModal({ open }: OnboardingModalProps) {
     token, 
     onboardingStep, 
     setOnboardingStep, 
-    checkOnboardingStatus,
-    hubspotStatus 
+    checkOnboardingStatus
   } = useAuth()
   
   const [isConnecting, setIsConnecting] = React.useState(false)
@@ -67,7 +66,6 @@ export function OnboardingModal({ open }: OnboardingModalProps) {
     total: number;
     isComplete: boolean;
   }>({ contacts: 0, companies: 0, deals: 0, total: 0, isComplete: false })
-  const [syncId, setSyncId] = React.useState<number | null>(null)
 
   const handleHubSpotConnection = async () => {
     if (!token) return
@@ -130,7 +128,6 @@ export function OnboardingModal({ open }: OnboardingModalProps) {
     
     try {
       const syncResponse = await syncHubSpotData(token)
-      setSyncId(syncResponse.sync_id)
       
       // Surveiller le progrès de la synchronisation
       const interval = setInterval(async () => {

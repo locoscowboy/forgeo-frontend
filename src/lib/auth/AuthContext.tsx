@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCurrentUser, User } from '../api/auth';
 import { getHubSpotStatus, HubSpotConnectionStatus } from '../api/integrations';
@@ -42,7 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; secure; samesite=strict`;
   }
 
-  const checkOnboardingStatus = async () => {
+  const checkOnboardingStatus = useCallback(async () => {
     if (!token) return;
     
     try {
@@ -75,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setNeedsOnboarding(true);
       setOnboardingStep('selection');
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     async function fetchUser(authToken: string) {
@@ -105,7 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } else {
       setIsLoading(false);
     }
-  }, []);
+  }, [checkOnboardingStatus]);
 
   const login = (newToken: string) => {
     console.log("🔐 AuthContext: login called with token");

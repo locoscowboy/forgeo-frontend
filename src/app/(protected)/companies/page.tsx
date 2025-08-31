@@ -19,6 +19,7 @@ import {
   Building,
   AlertCircle
 } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
 
 // Nos nouveaux composants
 import AddColumnDropdown from "@/components/table/AddColumnDropdown";
@@ -528,16 +529,11 @@ export default function CompaniesPage() {
     <>
       <style>{tableStyles}</style>
       <div className={`h-full bg-gray-50 flex flex-col ${isResizing ? 'noselect' : ''}`}>
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-6 h-14 flex items-center justify-between flex-shrink-0">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Companies</h1>
-          </div>
-          <div className="text-sm text-gray-600">
-            {total.toLocaleString()} companies • Page {searchParams.page} of {totalPages}
-            {loading && " • Mise à jour..."}
-          </div>
-        </div>
+        {/* Header avec Smart Sync */}
+        <PageHeader 
+          title="Companies" 
+          description={`${total.toLocaleString()} companies • Page ${searchParams.page} of ${totalPages}${loading ? " • Mise à jour..." : ""}`}
+        />
 
         {/* Message d'erreur en cas de problème pendant le chargement */}
         {error && companies.length > 0 && (

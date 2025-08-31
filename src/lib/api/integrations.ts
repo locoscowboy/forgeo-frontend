@@ -1,4 +1,12 @@
 // Types pour les intégrations HubSpot
+import {
+  SmartSyncStatus,
+  EnrichedSyncStatus,
+  LoginSyncCheck,
+  LatestSyncResponse,
+  HubspotSyncData
+} from '@/types/smart-sync';
+
 export interface HubSpotAccount {
   id?: number;
   user_id: number;
@@ -270,6 +278,68 @@ export async function disconnectHubSpot(token: string): Promise<{ message: strin
  */
 export async function refreshHubSpotToken(token: string): Promise<HubSpotToken> {
   return apiCall<HubSpotToken>('/api/v1/hubspot/token', {
+    method: 'GET',
+  }, token);
+}
+
+// ========================================
+// NOUVEAUX ENDPOINTS SMART SYNC
+// ========================================
+
+/**
+ * Vérifier si une synchronisation est recommandée (endpoint Smart Sync)
+ */
+export async function getShouldSync(token: string): Promise<SmartSyncStatus> {
+  return apiCall<SmartSyncStatus>('/api/v1/hubspot-sync/should-sync', {
+    method: 'GET',
+  }, token);
+}
+
+/**
+ * Obtenir le statut enrichi de synchronisation avec recommandations
+ */
+export async function getEnrichedSyncStatus(token: string): Promise<EnrichedSyncStatus> {
+  return apiCall<EnrichedSyncStatus>('/api/v1/hubspot-sync/status', {
+    method: 'GET',
+  }, token);
+}
+
+/**
+ * Vérifier si une synchronisation est nécessaire au login
+ */
+export async function getLoginSyncCheck(token: string): Promise<LoginSyncCheck> {
+  return apiCall<LoginSyncCheck>('/api/v1/hubspot-sync/login-check', {
+    method: 'GET',
+  }, token);
+}
+
+/**
+ * Obtenir la dernière synchronisation avec informations enrichies
+ */
+export async function getLatestSyncEnriched(token: string): Promise<LatestSyncResponse> {
+  return apiCall<LatestSyncResponse>('/api/v1/hubspot-sync/latest', {
+    method: 'GET',
+  }, token);
+}
+
+/**
+ * Obtenir une synchronisation spécifique par ID
+ */
+export async function getSyncById(syncId: number, token: string): Promise<HubspotSyncData> {
+  return apiCall<HubspotSyncData>(`/api/v1/hubspot-sync/${syncId}`, {
+    method: 'GET',
+  }, token);
+}
+
+/**
+ * Obtenir l'historique des synchronisations
+ */
+export async function getSyncHistory(
+  token: string,
+  skip: number = 0,
+  limit: number = 100
+): Promise<HubspotSyncData[]> {
+  return apiCall<HubspotSyncData[]>(`/api/v1/hubspot-sync?skip=${skip}&limit=${limit}`, {
     method: 'GET',
   }, token);
 } 

@@ -59,10 +59,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { 
   getHubSpotAuthUrl, 
   getHubSpotStatus, 
-  syncHubSpotData, 
   disconnectHubSpot,
   HubSpotConnectionStatus 
 } from "@/lib/api/integrations"
+import { useSmartSync, useSyncActions, useDataFreshness, useSyncStats } from "@/hooks/useSmartSync"
+import { SyncStatusIndicator } from "@/components/sync-status-indicator"
 
 const forgeoSettingsData = {
   nav: [
@@ -251,21 +252,24 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
     }
   }
 
+  // Hooks Smart Sync
+  const { isSyncing } = useSmartSync()
+  const { handleSync } = useSyncActions()
+  const { stats } = useSyncStats()
+  
   const handleSyncHubSpot = async () => {
     if (!token) return
     
-    setHubspotConnection(prev => ({ ...prev, syncStatus: 'syncing' }))
     setConnectionError(null)
     
     try {
-      await syncHubSpotData(token)
+      await handleSync({ trigger: 'manual' })
       // Recharger le statut après synchronisation
       setTimeout(() => loadHubSpotStatus(), 2000)
     } catch (error) {
       console.error('Erreur lors de la synchronisation HubSpot:', error)
       const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue'
       setConnectionError(`Erreur de synchronisation: ${errorMessage}`)
-      setHubspotConnection(prev => ({ ...prev, syncStatus: 'error' }))
     }
   }
 
@@ -351,66 +355,34 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {/* Sync Status - Simplifié */}
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <Badge variant={
-                          hubspotConnection.syncStatus === 'success' ? 'default' :
-                          hubspotConnection.syncStatus === 'syncing' ? 'secondary' :
-                          hubspotConnection.syncStatus === 'error' ? 'destructive' :
-                          'outline'
-                        }>
-                          {hubspotConnection.syncStatus === 'success' && <CheckCircle className="w-3 h-3 mr-1" />}
-                          {hubspotConnection.syncStatus === 'syncing' && <RefreshCw className="w-3 h-3 mr-1 animate-spin" />}
-                          {hubspotConnection.syncStatus === 'error' && <XCircle className="w-3 h-3 mr-1" />}
-                          {hubspotConnection.syncStatus === 'success' ? 'Synchronisé' :
-                           hubspotConnection.syncStatus === 'syncing' ? 'En cours...' :
-                           hubspotConnection.syncStatus === 'error' ? 'Erreur' :
-                           'Prêt à synchroniser'}
-                        </Badge>
-                        {hubspotConnection.lastSync && (
-                          <span className="text-sm text-muted-foreground">
-                            {new Date(hubspotConnection.lastSync).toLocaleDateString('fr-FR')}
-                          </span>
-                        )}
-                      </div>
-                      
-                      <Button 
-                        onClick={handleSyncHubSpot}
-                        disabled={hubspotConnection.syncStatus === 'syncing' || hubspotConnection.isLoading}
-                        variant="outline"
-                        size="sm"
-                      >
-                        {hubspotConnection.syncStatus === 'syncing' ? (
-                          <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Sync...</>
-                        ) : (
-                          <><RefreshCw className="w-4 h-4 mr-2" /> Synchroniser</>
-                        )}
-                      </Button>
-                    </div>
+                    {/* Smart Sync Status */}
+                    <SyncStatusIndicator 
+                      variant="full" 
+                      className="border-0 bg-gray-50" 
+                    />
 
-                    {/* Data Overview - Amélioré visuellement */}
-                    {hubspotConnection.dataStats && (
+                    {/* Smart Sync Data Overview */}
+                    {(stats.totalRecords > 0 || hubspotConnection.dataStats) && (
                       <div className="grid grid-cols-3 gap-3">
                         <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-100">
                           <Users className="w-6 h-6 mx-auto mb-2 text-blue-600" />
                           <p className="text-xs text-blue-600 font-medium">Contacts</p>
                           <p className="text-xl font-bold text-blue-700">
-                            {hubspotConnection.dataStats.contacts.toLocaleString()}
+                            {(stats.totalContacts || hubspotConnection.dataStats?.contacts || 0).toLocaleString()}
                           </p>
                         </div>
                         <div className="text-center p-4 bg-green-50 rounded-lg border border-green-100">
                           <Building className="w-6 h-6 mx-auto mb-2 text-green-600" />
                           <p className="text-xs text-green-600 font-medium">Entreprises</p>
                           <p className="text-xl font-bold text-green-700">
-                            {hubspotConnection.dataStats.companies.toLocaleString()}
+                            {(stats.totalCompanies || hubspotConnection.dataStats?.companies || 0).toLocaleString()}
                           </p>
                         </div>
                         <div className="text-center p-4 bg-purple-50 rounded-lg border border-purple-100">
                           <DollarSign className="w-6 h-6 mx-auto mb-2 text-purple-600" />
                           <p className="text-xs text-purple-600 font-medium">Deals</p>
                           <p className="text-xl font-bold text-purple-700">
-                            {hubspotConnection.dataStats.deals.toLocaleString()}
+                            {(stats.totalDeals || hubspotConnection.dataStats?.deals || 0).toLocaleString()}
                           </p>
                         </div>
                       </div>

@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCurrentUser, User } from '../api/auth';
-import { getHubSpotStatus, HubSpotConnectionStatus } from '../api/integrations';
+import { getHubSpotStatus, HubSpotConnectionStatus, getLoginSyncCheck } from '../api/integrations';
 
 interface AuthContextType {
   user: User | null;
@@ -46,27 +46,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!token) return;
     
     try {
-      const status = await getHubSpotStatus(token);
-      setHubspotStatus(status);
+      console.log('🔄 Checking onboarding status with Smart Sync...');
       
-      // Déterminer si l'onboarding est nécessaire
-      const hasConnection = status.isConnected;
-      const hasData = status.dataStats && (
-        (status.dataStats.contacts && status.dataStats.contacts > 0) ||
-        (status.dataStats.companies && status.dataStats.companies > 0) ||
-        (status.dataStats.deals && status.dataStats.deals > 0)
-      );
+      // Utiliser le nouveau endpoint Smart Sync pour déterminer l'onboarding
+      const [hubspotStatus, loginSyncCheck] = await Promise.all([
+        getHubSpotStatus(token),
+        getLoginSyncCheck(token).catch(() => null) // Graceful fallback si l'endpoint n'existe pas encore
+      ]);
+      
+      setHubspotStatus(hubspotStatus);
+      
+      // Logique Smart Sync pour l'onboarding
+      const hasConnection = hubspotStatus.isConnected;
+      const hasData = loginSyncCheck?.has_data || (hubspotStatus.dataStats && (
+        (hubspotStatus.dataStats.contacts && hubspotStatus.dataStats.contacts > 0) ||
+        (hubspotStatus.dataStats.companies && hubspotStatus.dataStats.companies > 0) ||
+        (hubspotStatus.dataStats.deals && hubspotStatus.dataStats.deals > 0)
+      ));
       
       const needsOnboardingNow = !hasConnection || !hasData;
       setNeedsOnboarding(needsOnboardingNow);
       
-      // Définir l'étape d'onboarding
+      // Définir l'étape d'onboarding basée sur Smart Sync
       if (!hasConnection) {
         setOnboardingStep('selection');
+        console.log('📝 Onboarding: Connexion CRM requise');
       } else if (!hasData) {
         setOnboardingStep('syncing');
+        console.log('🔄 Onboarding: Synchronisation requise');
       } else {
         setOnboardingStep('completed');
+        console.log('✅ Onboarding: Terminé');
+      }
+      
+      // Si login sync recommandé, logguer l'information
+      if (loginSyncCheck?.should_sync_on_login) {
+        console.log('🔄 Smart Sync: Synchronisation recommandée au login');
       }
       
     } catch (error) {

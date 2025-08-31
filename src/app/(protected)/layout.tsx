@@ -2,7 +2,8 @@
 
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { OnboardingModal } from "@/components/onboarding-modal";
+import { OnboardingModal } from "@/components/onboarding-modal-smart";
+import { LoginSyncHandler } from "@/components/login-sync-handler";
 import { useAuth } from "@/lib/auth/AuthContext";
 
 export default function ProtectedLayout({
@@ -28,6 +29,9 @@ export default function ProtectedLayout({
       
       {/* Modal d'onboarding */}
       <OnboardingModal open={needsOnboarding} />
+      
+      {/* Gestionnaire de sync au login */}
+      <LoginSyncHandler />
     </SidebarProvider>
   );
 }

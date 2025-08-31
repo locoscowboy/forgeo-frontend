@@ -1,11 +1,14 @@
 'use client';
 
 import { AuthProvider } from '@/lib/auth/AuthContext';
+import { SyncProvider } from '@/lib/sync/SyncContext';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
-      {children}
+      <SyncProvider>
+        {children}
+      </SyncProvider>
     </AuthProvider>
   );
 } 

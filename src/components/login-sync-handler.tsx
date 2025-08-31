@@ -1,7 +1,7 @@
 "use client"
 
-import React, { useEffect } from 'react';
-import { useLoginSync, useSmartSync } from '@/hooks/useSmartSync';
+import { useEffect } from 'react';
+import { useLoginSync } from '@/hooks/useSmartSync';
 import { useAuth } from '@/lib/auth/AuthContext';
 
 /**
@@ -22,45 +22,4 @@ export function LoginSyncHandler() {
 
   // Ce composant ne rend rien visuellement
   return null;
-}
-
-/**
- * Hook pour gérer la sync automatique au login avec plus de contrôle
- */
-export function useAutoSyncOnLogin() {
-  const { token } = useAuth();
-  const { checkSyncStatus } = useSmartSync();
-  const [hasPerformedLoginSync, setHasPerformedLoginSync] = React.useState(false);
-
-  const performLoginSync = React.useCallback(async () => {
-    if (!token || hasPerformedLoginSync) return;
-
-    try {
-      console.log('🔄 Performing login sync check...');
-      
-      // Vérifier d'abord le statut
-      await checkSyncStatus(token, true);
-      
-      // TODO: Implémenter la logique basée sur loginSyncCheck
-      // En attendant, on marque comme vérifié
-      setHasPerformedLoginSync(true);
-      
-      console.log('✅ Login sync check completed');
-    } catch (error) {
-      console.error('❌ Error during login sync check:', error);
-      setHasPerformedLoginSync(true); // Marquer comme fait même en cas d'erreur
-    }
-  }, [token, hasPerformedLoginSync, checkSyncStatus]);
-
-  // Reset quand l'utilisateur se déconnecte
-  useEffect(() => {
-    if (!token) {
-      setHasPerformedLoginSync(false);
-    }
-  }, [token]);
-
-  return {
-    performLoginSync,
-    hasPerformedLoginSync
-  };
 }

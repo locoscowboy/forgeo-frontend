@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useCallback, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useCallback, useReducer } from 'react';
 import {
   SmartSyncStatus,
   EnrichedSyncStatus,
@@ -8,8 +8,7 @@ import {
   SyncRecommendation,
   DataFreshnessIndicator,
   SyncProgress,
-  SyncOptions,
-  HubspotSyncData
+  SyncOptions
 } from '@/types/smart-sync';
 import {
   getShouldSync,
@@ -191,7 +190,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
-  }, [isStale]);
+  }, [isStale, CACHE_DURATION]);
 
   // Démarrer une synchronisation
   const startSync = useCallback(async (token: string, options: SyncOptions = { trigger: 'manual' }) => {

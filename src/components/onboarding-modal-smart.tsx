@@ -61,7 +61,7 @@ export function OnboardingModal({ open }: OnboardingModalProps) {
     checkOnboardingStatus
   } = useAuth()
   
-  const { syncProgress, isSyncing } = useSmartSync()
+  const { syncProgress } = useSmartSync()
   const { handleSync } = useSyncActions()
   const router = useRouter()
   

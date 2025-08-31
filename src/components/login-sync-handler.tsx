@@ -29,7 +29,7 @@ export function LoginSyncHandler() {
  */
 export function useAutoSyncOnLogin() {
   const { token } = useAuth();
-  const { checkSyncStatus, startSync } = useSmartSync();
+  const { checkSyncStatus } = useSmartSync();
   const [hasPerformedLoginSync, setHasPerformedLoginSync] = React.useState(false);
 
   const performLoginSync = React.useCallback(async () => {

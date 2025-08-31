@@ -15,7 +15,6 @@ import {
   Mail,
   HelpCircle,
   LogOut,
-  CheckCircle,
   XCircle,
   RefreshCw,
   Link,
@@ -62,7 +61,7 @@ import {
   disconnectHubSpot,
   HubSpotConnectionStatus 
 } from "@/lib/api/integrations"
-import { useSmartSync, useSyncActions, useDataFreshness, useSyncStats } from "@/hooks/useSmartSync"
+import { useSyncActions, useSyncStats } from "@/hooks/useSmartSync"
 import { SyncStatusIndicator } from "@/components/sync-status-indicator"
 
 const forgeoSettingsData = {
@@ -253,25 +252,7 @@ export function SettingsDialog({ children }: SettingsDialogProps) {
   }
 
   // Hooks Smart Sync
-  const { isSyncing } = useSmartSync()
-  const { handleSync } = useSyncActions()
   const { stats } = useSyncStats()
-  
-  const handleSyncHubSpot = async () => {
-    if (!token) return
-    
-    setConnectionError(null)
-    
-    try {
-      await handleSync({ trigger: 'manual' })
-      // Recharger le statut après synchronisation
-      setTimeout(() => loadHubSpotStatus(), 2000)
-    } catch (error) {
-      console.error('Erreur lors de la synchronisation HubSpot:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue'
-      setConnectionError(`Erreur de synchronisation: ${errorMessage}`)
-    }
-  }
 
   const renderSettingsContent = () => {
     switch (activeSection) {

@@ -105,7 +105,7 @@ export function useDataFreshness() {
  */
 export function useLoginSync() {
   const { token } = useAuth();
-  const { checkSyncStatus, startSync } = useSync();
+  const { checkSyncStatus } = useSync();
   const [hasChecked, setHasChecked] = useState(false);
 
   const performLoginCheck = useCallback(async () => {

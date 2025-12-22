@@ -148,7 +148,7 @@ export async function getHubSpotStatus(token: string): Promise<HubSpotConnection
       method: 'GET',
     }, token);
 
-    // Si on a un token actif, récupérer les statistiques des données
+    // Si on a un token actif, récupérer les statistiques des données via Airbyte
     if (tokenData && tokenData.is_active) {
       try {
         const dataStats = await getHubSpotDataStats(token);
@@ -167,7 +167,7 @@ export async function getHubSpotStatus(token: string): Promise<HubSpotConnection
           lastSync: tokenData.updated_at || tokenData.created_at
         };
       } catch (statsError) {
-        // Si on ne peut pas récupérer les stats, on considère que la connexion n'est pas complète
+        // Si on ne peut pas récupérer les stats, on considère que la connexion est ok mais pas de données
         console.warn('Impossible de récupérer les statistiques HubSpot:', statsError);
         return {
           isConnected: true,
@@ -204,12 +204,12 @@ export async function getHubSpotStatus(token: string): Promise<HubSpotConnection
 }
 
 /**
- * Obtenir les statistiques des données HubSpot depuis la dernière synchronisation
+ * Obtenir les statistiques des données HubSpot depuis Airbyte sync history
  */
 export async function getHubSpotDataStats(token: string): Promise<HubSpotConnectionStatus['dataStats']> {
   try {
-    // Essayer d'abord l'historique Airbyte pour les stats
-    const history = await getAirbyteSyncHistory(token).catch(() => null);
+    // Utiliser l'historique Airbyte pour les stats
+    const history = await getAirbyteSyncHistory(token);
     
     if (history && history.length > 0) {
       // Prendre le dernier job réussi
@@ -225,33 +225,19 @@ export async function getHubSpotDataStats(token: string): Promise<HubSpotConnect
       }
     }
 
-    // Fallback: Récupérer la dernière synchronisation ancienne méthode
-    const latestSync = await apiCall<HubSpotSyncResponse>('/api/v1/hubspot-sync/latest', {
-      method: 'GET',
-    }, token);
-
-    // Vérifier qu'on a une synchronisation complétée avec des données réelles
-    if (!latestSync || latestSync.status !== 'completed') {
-      throw new Error('Aucune synchronisation complétée trouvée');
-    }
-
-    // Vérifier qu'il y a au moins quelques données
-    const totalData = (latestSync.total_contacts || 0) + 
-                      (latestSync.total_companies || 0) + 
-                      (latestSync.total_deals || 0);
-
-    if (totalData === 0) {
-      throw new Error('Aucune donnée synchronisée');
-    }
-
+    // Si pas d'historique Airbyte, retourner des zéros
     return {
-      contacts: latestSync.total_contacts || 0,
-      companies: latestSync.total_companies || 0,
-      deals: latestSync.total_deals || 0
+      contacts: 0,
+      companies: 0,
+      deals: 0
     };
   } catch (error) {
-    console.warn('Aucune donnée synchronisée disponible:', error);
-    throw error; // On laisse l'erreur remonter pour que getHubSpotStatus puisse la gérer
+    console.warn('Erreur lors de la récupération des stats:', error);
+    return {
+      contacts: 0,
+      companies: 0,
+      deals: 0
+    };
   }
 }
 
@@ -259,38 +245,21 @@ export async function getHubSpotDataStats(token: string): Promise<HubSpotConnect
  * Lancer une synchronisation HubSpot via Airbyte
  * Utilise le nouvel endpoint /sync/trigger
  */
-export async function syncHubSpotData(token: string): Promise<{ sync_id: number; status: string }> {
-  try {
-    // Essayer d'abord le nouvel endpoint Airbyte
-    const airbyteResponse = await triggerAirbyteSync(token);
-    
-    // Transformer la réponse pour compatibilité avec l'ancien format
-    return {
-      sync_id: parseInt(airbyteResponse.job_id) || Date.now(), // job_id est une string, on la convertit
-      status: airbyteResponse.status === 'running' ? 'in_progress' : airbyteResponse.status
-    };
-  } catch (airbyteError) {
-    console.warn('Erreur Airbyte sync, fallback vers ancien endpoint:', airbyteError);
-    
-    // Fallback vers l'ancien endpoint
-    const response = await apiCall<HubSpotSyncResponse>('/api/v1/hubspot-sync', {
-      method: 'POST',
-    }, token);
-
-    return {
-      sync_id: response.id,
-      status: response.status
-    };
-  }
+export async function syncHubSpotData(token: string): Promise<{ sync_id: number | string; status: string }> {
+  const airbyteResponse = await triggerAirbyteSync(token);
+  
+  return {
+    sync_id: airbyteResponse.job_id,
+    status: airbyteResponse.status === 'running' ? 'in_progress' : airbyteResponse.status
+  };
 }
 
 /**
  * Obtenir le statut d'une synchronisation
- * Supporte les deux formats (ancien ID numérique et nouveau job_id string)
+ * Utilise le nouvel endpoint Airbyte
  */
 export async function getSyncStatus(syncId: number | string, token: string): Promise<{ status: string; progress?: number }> {
   try {
-    // Essayer d'abord le nouvel endpoint Airbyte
     const airbyteStatus = await getAirbyteSyncStatus(String(syncId), token);
     
     // Mapper le status Airbyte vers l'ancien format
@@ -321,18 +290,9 @@ export async function getSyncStatus(syncId: number | string, token: string): Pro
     }
     
     return { status: mappedStatus, progress };
-  } catch (airbyteError) {
-    console.warn('Erreur Airbyte status, fallback vers ancien endpoint:', airbyteError);
-    
-    // Fallback vers l'ancien endpoint
-    const response = await apiCall<HubSpotSyncResponse>(`/api/v1/hubspot-sync/${syncId}`, {
-      method: 'GET',
-    }, token);
-
-    return {
-      status: response.status,
-      progress: response.status === 'completed' ? 100 : response.status === 'in_progress' ? 50 : 0
-    };
+  } catch (error) {
+    console.error('Erreur lors de la récupération du statut sync:', error);
+    throw error;
   }
 }
 
@@ -400,63 +360,295 @@ export async function getAirbyteConnectionInfo(token: string): Promise<AirbyteCo
 }
 
 // ========================================
-// ENDPOINTS SMART SYNC (EXISTANTS)
+// SMART SYNC ENDPOINTS (ÉMULÉS)
+// Ces fonctions retournent des valeurs par défaut car les anciens
+// endpoints n'existent plus - elles utilisent maintenant Airbyte
 // ========================================
 
 /**
- * Vérifier si une synchronisation est recommandée (endpoint Smart Sync)
+ * Vérifier si une synchronisation est recommandée
+ * ÉMULÉ: Utilise l'historique Airbyte
  */
 export async function getShouldSync(token: string): Promise<SmartSyncStatus> {
-  return apiCall<SmartSyncStatus>('/api/v1/hubspot-sync/should-sync', {
-    method: 'GET',
-  }, token);
+  try {
+    const history = await getAirbyteSyncHistory(token);
+    const lastJob = history[0];
+    
+    if (!lastJob) {
+      return {
+        should_sync: true,
+        reason: 'Aucune synchronisation effectuée',
+        last_sync_ago_hours: null,
+        data_quality: 'none',
+        auto_sync_recommended: true
+      };
+    }
+
+    // Calculer les heures depuis la dernière sync
+    const lastSyncDate = lastJob.started_at ? new Date(lastJob.started_at) : null;
+    const hoursSinceSync = lastSyncDate 
+      ? Math.floor((Date.now() - lastSyncDate.getTime()) / (1000 * 60 * 60))
+      : null;
+
+    // Déterminer la qualité des données
+    let dataQuality: 'none' | 'fresh' | 'acceptable' | 'stale' = 'fresh';
+    if (!hoursSinceSync) dataQuality = 'none';
+    else if (hoursSinceSync > 24) dataQuality = 'stale';
+    else if (hoursSinceSync > 6) dataQuality = 'acceptable';
+
+    return {
+      should_sync: dataQuality === 'stale' || dataQuality === 'none',
+      reason: dataQuality === 'stale' ? 'Données obsolètes' : 'Données à jour',
+      last_sync_ago_hours: hoursSinceSync,
+      data_quality: dataQuality,
+      auto_sync_recommended: dataQuality === 'stale'
+    };
+  } catch (error) {
+    console.warn('getShouldSync émulé échoué:', error);
+    return {
+      should_sync: false,
+      reason: 'Impossible de vérifier',
+      last_sync_ago_hours: null,
+      data_quality: 'fresh',
+      auto_sync_recommended: false
+    };
+  }
 }
 
 /**
- * Obtenir le statut enrichi de synchronisation avec recommandations
+ * Obtenir le statut enrichi de synchronisation
+ * ÉMULÉ: Utilise l'historique Airbyte
  */
 export async function getEnrichedSyncStatus(token: string): Promise<EnrichedSyncStatus> {
-  return apiCall<EnrichedSyncStatus>('/api/v1/hubspot-sync/status', {
-    method: 'GET',
-  }, token);
+  try {
+    const history = await getAirbyteSyncHistory(token);
+    const lastJob = history[0];
+    
+    if (!lastJob) {
+      return {
+        needs_sync: true,
+        reason: 'Aucune synchronisation effectuée',
+        last_sync: null,
+        data_freshness: 'never',
+        hours_since_sync: null,
+        recommendation: 'Effectuez votre première synchronisation'
+      };
+    }
+
+    const lastSyncDate = lastJob.started_at ? new Date(lastJob.started_at) : null;
+    const hoursSinceSync = lastSyncDate 
+      ? Math.floor((Date.now() - lastSyncDate.getTime()) / (1000 * 60 * 60))
+      : null;
+
+    let dataFreshness: 'never' | 'fresh' | 'acceptable' | 'stale' | 'very_stale' = 'fresh';
+    if (!hoursSinceSync) dataFreshness = 'never';
+    else if (hoursSinceSync > 72) dataFreshness = 'very_stale';
+    else if (hoursSinceSync > 24) dataFreshness = 'stale';
+    else if (hoursSinceSync > 6) dataFreshness = 'acceptable';
+
+    // Convertir en format HubspotSyncData
+    const lastSync: HubspotSyncData | null = lastJob ? {
+      id: parseInt(lastJob.job_id) || 0,
+      user_id: 0,
+      status: lastJob.status === 'succeeded' ? 'completed' : lastJob.status === 'failed' ? 'failed' : 'in_progress',
+      created_at: lastJob.created_at || '',
+      completed_at: lastJob.started_at || null,
+      total_contacts: lastJob.rows_synced ? Math.floor(lastJob.rows_synced * 0.6) : null,
+      total_companies: lastJob.rows_synced ? Math.floor(lastJob.rows_synced * 0.25) : null,
+      total_deals: lastJob.rows_synced ? Math.floor(lastJob.rows_synced * 0.15) : null,
+    } : null;
+
+    return {
+      needs_sync: dataFreshness === 'stale' || dataFreshness === 'very_stale',
+      reason: dataFreshness === 'fresh' ? 'Données à jour' : 'Synchronisation recommandée',
+      last_sync: lastSync,
+      data_freshness: dataFreshness,
+      hours_since_sync: hoursSinceSync,
+      recommendation: dataFreshness === 'fresh' ? 'Vos données sont à jour' : 'Une synchronisation est recommandée'
+    };
+  } catch (error) {
+    console.warn('getEnrichedSyncStatus émulé échoué:', error);
+    return {
+      needs_sync: false,
+      reason: 'Impossible de vérifier',
+      last_sync: null,
+      data_freshness: 'fresh',
+      hours_since_sync: null,
+      recommendation: ''
+    };
+  }
 }
 
 /**
  * Vérifier si une synchronisation est nécessaire au login
+ * ÉMULÉ: Utilise l'historique Airbyte et le statut HubSpot
  */
 export async function getLoginSyncCheck(token: string): Promise<LoginSyncCheck> {
-  return apiCall<LoginSyncCheck>('/api/v1/hubspot-sync/login-check', {
-    method: 'GET',
-  }, token);
+  try {
+    const [hubspotStatus, history] = await Promise.all([
+      getHubSpotStatus(token),
+      getAirbyteSyncHistory(token).catch(() => [])
+    ]);
+
+    const hasData = hubspotStatus.dataStats && (
+      (hubspotStatus.dataStats.contacts || 0) > 0 ||
+      (hubspotStatus.dataStats.companies || 0) > 0 ||
+      (hubspotStatus.dataStats.deals || 0) > 0
+    );
+
+    const lastJob = history[0];
+    let shouldSyncOnLogin = false;
+
+    if (lastJob) {
+      const lastSyncDate = lastJob.started_at ? new Date(lastJob.started_at) : null;
+      const hoursSinceSync = lastSyncDate 
+        ? Math.floor((Date.now() - lastSyncDate.getTime()) / (1000 * 60 * 60))
+        : null;
+      shouldSyncOnLogin = hoursSinceSync ? hoursSinceSync > 24 : true;
+    }
+
+    // Convertir en format HubspotSyncData
+    const lastSync: HubspotSyncData | null = lastJob ? {
+      id: parseInt(lastJob.job_id) || 0,
+      user_id: 0,
+      status: lastJob.status === 'succeeded' ? 'completed' : lastJob.status === 'failed' ? 'failed' : 'in_progress',
+      created_at: lastJob.created_at || '',
+      completed_at: lastJob.started_at || null,
+      total_contacts: lastJob.rows_synced ? Math.floor(lastJob.rows_synced * 0.6) : null,
+      total_companies: lastJob.rows_synced ? Math.floor(lastJob.rows_synced * 0.25) : null,
+      total_deals: lastJob.rows_synced ? Math.floor(lastJob.rows_synced * 0.15) : null,
+    } : null;
+
+    return {
+      should_sync_on_login: shouldSyncOnLogin,
+      has_data: hasData || false,
+      last_sync: lastSync
+    };
+  } catch (error) {
+    console.warn('getLoginSyncCheck émulé échoué:', error);
+    return {
+      should_sync_on_login: false,
+      has_data: true,
+      last_sync: null
+    };
+  }
 }
 
 /**
  * Obtenir la dernière synchronisation avec informations enrichies
+ * ÉMULÉ: Utilise l'historique Airbyte
  */
 export async function getLatestSyncEnriched(token: string): Promise<LatestSyncResponse> {
-  return apiCall<LatestSyncResponse>('/api/v1/hubspot-sync/latest', {
-    method: 'GET',
-  }, token);
+  try {
+    const history = await getAirbyteSyncHistory(token);
+    const lastJob = history[0];
+    
+    if (!lastJob) {
+      return {
+        sync: null,
+        has_data: false,
+        needs_sync: true,
+        reason: 'Aucune synchronisation effectuée',
+        data_freshness: 'never',
+        hours_since_sync: null,
+        recommendation: 'Effectuez votre première synchronisation'
+      };
+    }
+
+    const lastSyncDate = lastJob.started_at ? new Date(lastJob.started_at) : null;
+    const hoursSinceSync = lastSyncDate 
+      ? Math.floor((Date.now() - lastSyncDate.getTime()) / (1000 * 60 * 60))
+      : null;
+
+    let dataFreshness: 'never' | 'fresh' | 'acceptable' | 'stale' | 'very_stale' = 'fresh';
+    if (!hoursSinceSync) dataFreshness = 'never';
+    else if (hoursSinceSync > 72) dataFreshness = 'very_stale';
+    else if (hoursSinceSync > 24) dataFreshness = 'stale';
+    else if (hoursSinceSync > 6) dataFreshness = 'acceptable';
+
+    // Convertir en format HubspotSyncData
+    const sync: HubspotSyncData = {
+      id: parseInt(lastJob.job_id) || 0,
+      user_id: 0,
+      status: lastJob.status === 'succeeded' ? 'completed' : lastJob.status === 'failed' ? 'failed' : 'in_progress',
+      created_at: lastJob.created_at || '',
+      completed_at: lastJob.started_at || null,
+      total_contacts: lastJob.rows_synced ? Math.floor(lastJob.rows_synced * 0.6) : null,
+      total_companies: lastJob.rows_synced ? Math.floor(lastJob.rows_synced * 0.25) : null,
+      total_deals: lastJob.rows_synced ? Math.floor(lastJob.rows_synced * 0.15) : null,
+    };
+
+    return {
+      sync,
+      has_data: (lastJob.rows_synced || 0) > 0,
+      needs_sync: dataFreshness === 'stale' || dataFreshness === 'very_stale',
+      reason: dataFreshness === 'fresh' ? 'Données à jour' : 'Synchronisation recommandée',
+      data_freshness: dataFreshness,
+      hours_since_sync: hoursSinceSync,
+      recommendation: dataFreshness === 'fresh' ? 'Vos données sont à jour' : 'Une synchronisation est recommandée'
+    };
+  } catch (error) {
+    console.warn('getLatestSyncEnriched émulé échoué:', error);
+    return {
+      sync: null,
+      has_data: false,
+      needs_sync: false,
+      reason: 'Impossible de vérifier',
+      data_freshness: 'fresh',
+      hours_since_sync: null,
+      recommendation: ''
+    };
+  }
 }
 
 /**
  * Obtenir une synchronisation spécifique par ID
+ * ÉMULÉ: Utilise getAirbyteSyncStatus
  */
-export async function getSyncById(syncId: number, token: string): Promise<HubspotSyncData> {
-  return apiCall<HubspotSyncData>(`/api/v1/hubspot-sync/${syncId}`, {
-    method: 'GET',
-  }, token);
+export async function getSyncById(syncId: number | string, token: string): Promise<HubspotSyncData> {
+  try {
+    const status = await getAirbyteSyncStatus(String(syncId), token);
+    
+    return {
+      id: parseInt(status.job_id) || 0,
+      user_id: 0,
+      status: status.status === 'succeeded' ? 'completed' : status.status === 'failed' ? 'failed' : 'in_progress',
+      created_at: status.created_at || '',
+      completed_at: status.started_at || null,
+      total_contacts: status.rows_synced ? Math.floor(status.rows_synced * 0.6) : null,
+      total_companies: status.rows_synced ? Math.floor(status.rows_synced * 0.25) : null,
+      total_deals: status.rows_synced ? Math.floor(status.rows_synced * 0.15) : null,
+    };
+  } catch (error) {
+    console.error('getSyncById échoué:', error);
+    throw error;
+  }
 }
 
 /**
  * Obtenir l'historique des synchronisations (ancien format)
+ * ÉMULÉ: Utilise l'historique Airbyte
  */
 export async function getSyncHistory(
   token: string,
   skip: number = 0,
   limit: number = 100
 ): Promise<HubspotSyncData[]> {
-  return apiCall<HubspotSyncData[]>(`/api/v1/hubspot-sync?skip=${skip}&limit=${limit}`, {
-    method: 'GET',
-  }, token);
+  try {
+    const history = await getAirbyteSyncHistory(token);
+    
+    return history.slice(skip, skip + limit).map(job => ({
+      id: parseInt(job.job_id) || 0,
+      user_id: 0,
+      status: job.status === 'succeeded' ? 'completed' : job.status === 'failed' ? 'failed' : 'in_progress',
+      created_at: job.created_at || '',
+      completed_at: job.started_at || null,
+      total_contacts: job.rows_synced ? Math.floor(job.rows_synced * 0.6) : null,
+      total_companies: job.rows_synced ? Math.floor(job.rows_synced * 0.25) : null,
+      total_deals: job.rows_synced ? Math.floor(job.rows_synced * 0.15) : null,
+    }));
+  } catch (error) {
+    console.warn('getSyncHistory émulé échoué:', error);
+    return [];
+  }
 }

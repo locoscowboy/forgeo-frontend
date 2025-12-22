@@ -38,7 +38,7 @@ export function SyncStatusIndicator({
   variant = 'full',
   size = 'md'
 }: SyncStatusIndicatorProps) {
-  const { indicator, hasIndicator } = useDataFreshness();
+  const { indicator } = useDataFreshness();
   const { recommendation, shouldShowSyncButton } = useSyncRecommendations();
   const { handleSync, isStarting, error } = useSyncActions();
 

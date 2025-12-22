@@ -4,7 +4,11 @@ import {
   EnrichedSyncStatus,
   LoginSyncCheck,
   LatestSyncResponse,
-  HubspotSyncData
+  HubspotSyncData,
+  AirbyteSyncJobResponse,
+  AirbyteSyncJobStatus,
+  AirbyteSyncHistoryItem,
+  AirbyteConnectionInfo
 } from '@/types/smart-sync';
 
 export interface HubSpotAccount {
@@ -204,7 +208,24 @@ export async function getHubSpotStatus(token: string): Promise<HubSpotConnection
  */
 export async function getHubSpotDataStats(token: string): Promise<HubSpotConnectionStatus['dataStats']> {
   try {
-    // Récupérer la dernière synchronisation
+    // Essayer d'abord l'historique Airbyte pour les stats
+    const history = await getAirbyteSyncHistory(token).catch(() => null);
+    
+    if (history && history.length > 0) {
+      // Prendre le dernier job réussi
+      const successfulJob = history.find(job => job.status === 'succeeded');
+      if (successfulJob && successfulJob.rows_synced) {
+        // Airbyte ne donne pas le détail par type, on estime
+        const totalRows = successfulJob.rows_synced;
+        return {
+          contacts: Math.floor(totalRows * 0.6), // Estimation
+          companies: Math.floor(totalRows * 0.25),
+          deals: Math.floor(totalRows * 0.15)
+        };
+      }
+    }
+
+    // Fallback: Récupérer la dernière synchronisation ancienne méthode
     const latestSync = await apiCall<HubSpotSyncResponse>('/api/v1/hubspot-sync/latest', {
       method: 'GET',
     }, token);
@@ -235,32 +256,84 @@ export async function getHubSpotDataStats(token: string): Promise<HubSpotConnect
 }
 
 /**
- * Lancer une synchronisation HubSpot
+ * Lancer une synchronisation HubSpot via Airbyte
+ * Utilise le nouvel endpoint /sync/trigger
  */
 export async function syncHubSpotData(token: string): Promise<{ sync_id: number; status: string }> {
-  const response = await apiCall<HubSpotSyncResponse>('/api/v1/hubspot-sync', {
-    method: 'POST',
-  }, token);
+  try {
+    // Essayer d'abord le nouvel endpoint Airbyte
+    const airbyteResponse = await triggerAirbyteSync(token);
+    
+    // Transformer la réponse pour compatibilité avec l'ancien format
+    return {
+      sync_id: parseInt(airbyteResponse.job_id) || Date.now(), // job_id est une string, on la convertit
+      status: airbyteResponse.status === 'running' ? 'in_progress' : airbyteResponse.status
+    };
+  } catch (airbyteError) {
+    console.warn('Erreur Airbyte sync, fallback vers ancien endpoint:', airbyteError);
+    
+    // Fallback vers l'ancien endpoint
+    const response = await apiCall<HubSpotSyncResponse>('/api/v1/hubspot-sync', {
+      method: 'POST',
+    }, token);
 
-  return {
-    sync_id: response.id,
-    status: response.status
-  };
+    return {
+      sync_id: response.id,
+      status: response.status
+    };
+  }
 }
 
 /**
  * Obtenir le statut d'une synchronisation
+ * Supporte les deux formats (ancien ID numérique et nouveau job_id string)
  */
-export async function getSyncStatus(syncId: number, token: string): Promise<{ status: string; progress?: number }> {
-  const response = await apiCall<HubSpotSyncResponse>(`/api/v1/hubspot-sync/${syncId}`, {
-    method: 'GET',
-  }, token);
+export async function getSyncStatus(syncId: number | string, token: string): Promise<{ status: string; progress?: number }> {
+  try {
+    // Essayer d'abord le nouvel endpoint Airbyte
+    const airbyteStatus = await getAirbyteSyncStatus(String(syncId), token);
+    
+    // Mapper le status Airbyte vers l'ancien format
+    let mappedStatus = 'in_progress';
+    let progress = 50;
+    
+    switch (airbyteStatus.status) {
+      case 'succeeded':
+        mappedStatus = 'completed';
+        progress = 100;
+        break;
+      case 'failed':
+      case 'cancelled':
+        mappedStatus = 'failed';
+        progress = 0;
+        break;
+      case 'running':
+        mappedStatus = 'in_progress';
+        progress = 50;
+        break;
+      case 'pending':
+        mappedStatus = 'in_progress';
+        progress = 10;
+        break;
+      default:
+        mappedStatus = 'in_progress';
+        progress = 25;
+    }
+    
+    return { status: mappedStatus, progress };
+  } catch (airbyteError) {
+    console.warn('Erreur Airbyte status, fallback vers ancien endpoint:', airbyteError);
+    
+    // Fallback vers l'ancien endpoint
+    const response = await apiCall<HubSpotSyncResponse>(`/api/v1/hubspot-sync/${syncId}`, {
+      method: 'GET',
+    }, token);
 
-  return {
-    status: response.status,
-    // Le backend n'a pas de champ progress, on peut le calculer selon le statut
-    progress: response.status === 'completed' ? 100 : response.status === 'in_progress' ? 50 : 0
-  };
+    return {
+      status: response.status,
+      progress: response.status === 'completed' ? 100 : response.status === 'in_progress' ? 50 : 0
+    };
+  }
 }
 
 /**
@@ -283,7 +356,51 @@ export async function refreshHubSpotToken(token: string): Promise<HubSpotToken> 
 }
 
 // ========================================
-// NOUVEAUX ENDPOINTS SMART SYNC
+// ENDPOINTS AIRBYTE SYNC (NOUVEAUX)
+// ========================================
+
+/**
+ * Déclencher une synchronisation via Airbyte
+ * POST /api/v1/sync/trigger
+ */
+export async function triggerAirbyteSync(token: string): Promise<AirbyteSyncJobResponse> {
+  return apiCall<AirbyteSyncJobResponse>('/api/v1/sync/trigger', {
+    method: 'POST',
+  }, token);
+}
+
+/**
+ * Obtenir le statut d'un job de synchronisation Airbyte
+ * GET /api/v1/sync/status/{job_id}
+ */
+export async function getAirbyteSyncStatus(jobId: string, token: string): Promise<AirbyteSyncJobStatus> {
+  return apiCall<AirbyteSyncJobStatus>(`/api/v1/sync/status/${jobId}`, {
+    method: 'GET',
+  }, token);
+}
+
+/**
+ * Obtenir l'historique des synchronisations Airbyte
+ * GET /api/v1/sync/history
+ */
+export async function getAirbyteSyncHistory(token: string): Promise<AirbyteSyncHistoryItem[]> {
+  return apiCall<AirbyteSyncHistoryItem[]>('/api/v1/sync/history', {
+    method: 'GET',
+  }, token);
+}
+
+/**
+ * Obtenir les informations de connexion Airbyte
+ * GET /api/v1/sync/connection-info
+ */
+export async function getAirbyteConnectionInfo(token: string): Promise<AirbyteConnectionInfo> {
+  return apiCall<AirbyteConnectionInfo>('/api/v1/sync/connection-info', {
+    method: 'GET',
+  }, token);
+}
+
+// ========================================
+// ENDPOINTS SMART SYNC (EXISTANTS)
 // ========================================
 
 /**
@@ -332,7 +449,7 @@ export async function getSyncById(syncId: number, token: string): Promise<Hubspo
 }
 
 /**
- * Obtenir l'historique des synchronisations
+ * Obtenir l'historique des synchronisations (ancien format)
  */
 export async function getSyncHistory(
   token: string,
@@ -342,4 +459,4 @@ export async function getSyncHistory(
   return apiCall<HubspotSyncData[]>(`/api/v1/hubspot-sync?skip=${skip}&limit=${limit}`, {
     method: 'GET',
   }, token);
-} 
+}

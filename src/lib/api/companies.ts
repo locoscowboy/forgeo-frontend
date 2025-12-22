@@ -36,6 +36,15 @@ export interface CompaniesResponse {
   total_pages: number;
 }
 
+// Interface pour la réponse du nouveau backend Airbyte
+interface AirbyteCompaniesResponse {
+  items: Company[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
+
 export interface APIError {
   detail?: string;
   message?: string;
@@ -59,7 +68,8 @@ export async function getCompanies(
   if (sortField) params.append('sort_field', sortField);
   if (sortOrder) params.append('sort_order', sortOrder);
 
-  const url = `https://forgeo.store/api/v1/companies?${params}`;
+  // Nouveau endpoint Airbyte
+  const url = `https://forgeo.store/api/v1/hubspot-data/companies?${params}`;
   
   console.log('🌐 API Request (Companies):', {
     url,
@@ -111,21 +121,28 @@ export async function getCompanies(
       throw new Error(errorMessage);
     }
 
-    const data = await response.json();
+    const data: AirbyteCompaniesResponse = await response.json();
     
     console.log('✅ API Success (Companies):', {
-      companiesCount: data.companies?.length || 0,
+      companiesCount: data.items?.length || 0,
       total: data.total,
       page: data.page,
-      totalPages: data.total_pages
+      totalPages: data.pages
     });
 
     // Validation basique des données
-    if (!data.companies || !Array.isArray(data.companies)) {
+    if (!data.items || !Array.isArray(data.items)) {
       throw new Error('Format de réponse invalide: companies manquants ou malformés');
     }
 
-    return data;
+    // Transformation du format Airbyte vers le format attendu par le frontend
+    return {
+      companies: data.items,
+      total: data.total,
+      page: data.page,
+      limit: data.limit,
+      total_pages: data.pages
+    };
   } catch (error) {
     console.error('💥 Network/Fetch Error (Companies):', error);
     
@@ -136,4 +153,4 @@ export async function getCompanies(
     // Erreur de réseau ou autre erreur inattendue
     throw new Error('Erreur de connexion. Vérifiez votre connexion internet et réessayez.');
   }
-} 
+}

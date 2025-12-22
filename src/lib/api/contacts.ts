@@ -34,6 +34,15 @@ export interface ContactsResponse {
   total_pages: number;
 }
 
+// Interface pour la réponse du nouveau backend Airbyte
+interface AirbyteContactsResponse {
+  items: Contact[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
+
 export interface APIError {
   detail?: string;
   message?: string;
@@ -57,7 +66,8 @@ export async function getContacts(
   if (sortField) params.append('sort_field', sortField);
   if (sortOrder) params.append('sort_order', sortOrder);
 
-  const url = `https://forgeo.store/api/v1/contacts?${params}`;
+  // Nouveau endpoint Airbyte
+  const url = `https://forgeo.store/api/v1/hubspot-data/contacts?${params}`;
   
   console.log('🌐 API Request:', {
     url,
@@ -109,21 +119,28 @@ export async function getContacts(
       throw new Error(errorMessage);
     }
 
-    const data = await response.json();
+    const data: AirbyteContactsResponse = await response.json();
     
     console.log('✅ API Success:', {
-      contactsCount: data.contacts?.length || 0,
+      contactsCount: data.items?.length || 0,
       total: data.total,
       page: data.page,
-      totalPages: data.total_pages
+      totalPages: data.pages
     });
 
     // Validation basique des données
-    if (!data.contacts || !Array.isArray(data.contacts)) {
+    if (!data.items || !Array.isArray(data.items)) {
       throw new Error('Format de réponse invalide: contacts manquants ou malformés');
     }
 
-    return data;
+    // Transformation du format Airbyte vers le format attendu par le frontend
+    return {
+      contacts: data.items,
+      total: data.total,
+      page: data.page,
+      limit: data.limit,
+      total_pages: data.pages
+    };
   } catch (error) {
     console.error('💥 Network/Fetch Error:', error);
     
@@ -134,4 +151,4 @@ export async function getContacts(
     // Erreur de réseau ou autre erreur inattendue
     throw new Error('Erreur de connexion. Vérifiez votre connexion internet et réessayez.');
   }
-} 
+}

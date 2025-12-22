@@ -36,6 +36,7 @@ export interface LatestSyncResponse {
   recommendation: string;
 }
 
+// Ancien format de données sync (compatibilité)
 export interface HubspotSyncData {
   id: number;
   user_id: number;
@@ -46,6 +47,68 @@ export interface HubspotSyncData {
   total_companies: number | null;
   total_deals: number | null;
 }
+
+// ========================================
+// NOUVEAUX TYPES AIRBYTE SYNC
+// ========================================
+
+/**
+ * Réponse du déclenchement d'une synchronisation Airbyte
+ * POST /api/v1/sync/trigger
+ */
+export interface AirbyteSyncJobResponse {
+  job_id: string;
+  status: string;
+  message: string;
+}
+
+/**
+ * Statut détaillé d'un job de synchronisation Airbyte
+ * GET /api/v1/sync/status/{job_id}
+ */
+export interface AirbyteSyncJobStatus {
+  job_id: string;
+  status: 'pending' | 'running' | 'incomplete' | 'failed' | 'succeeded' | 'cancelled';
+  job_type: string;
+  started_at: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  rows_synced: number | null;
+  bytes_synced: number | null;
+  duration_seconds: number | null;
+}
+
+/**
+ * Élément de l'historique de synchronisation Airbyte
+ * GET /api/v1/sync/history
+ */
+export interface AirbyteSyncHistoryItem {
+  job_id: string;
+  status: 'pending' | 'running' | 'incomplete' | 'failed' | 'succeeded' | 'cancelled';
+  job_type: string;
+  started_at: string | null;
+  created_at: string | null;
+  rows_synced: number | null;
+  bytes_synced: number | null;
+}
+
+/**
+ * Informations sur la connexion Airbyte
+ * GET /api/v1/sync/connection-info
+ */
+export interface AirbyteConnectionInfo {
+  connection_id: string;
+  source_id: string;
+  destination_id: string;
+  status: string;
+  name: string;
+  schedule_type: string | null;
+  schedule_data: Record<string, unknown> | null;
+}
+
+// ========================================
+// TYPES EXISTANTS (INCHANGÉS)
+// ========================================
 
 export interface SyncRecommendation {
   type: 'none' | 'optional' | 'recommended' | 'urgent';

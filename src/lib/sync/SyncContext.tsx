@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useCallback, useReducer } from 'react';
+import React, { createContext, useContext, useCallback, useReducer, useRef } from 'react';
 import {
   SmartSyncStatus,
   EnrichedSyncStatus,
@@ -15,7 +15,8 @@ import {
   getEnrichedSyncStatus,
   getLatestSyncEnriched,
   syncHubSpotData,
-  getSyncById
+  getSyncStatus,
+  getAirbyteSyncHistory
 } from '@/lib/api/integrations';
 
 // Types pour le contexte
@@ -32,7 +33,7 @@ interface SyncState {
   
   // État de synchronisation en cours
   isSyncing: boolean;
-  currentSyncId: number | null;
+  currentSyncId: number | string | null; // Supporte maintenant string pour job_id Airbyte
   syncProgress: SyncProgress | null;
   
   // Recommandations
@@ -50,7 +51,7 @@ type SyncAction =
   | { type: 'SET_SHOULD_SYNC'; payload: SmartSyncStatus }
   | { type: 'SET_ENRICHED_STATUS'; payload: EnrichedSyncStatus }
   | { type: 'SET_LATEST_SYNC'; payload: LatestSyncResponse }
-  | { type: 'SET_SYNCING'; payload: { isSyncing: boolean; syncId?: number } }
+  | { type: 'SET_SYNCING'; payload: { isSyncing: boolean; syncId?: number | string } }
   | { type: 'SET_SYNC_PROGRESS'; payload: SyncProgress | null }
   | { type: 'SET_RECOMMENDATION'; payload: SyncRecommendation | null }
   | { type: 'SET_FRESHNESS_INDICATOR'; payload: DataFreshnessIndicator | null }
@@ -63,7 +64,7 @@ interface SyncContextType {
   
   // Actions principales
   checkSyncStatus: (token: string, force?: boolean) => Promise<void>;
-  startSync: (token: string, options?: SyncOptions) => Promise<number | null>;
+  startSync: (token: string, options?: SyncOptions) => Promise<number | string | null>;
   refreshStatus: (token: string) => Promise<void>;
   
   // Utilitaires
@@ -108,7 +109,7 @@ function syncReducer(state: SyncState, action: SyncAction): SyncState {
       return { 
         ...state, 
         isSyncing: action.payload.isSyncing,
-        currentSyncId: action.payload.syncId || null
+        currentSyncId: action.payload.syncId ?? null
       };
     case 'SET_SYNC_PROGRESS':
       return { ...state, syncProgress: action.payload };
@@ -133,6 +134,7 @@ const SyncContext = createContext<SyncContextType | undefined>(undefined);
 
 export function SyncProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(syncReducer, initialState);
+  const isSyncingRef = useRef(false);
 
   // Cache de 2 minutes pour éviter les appels répétés
   const CACHE_DURATION = 2 * 60 * 1000; // 2 minutes
@@ -160,15 +162,23 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       console.log('🔄 Checking sync status...');
       
       // Récupérer toutes les données en parallèle
-      const [shouldSyncData, enrichedStatusData, latestSyncData] = await Promise.all([
+      // On utilise Promise.allSettled pour ne pas bloquer si un endpoint échoue
+      const results = await Promise.allSettled([
         getShouldSync(token),
         getEnrichedSyncStatus(token),
         getLatestSyncEnriched(token)
       ]);
 
-      dispatch({ type: 'SET_SHOULD_SYNC', payload: shouldSyncData });
-      dispatch({ type: 'SET_ENRICHED_STATUS', payload: enrichedStatusData });
-      dispatch({ type: 'SET_LATEST_SYNC', payload: latestSyncData });
+      // Traiter les résultats
+      if (results[0].status === 'fulfilled') {
+        dispatch({ type: 'SET_SHOULD_SYNC', payload: results[0].value });
+      }
+      if (results[1].status === 'fulfilled') {
+        dispatch({ type: 'SET_ENRICHED_STATUS', payload: results[1].value });
+      }
+      if (results[2].status === 'fulfilled') {
+        dispatch({ type: 'SET_LATEST_SYNC', payload: results[2].value });
+      }
 
       // Mettre à jour le cache
       const now = Date.now();
@@ -199,12 +209,14 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('🚀 Starting sync...', options);
       
+      // Déclencher la synchronisation (utilise maintenant Airbyte en priorité)
       const syncResponse = await syncHubSpotData(token);
       const syncId = syncResponse.sync_id;
 
       dispatch({ type: 'SET_SYNCING', payload: { isSyncing: true, syncId } });
+      isSyncingRef.current = true;
 
-      // Simuler le progress (le backend n'a pas de progress temps réel pour l'instant)
+      // Progress initial
       dispatch({ 
         type: 'SET_SYNC_PROGRESS', 
         payload: { 
@@ -213,39 +225,67 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
           deals: 0, 
           total: 0, 
           isComplete: false, 
-          percentage: 0 
+          percentage: 10 
         }
       });
 
       // Polling pour vérifier le statut
       const pollInterval = setInterval(async () => {
         try {
-          const syncData = await getSyncById(syncId, token);
+          // Utiliser getSyncStatus qui supporte maintenant les deux formats
+          const statusData = await getSyncStatus(syncId, token);
           
-          if (syncData.status === 'completed') {
+          console.log('📊 Sync status poll:', statusData);
+
+          if (statusData.status === 'completed') {
             clearInterval(pollInterval);
+            isSyncingRef.current = false;
             dispatch({ type: 'SET_SYNCING', payload: { isSyncing: false } });
-            dispatch({ 
-              type: 'SET_SYNC_PROGRESS', 
-              payload: {
-                contacts: syncData.total_contacts || 0,
-                companies: syncData.total_companies || 0,
-                deals: syncData.total_deals || 0,
-                total: (syncData.total_contacts || 0) + (syncData.total_companies || 0) + (syncData.total_deals || 0),
-                isComplete: true,
-                percentage: 100
-              }
-            });
+            
+            // Essayer de récupérer les stats depuis l'historique Airbyte
+            try {
+              const history = await getAirbyteSyncHistory(token);
+              const latestJob = history.find(job => job.status === 'succeeded');
+              const rowsSynced = latestJob?.rows_synced || 0;
+              
+              dispatch({ 
+                type: 'SET_SYNC_PROGRESS', 
+                payload: {
+                  contacts: Math.floor(rowsSynced * 0.6),
+                  companies: Math.floor(rowsSynced * 0.25),
+                  deals: Math.floor(rowsSynced * 0.15),
+                  total: rowsSynced,
+                  isComplete: true,
+                  percentage: 100
+                }
+              });
+            } catch {
+              dispatch({ 
+                type: 'SET_SYNC_PROGRESS', 
+                payload: {
+                  contacts: 0,
+                  companies: 0,
+                  deals: 0,
+                  total: 0,
+                  isComplete: true,
+                  percentage: 100
+                }
+              });
+            }
             
             // Rafraîchir le statut après synchronisation
             await checkSyncStatus(token, true);
             console.log('✅ Sync completed successfully');
-          } else if (syncData.status === 'failed') {
+            
+          } else if (statusData.status === 'failed') {
             clearInterval(pollInterval);
+            isSyncingRef.current = false;
             dispatch({ type: 'SET_SYNCING', payload: { isSyncing: false } });
             dispatch({ type: 'SET_ERROR', payload: 'La synchronisation a échoué' });
+            
           } else {
             // Sync en cours, mettre à jour le progress estimé
+            const progress = statusData.progress || 50;
             dispatch({ 
               type: 'SET_SYNC_PROGRESS', 
               payload: { 
@@ -254,30 +294,33 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
                 deals: 0, 
                 total: 0, 
                 isComplete: false, 
-                percentage: 50 
+                percentage: progress 
               }
             });
           }
         } catch (error) {
           console.error('Error polling sync status:', error);
           clearInterval(pollInterval);
+          isSyncingRef.current = false;
           dispatch({ type: 'SET_SYNCING', payload: { isSyncing: false } });
           dispatch({ type: 'SET_ERROR', payload: 'Erreur lors du suivi de la synchronisation' });
         }
-      }, 2000); // Poll toutes les 2 secondes
+      }, 3000); // Poll toutes les 3 secondes (Airbyte peut être plus lent)
 
-      // Timeout de sécurité (5 minutes max)
+      // Timeout de sécurité (10 minutes max pour Airbyte)
       setTimeout(() => {
         clearInterval(pollInterval);
-        if (state.isSyncing) {
+        if (isSyncingRef.current) {
+          isSyncingRef.current = false;
           dispatch({ type: 'SET_SYNCING', payload: { isSyncing: false } });
           dispatch({ type: 'SET_ERROR', payload: 'Timeout de synchronisation' });
         }
-      }, 5 * 60 * 1000);
+      }, 10 * 60 * 1000);
 
       return syncId;
     } catch (error) {
       console.error('❌ Error starting sync:', error);
+      isSyncingRef.current = false;
       dispatch({ type: 'SET_SYNCING', payload: { isSyncing: false } });
       dispatch({ 
         type: 'SET_ERROR', 
@@ -285,7 +328,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       });
       return null;
     }
-  }, [checkSyncStatus, state.isSyncing]);
+  }, [checkSyncStatus]);
 
   // Rafraîchir le statut
   const refreshStatus = useCallback(async (token: string) => {

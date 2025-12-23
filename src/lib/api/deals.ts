@@ -26,9 +26,14 @@ export interface DealsResponse {
   total_pages: number;
 }
 
-// Interface pour la réponse du nouveau backend Airbyte
+// Interface pour la réponse brute du backend Airbyte
+interface AirbyteDeal {
+  id: string;
+  [key: string]: string | number | boolean | null | undefined | object;
+}
+
 interface AirbyteDealsResponse {
-  items: Deal[];
+  items: AirbyteDeal[];
   total: number;
   page: number;
   limit: number;
@@ -39,6 +44,41 @@ export interface APIError {
   detail?: string;
   message?: string;
   status?: number;
+}
+
+/**
+ * Transforme un deal Airbyte (avec préfixe properties_) vers le format attendu par le frontend
+ */
+function transformAirbyteDeal(airbyteDeal: AirbyteDeal): Deal {
+  // Extraire toutes les propriétés avec le préfixe properties_
+  const properties: Record<string, string | number | boolean | null | undefined> = {};
+  
+  for (const [key, value] of Object.entries(airbyteDeal)) {
+    if (key.startsWith('properties_') && key !== 'properties') {
+      const cleanKey = key.replace('properties_', '');
+      properties[cleanKey] = value as string | number | boolean | null | undefined;
+    }
+  }
+
+  return {
+    id: airbyteDeal.id || '',
+    dealname: (airbyteDeal.properties_dealname as string) || properties.dealname as string || '',
+    amount: String((airbyteDeal.properties_amount as string | number) || properties.amount || ''),
+    closedate: (airbyteDeal.properties_closedate as string) || properties.closedate as string || '',
+    dealstage: (airbyteDeal.properties_dealstage as string) || properties.dealstage as string || '',
+    pipeline: (airbyteDeal.properties_pipeline as string) || properties.pipeline as string || '',
+    dealtype: (airbyteDeal.properties_dealtype as string) || properties.dealtype as string || '',
+    description: (airbyteDeal.properties_description as string) || properties.description as string || '',
+    hubspot_owner_id: (airbyteDeal.properties_hubspot_owner_id as string) || properties.hubspot_owner_id as string || '',
+    hs_deal_stage_probability: String((airbyteDeal.properties_hs_deal_stage_probability as string | number) || properties.hs_deal_stage_probability || ''),
+    hs_forecast_amount: String((airbyteDeal.properties_hs_forecast_amount as string | number) || properties.hs_forecast_amount || ''),
+    hs_deal_priority: (airbyteDeal.properties_hs_deal_priority as string) || properties.hs_deal_priority as string || '',
+    associatedcompanyids: (airbyteDeal.properties_associatedcompanyids as string) || properties.associatedcompanyids as string || '',
+    associatedvids: (airbyteDeal.properties_associatedvids as string) || properties.associatedvids as string || '',
+    createdate: (airbyteDeal.properties_createdate as string) || properties.createdate as string || '',
+    lastmodifieddate: (airbyteDeal.properties_lastmodifieddate as string) || properties.lastmodifieddate as string || '',
+    hs_lastmodifieddate: (airbyteDeal.properties_hs_lastmodifieddate as string) || properties.hs_lastmodifieddate as string || '',
+  };
 }
 
 export async function getDeals(
@@ -125,9 +165,11 @@ export async function getDeals(
       throw new Error('Format de réponse invalide: deals manquants ou malformés');
     }
 
-    // Transformation du format Airbyte vers le format attendu par le frontend
+    // Transformation des données Airbyte vers le format frontend
+    const transformedDeals = data.items.map(transformAirbyteDeal);
+
     return {
-      deals: data.items,
+      deals: transformedDeals,
       total: data.total,
       page: data.page,
       limit: data.limit,

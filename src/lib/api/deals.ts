@@ -26,19 +26,56 @@ export interface DealsResponse {
   total_pages: number;
 }
 
-// Interface pour la réponse du nouveau backend Airbyte
+export interface APIError {
+  detail?: string;
+  message?: string;
+  status?: number;
+}
+
+// Interface pour les données brutes Airbyte
+interface AirbyteDealRaw {
+  id: string;
+  [key: string]: string | number | boolean | null | undefined;
+}
+
+// Interface pour la réponse du nouveau backend Airbyte (données brutes)
 interface AirbyteDealsResponse {
-  items: Deal[];
+  items: AirbyteDealRaw[];
   total: number;
   page: number;
   limit: number;
   pages: number;
 }
 
-export interface APIError {
-  detail?: string;
-  message?: string;
-  status?: number;
+/**
+ * Transformer les données Airbyte (avec properties_*) vers le format frontend
+ * Convertit automatiquement tous les types en string
+ */
+function transformAirbyteDeal(airbyteDeal: AirbyteDealRaw): Deal {
+  const toString = (value: string | number | boolean | null | undefined): string => {
+    if (value === null || value === undefined) return '';
+    return String(value);
+  };
+
+  return {
+    id: airbyteDeal.id,
+    dealname: toString(airbyteDeal.properties_dealname || airbyteDeal.dealname),
+    amount: toString(airbyteDeal.properties_amount || airbyteDeal.amount),
+    closedate: toString(airbyteDeal.properties_closedate || airbyteDeal.closedate),
+    dealstage: toString(airbyteDeal.properties_dealstage || airbyteDeal.dealstage),
+    pipeline: toString(airbyteDeal.properties_pipeline || airbyteDeal.pipeline),
+    dealtype: toString(airbyteDeal.properties_dealtype || airbyteDeal.dealtype),
+    description: toString(airbyteDeal.properties_description || airbyteDeal.description),
+    hubspot_owner_id: toString(airbyteDeal.properties_hubspot_owner_id || airbyteDeal.hubspot_owner_id),
+    hs_deal_stage_probability: toString(airbyteDeal.properties_hs_deal_stage_probability || airbyteDeal.hs_deal_stage_probability),
+    hs_forecast_amount: toString(airbyteDeal.properties_hs_forecast_amount || airbyteDeal.hs_forecast_amount),
+    hs_deal_priority: toString(airbyteDeal.properties_hs_deal_priority || airbyteDeal.hs_deal_priority),
+    associatedcompanyids: toString(airbyteDeal.properties_associatedcompanyids || airbyteDeal.associatedcompanyids),
+    associatedvids: toString(airbyteDeal.properties_associatedvids || airbyteDeal.associatedvids),
+    createdate: toString(airbyteDeal.properties_createdate || airbyteDeal.createdate),
+    lastmodifieddate: toString(airbyteDeal.properties_lastmodifieddate || airbyteDeal.lastmodifieddate),
+    hs_lastmodifieddate: toString(airbyteDeal.properties_hs_lastmodifieddate || airbyteDeal.hs_lastmodifieddate),
+  };
 }
 
 export async function getDeals(
@@ -126,8 +163,12 @@ export async function getDeals(
     }
 
     // Transformation du format Airbyte vers le format attendu par le frontend
+    const transformedDeals = data.items.map(transformAirbyteDeal);
+    
+    console.log('🔄 Transformed deals sample:', transformedDeals[0]);
+    
     return {
-      deals: data.items,
+      deals: transformedDeals,
       total: data.total,
       page: data.page,
       limit: data.limit,

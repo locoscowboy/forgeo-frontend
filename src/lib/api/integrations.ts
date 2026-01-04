@@ -213,9 +213,11 @@ export async function getHubSpotDataStats(token: string): Promise<HubSpotConnect
     const history = await getAirbyteSyncHistory(token);
     
     if (history && history.length > 0) {
-      // Prendre le dernier job réussi
+      // Prendre le dernier job réussi (pas en cours ou échoué)
       const successfulJob = history.find(job => job.status === 'succeeded');
-      if (successfulJob && successfulJob.rows_synced) {
+      
+      // Si on a un job réussi avec des données
+      if (successfulJob && successfulJob.rows_synced && successfulJob.rows_synced > 0) {
         // Airbyte ne donne pas le détail par type, on estime
         const totalRows = successfulJob.rows_synced;
         return {
@@ -224,9 +226,20 @@ export async function getHubSpotDataStats(token: string): Promise<HubSpotConnect
           deals: Math.floor(totalRows * 0.15) // 15% deals
         };
       }
+      
+      // Si un job est en cours (running/pending), considérer qu'on a des données "en cours"
+      const runningJob = history.find(job => job.status === 'running' || job.status === 'pending');
+      if (runningJob) {
+        // Retourner des valeurs symboliques pour indiquer qu'une sync est en cours
+        return {
+          contacts: 1,
+          companies: 1,
+          deals: 1
+        };
+      }
     }
 
-    // Si aucun job réussi, retourner 0
+    // Si aucun job réussi ni en cours, retourner 0
     return {
       contacts: 0,
       companies: 0,
@@ -483,10 +496,15 @@ export async function getLoginSyncCheck(token: string): Promise<LoginSyncCheck> 
     const history = await getAirbyteSyncHistory(token);
     const shouldSync = await getShouldSync(token);
     
-    const hasData = history && history.length > 0 && history.some(job => job.status === 'succeeded');
+    // On a des données si:
+    // 1. Il y a au moins un job réussi (succeeded)
+    // 2. OU il y a un job en cours (running/pending) - considéré comme "a des données en cours de chargement"
+    const hasSuccessfulSync = history && history.length > 0 && history.some(job => job.status === 'succeeded');
+    const hasRunningSync = history && history.length > 0 && history.some(job => job.status === 'running' || job.status === 'pending');
+    const hasData = hasSuccessfulSync || hasRunningSync;
     
     return {
-      should_sync_on_login: shouldSync.auto_sync_recommended,
+      should_sync_on_login: shouldSync.auto_sync_recommended && !hasRunningSync, // Ne pas recommander si déjà en cours
       has_data: hasData,
       last_sync: null // On ne retourne pas les détails complets
     };

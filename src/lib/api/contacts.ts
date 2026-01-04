@@ -34,19 +34,63 @@ export interface ContactsResponse {
   total_pages: number;
 }
 
-// Interface pour la réponse du nouveau backend Airbyte
+export interface APIError {
+  detail?: string;
+  message?: string;
+  status?: number;
+}
+
+// Interface pour les données brutes Airbyte
+interface AirbyteContactRaw {
+  id: string;
+  [key: string]: string | number | boolean | null | undefined;
+}
+
+// Interface pour la réponse du nouveau backend Airbyte (données brutes)
 interface AirbyteContactsResponse {
-  items: Contact[];
+  items: AirbyteContactRaw[];
   total: number;
   page: number;
   limit: number;
   pages: number;
 }
 
-export interface APIError {
-  detail?: string;
-  message?: string;
-  status?: number;
+/**
+ * Transformer les données Airbyte (avec properties_*) vers le format frontend
+ * Convertit automatiquement tous les types en string
+ */
+function transformAirbyteContact(airbyteContact: AirbyteContactRaw): Contact {
+  const toString = (value: string | number | boolean | null | undefined): string => {
+    if (value === null || value === undefined) return '';
+    return String(value);
+  };
+
+  return {
+    id: airbyteContact.id,
+    firstname: toString(airbyteContact.properties_firstname || airbyteContact.firstname),
+    lastname: toString(airbyteContact.properties_lastname || airbyteContact.lastname),
+    email: toString(airbyteContact.properties_email || airbyteContact.email),
+    phone: toString(airbyteContact.properties_phone || airbyteContact.phone),
+    company: toString(airbyteContact.properties_company || airbyteContact.company),
+    website: toString(airbyteContact.properties_website || airbyteContact.website),
+    address: toString(airbyteContact.properties_address || airbyteContact.address),
+    city: toString(airbyteContact.properties_city || airbyteContact.city),
+    state: toString(airbyteContact.properties_state || airbyteContact.state),
+    zip: toString(airbyteContact.properties_zip || airbyteContact.zip),
+    country: toString(airbyteContact.properties_country || airbyteContact.country),
+    jobtitle: toString(airbyteContact.properties_jobtitle || airbyteContact.jobtitle),
+    lifecyclestage: toString(airbyteContact.properties_lifecyclestage || airbyteContact.lifecyclestage),
+    hs_lead_status: toString(airbyteContact.properties_hs_lead_status || airbyteContact.hs_lead_status),
+    lastmodifieddate: toString(airbyteContact.properties_lastmodifieddate || airbyteContact.lastmodifieddate),
+    properties: {
+      hs_linkedin_url: toString(airbyteContact.properties_hs_linkedin_url || airbyteContact.hs_linkedin_url),
+      createdate: toString(airbyteContact.properties_createdate || airbyteContact.createdate),
+      hs_analytics_source: toString(airbyteContact.properties_hs_analytics_source || airbyteContact.hs_analytics_source),
+      hubspot_owner_id: toString(airbyteContact.properties_hubspot_owner_id || airbyteContact.hubspot_owner_id),
+      mobilephone: toString(airbyteContact.properties_mobilephone || airbyteContact.mobilephone),
+      hs_lead_score: toString(airbyteContact.properties_hs_lead_score || airbyteContact.hs_lead_score),
+    }
+  };
 }
 
 export async function getContacts(
@@ -134,8 +178,12 @@ export async function getContacts(
     }
 
     // Transformation du format Airbyte vers le format attendu par le frontend
+    const transformedContacts = data.items.map(transformAirbyteContact);
+    
+    console.log('🔄 Transformed contacts sample:', transformedContacts[0]);
+    
     return {
-      contacts: data.items,
+      contacts: transformedContacts,
       total: data.total,
       page: data.page,
       limit: data.limit,

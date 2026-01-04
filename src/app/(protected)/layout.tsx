@@ -2,16 +2,16 @@
 
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { OnboardingModal } from "@/components/onboarding-modal-smart";
+// import { OnboardingModal } from "@/components/onboarding-modal-smart";
 import { LoginSyncHandler } from "@/components/login-sync-handler";
-import { useAuth } from "@/lib/auth/AuthContext";
+// import { useAuth } from "@/lib/auth/AuthContext";
 
 export default function ProtectedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { needsOnboarding } = useAuth();
+  // const { needsOnboarding } = useAuth();
   
   // Le middleware s'occupe déjà de vérifier l'authentification, 
   // donc nous n'avons plus besoin de le faire ici
@@ -27,8 +27,8 @@ export default function ProtectedLayout({
         </SidebarInset>
       </div>
       
-      {/* Modal d'onboarding */}
-      <OnboardingModal open={needsOnboarding} />
+      {/* Modal d'onboarding - Temporairement désactivé */}
+      {/* <OnboardingModal open={needsOnboarding} /> */}
       
       {/* Gestionnaire de sync au login */}
       <LoginSyncHandler />

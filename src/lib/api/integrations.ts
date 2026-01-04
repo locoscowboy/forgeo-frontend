@@ -559,7 +559,8 @@ export async function getLatestSyncEnriched(token: string): Promise<LatestSyncRe
  * Note: Non supporté par Airbyte, retourne null
  * @deprecated Utiliser getAirbyteSyncStatus à la place
  */
-export async function getSyncById(_syncId: number, _token: string): Promise<HubspotSyncData | null> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function getSyncById(syncId: number, token: string): Promise<HubspotSyncData | null> {
   console.warn('getSyncById is deprecated, use getAirbyteSyncStatus instead');
   return null;
 }

@@ -385,12 +385,14 @@ export default function DealsPage() {
             
             <div className="flex items-center gap-4">
               <SortDropdown
+                type="deal"
                 activeProperties={activeProperties}
                 sortCriteria={sortCriteria}
                 onSortChange={handleSortChange}
               />
               
               <FilterDropdown
+                type="deal"
                 activeProperties={activeProperties}
                 filterGroups={filterGroups}
                 onFilterChange={handleFilterChange}

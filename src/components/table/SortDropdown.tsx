@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { HubSpotProperty } from '@/lib/hubspot-properties';
+import { HubSpotProperty, CONTACT_PROPERTIES, COMPANY_PROPERTIES, DEAL_PROPERTIES } from '@/lib/hubspot-properties';
 
 interface SortCriteria {
   field: string;
@@ -19,20 +19,27 @@ interface SortCriteria {
 }
 
 interface SortDropdownProps {
+  type?: 'contact' | 'company' | 'deal';
   activeProperties: HubSpotProperty[];
   sortCriteria: SortCriteria[];
   onSortChange: (sortCriteria: SortCriteria[]) => void;
 }
 
 const SortDropdown: React.FC<SortDropdownProps> = ({
+  type,
   activeProperties,
   sortCriteria,
   onSortChange,
 }) => {
   const [open, setOpen] = useState(false);
 
+  // Utiliser TOUTES les propriétés disponibles pour le type, pas seulement les actives
+  const allProperties = type 
+    ? (type === 'contact' ? CONTACT_PROPERTIES : type === 'company' ? COMPANY_PROPERTIES : DEAL_PROPERTIES)
+    : activeProperties;
+
   const addSortCriteria = () => {
-    const firstAvailableField = activeProperties.find(
+    const firstAvailableField = allProperties.find(
       prop => !sortCriteria.some(sort => sort.field === prop.key)
     );
     
@@ -104,7 +111,7 @@ const SortDropdown: React.FC<SortDropdownProps> = ({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {activeProperties.map((property) => (
+                    {allProperties.map((property) => (
                       <SelectItem key={property.key} value={property.key}>
                         <div className="flex items-center gap-2">
                           <property.icon className="h-3 w-3" />
@@ -155,7 +162,7 @@ const SortDropdown: React.FC<SortDropdownProps> = ({
         
         <DropdownMenuItem 
           onClick={addSortCriteria}
-          disabled={sortCriteria.length >= activeProperties.length}
+          disabled={sortCriteria.length >= allProperties.length}
           className="text-blue-600"
         >
           <Plus className="h-4 w-4 mr-2" />

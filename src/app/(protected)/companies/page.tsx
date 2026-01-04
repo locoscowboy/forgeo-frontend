@@ -565,12 +565,14 @@ export default function CompaniesPage() {
             <div className="flex items-center gap-4">
               {/* Nouveaux boutons de tri et filtrage */}
               <SortDropdown
+                type="company"
                 activeProperties={activeProperties}
                 sortCriteria={sortCriteria}
                 onSortChange={handleSortChange}
               />
               
               <FilterDropdown
+                type="company"
                 activeProperties={activeProperties}
                 filterGroups={filterGroups}
                 onFilterChange={handleFilterChange}

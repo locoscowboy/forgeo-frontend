@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { HubSpotProperty } from '@/lib/hubspot-properties';
+import { HubSpotProperty, CONTACT_PROPERTIES, COMPANY_PROPERTIES, DEAL_PROPERTIES } from '@/lib/hubspot-properties';
 
 interface FilterCriteria {
   field: string;
@@ -27,20 +27,27 @@ interface FilterGroup {
 }
 
 interface FilterDropdownProps {
+  type?: 'contact' | 'company' | 'deal';
   activeProperties: HubSpotProperty[];
   filterGroups: FilterGroup[];
   onFilterChange: (filterGroups: FilterGroup[]) => void;
 }
 
 const FilterDropdown: React.FC<FilterDropdownProps> = ({
+  type,
   activeProperties,
   filterGroups,
   onFilterChange,
 }) => {
   const [open, setOpen] = useState(false);
 
+  // Utiliser TOUTES les propriétés disponibles pour le type, pas seulement les actives
+  const allProperties = type 
+    ? (type === 'contact' ? CONTACT_PROPERTIES : type === 'company' ? COMPANY_PROPERTIES : DEAL_PROPERTIES)
+    : activeProperties;
+
   const addFilterGroup = () => {
-    const firstAvailableField = activeProperties[0];
+    const firstAvailableField = allProperties[0];
     if (firstAvailableField) {
       const newGroup: FilterGroup = {
         filters: [{
@@ -55,7 +62,7 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({
   };
 
   const addFilterToGroup = (groupIndex: number) => {
-    const firstAvailableField = activeProperties[0];
+    const firstAvailableField = allProperties[0];
     if (firstAvailableField) {
       const newGroups = [...filterGroups];
       newGroups[groupIndex].filters.push({
@@ -179,7 +186,7 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {activeProperties.map((property) => (
+                            {allProperties.map((property) => (
                               <SelectItem key={property.key} value={property.key}>
                                 <div className="flex items-center gap-2">
                                   <property.icon className="h-3 w-3" />

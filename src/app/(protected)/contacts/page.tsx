@@ -563,12 +563,14 @@ export default function ContactsPage() {
             <div className="flex items-center gap-4">
               {/* Nouveaux boutons de tri et filtrage */}
               <SortDropdown
+                type="contact"
                 activeProperties={activeProperties}
                 sortCriteria={sortCriteria}
                 onSortChange={handleSortChange}
               />
               
               <FilterDropdown
+                type="contact"
                 activeProperties={activeProperties}
                 filterGroups={filterGroups}
                 onFilterChange={handleFilterChange}

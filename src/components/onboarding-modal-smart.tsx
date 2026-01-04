@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { CheckCircle, Loader2, ArrowRight, XCircle } from "lucide-react"
+import { CheckCircle, Loader2, ArrowRight } from "lucide-react"
 import { useAuth } from "@/lib/auth/AuthContext"
 import { getHubSpotAuthUrl } from "@/lib/api/integrations"
 import { useSmartSync, useSyncActions } from "@/hooks/useSmartSync"
@@ -61,20 +61,17 @@ export function OnboardingModal({ open }: OnboardingModalProps) {
     checkOnboardingStatus
   } = useAuth()
   
-  const { syncProgress, isSyncing, errorMessage } = useSmartSync()
+  const { syncProgress } = useSmartSync()
   const { handleSync } = useSyncActions()
   const router = useRouter()
   
   const [isConnecting, setIsConnecting] = React.useState(false)
-  const [syncError, setSyncError] = React.useState<string | null>(null)
-  const [syncStartTime, setSyncStartTime] = React.useState<number | null>(null)
 
   const handleHubSpotConnection = async () => {
     if (!token) return
     
     setIsConnecting(true)
     setOnboardingStep('connecting')
-    setSyncError(null)
     
     try {
       // Obtenir l'URL d'autorisation
@@ -94,7 +91,7 @@ export function OnboardingModal({ open }: OnboardingModalProps) {
         if (event.data.type === 'hubspot-auth-success') {
           popup?.close()
           
-          // Commencer la synchronisation Airbyte
+          // Commencer la synchronisation Smart Sync
           setOnboardingStep('syncing')
           await startSmartSync()
           
@@ -103,7 +100,6 @@ export function OnboardingModal({ open }: OnboardingModalProps) {
           popup?.close()
           setOnboardingStep('selection')
           setIsConnecting(false)
-          setSyncError('Erreur lors de la connexion HubSpot')
           window.removeEventListener('message', handleMessage)
         }
       }
@@ -124,7 +120,6 @@ export function OnboardingModal({ open }: OnboardingModalProps) {
       console.error('❌ Erreur lors de la connexion HubSpot:', error)
       setOnboardingStep('selection')
       setIsConnecting(false)
-      setSyncError('Impossible de se connecter à HubSpot')
     }
   }
 
@@ -132,29 +127,21 @@ export function OnboardingModal({ open }: OnboardingModalProps) {
     if (!token) return
     
     try {
-      console.log('🚀 Démarrage de la synchronisation Airbyte...')
-      setSyncStartTime(Date.now())
+      console.log('🚀 Démarrage de la synchronisation Smart Sync...')
       
       const syncId = await handleSync({ trigger: 'onboarding' })
       
       if (syncId) {
-        console.log('✅ Synchronisation Airbyte démarrée:', syncId)
+        console.log('✅ Synchronisation Smart Sync démarrée:', syncId)
       } else {
         throw new Error('Impossible de démarrer la synchronisation')
       }
       
     } catch (error) {
       console.error('❌ Erreur lors du démarrage de la sync:', error)
-      setSyncError('Erreur lors de la synchronisation. Vous pouvez réessayer plus tard.')
-      // Ne pas bloquer l'onboarding - permettre de continuer
+      setOnboardingStep('selection')
+      setIsConnecting(false)
     }
-  }
-
-  const handleSkipSync = () => {
-    // Permettre à l'utilisateur de passer l'étape sync
-    setOnboardingStep('completed')
-    checkOnboardingStatus()
-    router.push('/contacts')
   }
   
   // Écouter les changements de progrès et terminer l'onboarding
@@ -168,9 +155,9 @@ export function OnboardingModal({ open }: OnboardingModalProps) {
         setOnboardingStep('completed')
         await checkOnboardingStatus()
         
-        // Rediriger vers les contacts
+        // Rediriger vers les audits
         setTimeout(() => {
-          router.push('/contacts')
+          router.push('/audits')
         }, 1000)
         
         console.log('✅ Onboarding terminé avec succès')
@@ -179,26 +166,6 @@ export function OnboardingModal({ open }: OnboardingModalProps) {
       completeOnboarding()
     }
   }, [syncProgress, onboardingStep, setOnboardingStep, checkOnboardingStatus, router])
-
-  // Timeout pour la sync (5 minutes max avant de proposer de skip)
-  React.useEffect(() => {
-    if (onboardingStep === 'syncing' && syncStartTime && !syncProgress?.isComplete) {
-      const timeout = setTimeout(() => {
-        if (onboardingStep === 'syncing' && !syncProgress?.isComplete) {
-          setSyncError('La synchronisation prend plus de temps que prévu. Vous pouvez continuer et réessayer plus tard.')
-        }
-      }, 5 * 60 * 1000) // 5 minutes
-
-      return () => clearTimeout(timeout)
-    }
-  }, [onboardingStep, syncStartTime, syncProgress?.isComplete])
-
-  // Gérer les erreurs de sync
-  React.useEffect(() => {
-    if (errorMessage && onboardingStep === 'syncing') {
-      setSyncError(errorMessage)
-    }
-  }, [errorMessage, onboardingStep])
 
   // Calculer le pourcentage de progression
   const progressPercentage = React.useMemo(() => {
@@ -226,13 +193,6 @@ export function OnboardingModal({ open }: OnboardingModalProps) {
           {/* Étape 1: Sélection du CRM */}
           {onboardingStep === 'selection' && (
             <div className="space-y-4">
-              {syncError && (
-                <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700">
-                  <XCircle className="h-5 w-5" />
-                  <span className="text-sm">{syncError}</span>
-                </div>
-              )}
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {CRM_OPTIONS.map((crm) => (
                   <Card 
@@ -326,14 +286,6 @@ export function OnboardingModal({ open }: OnboardingModalProps) {
                 </p>
               </div>
 
-              {/* Erreur de sync */}
-              {syncError && (
-                <div className="flex items-center gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-700">
-                  <XCircle className="h-5 w-5" />
-                  <span className="text-sm">{syncError}</span>
-                </div>
-              )}
-
               {/* Barre de progression */}
               <div className="space-y-3">
                 <Progress value={progressPercentage} className="h-2" />
@@ -343,7 +295,7 @@ export function OnboardingModal({ open }: OnboardingModalProps) {
               </div>
 
               {/* Statistiques de synchronisation */}
-              {syncProgress && !syncProgress.isComplete && (
+              {syncProgress && (
                 <div className="grid grid-cols-3 gap-4">
                   <div className="text-center space-y-1">
                     <div className="text-2xl font-bold text-blue-600">
@@ -369,21 +321,8 @@ export function OnboardingModal({ open }: OnboardingModalProps) {
               {syncProgress?.isComplete && (
                 <div className="text-center">
                   <p className="text-sm text-muted-foreground">
-                    Redirection vers vos contacts en cours...
+                    Redirection vers vos audits en cours...
                   </p>
-                </div>
-              )}
-
-              {/* Bouton pour passer si timeout ou erreur */}
-              {(syncError || (isSyncing && progressPercentage > 0 && progressPercentage < 100)) && (
-                <div className="text-center">
-                  <Button 
-                    variant="ghost" 
-                    onClick={handleSkipSync}
-                    className="text-muted-foreground hover:text-foreground"
-                  >
-                    Continuer sans attendre
-                  </Button>
                 </div>
               )}
             </div>
@@ -400,7 +339,7 @@ export function OnboardingModal({ open }: OnboardingModalProps) {
               <div>
                 <h3 className="text-lg font-semibold">Configuration terminée !</h3>
                 <p className="text-muted-foreground">
-                  Bienvenue dans Forgeo. Découvrez vos données.
+                  Bienvenue dans Forgeo. Découvrez vos premiers audits.
                 </p>
               </div>
             </div>

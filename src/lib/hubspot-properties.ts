@@ -114,6 +114,50 @@ export const COMPANY_PROPERTIES: HubSpotProperty[] = [
   { key: "timezone", label: "Time Zone", icon: Clock, category: 'advanced', type: 'text', width: 150 },
 ];
 
+// Configuration complète des propriétés pour les Deals
+export const DEAL_PROPERTIES: HubSpotProperty[] = [
+  // Propriétés de base (toujours visibles)
+  { key: "dealname", label: "Deal Name", icon: DollarSign, category: 'basic', type: 'text', width: 250 },
+  { key: "amount", label: "Amount", icon: DollarSign, category: 'basic', type: 'number', width: 120 },
+  { key: "dealstage", label: "Stage", icon: Target, category: 'basic', type: 'tag', width: 150 },
+  { key: "pipeline", label: "Pipeline", icon: Target, category: 'basic', type: 'tag', width: 150 },
+  
+  // Informations du deal
+  { key: "dealtype", label: "Deal Type", icon: FileText, category: 'contact', type: 'tag', width: 120 },
+  { key: "description", label: "Description", icon: FileText, category: 'contact', type: 'text', width: 300 },
+  { key: "deal_currency_code", label: "Currency", icon: DollarSign, category: 'contact', type: 'text', width: 100 },
+  
+  // Montants et prévisions
+  { key: "hs_forecast_amount", label: "Forecast Amount", icon: TrendingUp, category: 'analytics', type: 'number', width: 150 },
+  { key: "hs_projected_amount", label: "Projected Amount", icon: TrendingUp, category: 'analytics', type: 'number', width: 150 },
+  { key: "hs_closed_amount", label: "Closed Amount", icon: TrendingUp, category: 'analytics', type: 'number', width: 150 },
+  { key: "hs_deal_stage_probability", label: "Probability", icon: BarChart3, category: 'analytics', type: 'number', width: 100 },
+  { key: "hs_deal_amount_calculation_preference", label: "Amount Calculation", icon: BarChart3, category: 'advanced', type: 'text', width: 180 },
+  
+  // Statuts
+  { key: "hs_is_closed_won", label: "Closed Won", icon: Target, category: 'analytics', type: 'boolean', width: 120 },
+  { key: "hs_is_closed_lost", label: "Closed Lost", icon: Target, category: 'analytics', type: 'boolean', width: 120 },
+  
+  // Timing
+  { key: "closedate", label: "Close Date", icon: Calendar, category: 'dates', type: 'date', width: 150 },
+  { key: "days_to_close", label: "Days to Close", icon: Clock, category: 'analytics', type: 'number', width: 120 },
+  { key: "createdate", label: "Create Date", icon: Calendar, category: 'dates', type: 'date', width: 150 },
+  { key: "lastmodifieddate", label: "Last Modified", icon: Clock, category: 'dates', type: 'date', width: 150 },
+  { key: "hs_lastmodifieddate", label: "HS Modified", icon: Clock, category: 'dates', type: 'date', width: 150 },
+  
+  // Analytics & Sources
+  { key: "hs_analytics_source", label: "Original Source", icon: BarChart3, category: 'analytics', type: 'text', width: 150 },
+  
+  // Engagement & Notes
+  { key: "notes_last_contacted", label: "Last Contacted", icon: MessageCircle, category: 'analytics', type: 'date', width: 150 },
+  { key: "num_contacted_notes", label: "Contact Count", icon: Hash, category: 'analytics', type: 'number', width: 120 },
+  { key: "num_notes", label: "Notes Count", icon: FileText, category: 'analytics', type: 'number', width: 120 },
+  { key: "hs_latest_meeting_activity", label: "Last Meeting", icon: MessageCircle, category: 'analytics', type: 'date', width: 150 },
+  
+  // Advanced
+  { key: "hubspot_owner_id", label: "Owner", icon: User, category: 'advanced', type: 'text', width: 150 },
+];
+
 // Catégories pour l'organisation du menu - STRUCTURE CORRIGÉE
 export const PROPERTY_CATEGORIES: CategoryInfo[] = [
   { key: "basic", label: "Basic Info", color: "bg-blue-100 text-blue-800", icon: User },
@@ -127,15 +171,16 @@ export const PROPERTY_CATEGORIES: CategoryInfo[] = [
 // Colonnes par défaut (toujours visibles)
 export const DEFAULT_CONTACT_COLUMNS = ["firstname", "lastname", "email", "phone"];
 export const DEFAULT_COMPANY_COLUMNS = ["name", "domain", "website", "industry"];
+export const DEFAULT_DEAL_COLUMNS = ["dealname", "amount", "dealstage", "pipeline"];
 
 // Utilitaires
-export function getPropertyByKey(key: string, type: 'contact' | 'company'): HubSpotProperty | undefined {
-  const properties = type === 'contact' ? CONTACT_PROPERTIES : COMPANY_PROPERTIES;
+export function getPropertyByKey(key: string, type: 'contact' | 'company' | 'deal'): HubSpotProperty | undefined {
+  const properties = type === 'contact' ? CONTACT_PROPERTIES : type === 'company' ? COMPANY_PROPERTIES : DEAL_PROPERTIES;
   return properties.find(prop => prop.key === key);
 }
 
-export function getPropertiesByCategory(categoryKey: string, type: 'contact' | 'company'): HubSpotProperty[] {
-  const properties = type === 'contact' ? CONTACT_PROPERTIES : COMPANY_PROPERTIES;
+export function getPropertiesByCategory(categoryKey: string, type: 'contact' | 'company' | 'deal'): HubSpotProperty[] {
+  const properties = type === 'contact' ? CONTACT_PROPERTIES : type === 'company' ? COMPANY_PROPERTIES : DEAL_PROPERTIES;
   return properties.filter(prop => prop.category === categoryKey);
 }
 

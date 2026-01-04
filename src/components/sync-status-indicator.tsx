@@ -38,20 +38,16 @@ export function SyncStatusIndicator({
   variant = 'full',
   size = 'md'
 }: SyncStatusIndicatorProps) {
-  const { indicator } = useDataFreshness();
+  const { indicator, hasIndicator } = useDataFreshness();
   const { recommendation, shouldShowSyncButton } = useSyncRecommendations();
   const { handleSync, isStarting, error } = useSyncActions();
 
-  // Valeurs par défaut si pas d'indicateur
-  const defaultIndicator = {
-    icon: 'check' as const,
-    color: 'green' as const,
-    text: 'Données à jour'
-  };
+  if (!hasIndicator) {
+    return null;
+  }
 
-  const currentIndicator = indicator || defaultIndicator;
-  const Icon = iconMap[currentIndicator.icon];
-  const colorClass = colorMap[currentIndicator.color];
+  const Icon = iconMap[indicator!.icon];
+  const colorClass = colorMap[indicator!.color];
 
   const handleSyncClick = () => {
     handleSync({ trigger: 'manual' });
@@ -68,11 +64,11 @@ export function SyncStatusIndicator({
               className={cn(colorClass, "gap-1.5", className)}
             >
               <Icon className="h-3 w-3" />
-              {currentIndicator.text}
+              {indicator!.text}
             </Badge>
           </TooltipTrigger>
           <TooltipContent>
-            <p>{recommendation?.message || currentIndicator.text}</p>
+            <p>{recommendation?.message || indicator!.text}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -88,7 +84,7 @@ export function SyncStatusIndicator({
           className={cn(colorClass, "gap-1.5")}
         >
           <Icon className="h-3 w-3" />
-          {size === 'sm' ? '' : currentIndicator.text}
+          {size === 'sm' ? '' : indicator!.text}
         </Badge>
         
         {showSyncButton && shouldShowSyncButton && (
@@ -125,7 +121,7 @@ export function SyncStatusIndicator({
       <div className="flex items-center gap-2">
         <div className={cn("flex items-center gap-1.5 px-2 py-1 rounded-md", colorClass)}>
           <Icon className="h-4 w-4" />
-          <span className="text-sm font-medium">{currentIndicator.text}</span>
+          <span className="text-sm font-medium">{indicator!.text}</span>
         </div>
         
         {recommendation && (

@@ -46,55 +46,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!token) return;
     
     try {
-      console.log('🔄 Checking onboarding status...');
+      console.log('🔄 Checking onboarding status with Smart Sync...');
       
-      // Récupérer le statut HubSpot (connexion + données)
-      const hubspotStatusResult = await getHubSpotStatus(token);
-      setHubspotStatus(hubspotStatusResult);
+      // Utiliser le nouveau endpoint Smart Sync pour déterminer l'onboarding
+      const [hubspotStatus, loginSyncCheck] = await Promise.all([
+        getHubSpotStatus(token),
+        getLoginSyncCheck(token).catch(() => null) // Graceful fallback si l'endpoint n'existe pas encore
+      ]);
       
-      // Vérifier si HubSpot est connecté
-      const hasConnection = hubspotStatusResult.isConnected;
+      setHubspotStatus(hubspotStatus);
       
-      // Vérifier si on a des données (via dataStats ou via loginSyncCheck)
-      let hasData = hubspotStatusResult.dataStats && (
-        (hubspotStatusResult.dataStats.contacts || 0) > 0 ||
-        (hubspotStatusResult.dataStats.companies || 0) > 0 ||
-        (hubspotStatusResult.dataStats.deals || 0) > 0
-      );
-
-      // Si pas de données via dataStats, essayer getLoginSyncCheck
-      if (!hasData && hasConnection) {
-        try {
-          const loginSyncCheck = await getLoginSyncCheck(token);
-          hasData = loginSyncCheck.has_data;
-        } catch (e) {
-          console.warn('getLoginSyncCheck échoué, utilisation des dataStats:', e);
-        }
-      }
+      // Logique Smart Sync pour l'onboarding
+      const hasConnection = hubspotStatus.isConnected;
+      const hasData = loginSyncCheck?.has_data || (hubspotStatus.dataStats && (
+        (hubspotStatus.dataStats.contacts && hubspotStatus.dataStats.contacts > 0) ||
+        (hubspotStatus.dataStats.companies && hubspotStatus.dataStats.companies > 0) ||
+        (hubspotStatus.dataStats.deals && hubspotStatus.dataStats.deals > 0)
+      ));
       
-      const needsOnboardingNow = !hasConnection;
+      const needsOnboardingNow = !hasConnection || !hasData;
       setNeedsOnboarding(needsOnboardingNow);
       
-      // Définir l'étape d'onboarding
+      // Définir l'étape d'onboarding basée sur Smart Sync
       if (!hasConnection) {
         setOnboardingStep('selection');
         console.log('📝 Onboarding: Connexion CRM requise');
       } else if (!hasData) {
-        // Connecté mais pas de données - proposer sync mais ne pas bloquer
         setOnboardingStep('syncing');
-        console.log('🔄 Onboarding: Synchronisation suggérée (mais pas bloquante)');
-        // Ne pas bloquer l'utilisateur s'il a déjà connecté HubSpot
-        setNeedsOnboarding(false);
+        console.log('🔄 Onboarding: Synchronisation requise');
       } else {
         setOnboardingStep('completed');
         console.log('✅ Onboarding: Terminé');
       }
       
+      // Si login sync recommandé, logguer l'information
+      if (loginSyncCheck?.should_sync_on_login) {
+        console.log('🔄 Smart Sync: Synchronisation recommandée au login');
+      }
+      
     } catch (error) {
       console.error('❌ Erreur lors de la vérification du statut d\'onboarding:', error);
-      // En cas d'erreur, NE PAS bloquer l'utilisateur
-      setNeedsOnboarding(false);
-      setOnboardingStep('completed');
+      // En cas d'erreur, on considère que l'onboarding est nécessaire
+      setNeedsOnboarding(true);
+      setOnboardingStep('selection');
     }
   }, [token]);
 
@@ -193,4 +187,4 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}
+} 

@@ -33,7 +33,7 @@ interface SyncState {
   
   // État de synchronisation en cours
   isSyncing: boolean;
-  currentSyncId: number | string | null;
+  currentSyncId: number | string | null; // Supporte maintenant string pour job_id Airbyte
   syncProgress: SyncProgress | null;
   
   // Recommandations
@@ -159,10 +159,10 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'SET_ERROR', payload: null });
 
     try {
-      console.log('🔄 Checking sync status via Airbyte...');
+      console.log('🔄 Checking sync status...');
       
-      // Les fonctions émulées utilisent maintenant Airbyte en interne
-      // Promise.allSettled pour ne pas bloquer si une fonction échoue
+      // Récupérer toutes les données en parallèle
+      // On utilise Promise.allSettled pour ne pas bloquer si un endpoint échoue
       const results = await Promise.allSettled([
         getShouldSync(token),
         getEnrichedSyncStatus(token),
@@ -172,20 +172,12 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       // Traiter les résultats
       if (results[0].status === 'fulfilled') {
         dispatch({ type: 'SET_SHOULD_SYNC', payload: results[0].value });
-      } else {
-        console.warn('getShouldSync échoué:', results[0].reason);
       }
-      
       if (results[1].status === 'fulfilled') {
         dispatch({ type: 'SET_ENRICHED_STATUS', payload: results[1].value });
-      } else {
-        console.warn('getEnrichedSyncStatus échoué:', results[1].reason);
       }
-      
       if (results[2].status === 'fulfilled') {
         dispatch({ type: 'SET_LATEST_SYNC', payload: results[2].value });
-      } else {
-        console.warn('getLatestSyncEnriched échoué:', results[2].reason);
       }
 
       // Mettre à jour le cache
@@ -201,7 +193,10 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       console.log('✅ Sync status updated');
     } catch (error) {
       console.error('❌ Error checking sync status:', error);
-      // Ne pas afficher d'erreur à l'utilisateur pour les checks de statut
+      dispatch({ 
+        type: 'SET_ERROR', 
+        payload: error instanceof Error ? error.message : 'Erreur lors de la vérification du statut'
+      });
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
@@ -212,9 +207,9 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'SET_ERROR', payload: null });
 
     try {
-      console.log('🚀 Starting Airbyte sync...', options);
+      console.log('🚀 Starting sync...', options);
       
-      // Déclencher la synchronisation via Airbyte
+      // Déclencher la synchronisation (utilise maintenant Airbyte en priorité)
       const syncResponse = await syncHubSpotData(token);
       const syncId = syncResponse.sync_id;
 
@@ -237,6 +232,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       // Polling pour vérifier le statut
       const pollInterval = setInterval(async () => {
         try {
+          // Utiliser getSyncStatus qui supporte maintenant les deux formats
           const statusData = await getSyncStatus(syncId, token);
           
           console.log('📊 Sync status poll:', statusData);
@@ -246,7 +242,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
             isSyncingRef.current = false;
             dispatch({ type: 'SET_SYNCING', payload: { isSyncing: false } });
             
-            // Récupérer les stats depuis l'historique Airbyte
+            // Essayer de récupérer les stats depuis l'historique Airbyte
             try {
               const history = await getAirbyteSyncHistory(token);
               const latestJob = history.find(job => job.status === 'succeeded');
@@ -309,7 +305,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
           dispatch({ type: 'SET_SYNCING', payload: { isSyncing: false } });
           dispatch({ type: 'SET_ERROR', payload: 'Erreur lors du suivi de la synchronisation' });
         }
-      }, 3000); // Poll toutes les 3 secondes
+      }, 3000); // Poll toutes les 3 secondes (Airbyte peut être plus lent)
 
       // Timeout de sécurité (10 minutes max pour Airbyte)
       setTimeout(() => {
@@ -341,20 +337,10 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
 
   // Obtenir la recommendation
   const getSyncRecommendation = useCallback((): SyncRecommendation | null => {
-    if (!state.shouldSync && !state.enrichedStatus) {
-      // Retourner une valeur par défaut si pas de données
-      return {
-        type: 'none',
-        message: '',
-        action: 'no_action',
-        priority: 'low'
-      };
-    }
+    if (!state.shouldSync || !state.enrichedStatus) return null;
 
-    const should_sync = state.shouldSync?.should_sync ?? false;
-    const data_quality = state.shouldSync?.data_quality ?? 'fresh';
-    const auto_sync_recommended = state.shouldSync?.auto_sync_recommended ?? false;
-    const recommendation = state.enrichedStatus?.recommendation ?? '';
+    const { should_sync, data_quality, auto_sync_recommended } = state.shouldSync;
+    const { recommendation } = state.enrichedStatus;
 
     if (!should_sync) {
       return {
@@ -368,7 +354,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     if (data_quality === 'stale' || auto_sync_recommended) {
       return {
         type: 'recommended',
-        message: recommendation || 'Synchronisation recommandée',
+        message: recommendation,
         action: 'sync_recommended',
         priority: 'medium'
       };
@@ -393,17 +379,9 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
 
   // Obtenir l'indicateur de fraîcheur
   const getDataFreshnessIndicator = useCallback((): DataFreshnessIndicator | null => {
-    const data_freshness = state.latestSync?.data_freshness;
+    if (!state.latestSync) return null;
 
-    if (!data_freshness) {
-      // Retourner une valeur par défaut
-      return {
-        status: 'fresh',
-        color: 'green',
-        text: 'Données à jour',
-        icon: 'check'
-      };
-    }
+    const { data_freshness } = state.latestSync;
 
     switch (data_freshness) {
       case 'fresh':
@@ -442,12 +420,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
           icon: 'help'
         };
       default:
-        return {
-          status: 'fresh',
-          color: 'green',
-          text: 'Données à jour',
-          icon: 'check'
-        };
+        return null;
     }
   }, [state.latestSync]);
 

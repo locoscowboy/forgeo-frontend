@@ -224,7 +224,7 @@ export function useSyncActions() {
   const [actionState, setActionState] = useState<{
     isStarting: boolean;
     error: string | null;
-    lastSyncId: number | string | null; // Supporte string pour job_id Airbyte
+    lastSyncId: number | string | null;
   }>({
     isStarting: false,
     error: null,

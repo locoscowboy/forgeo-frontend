@@ -16,7 +16,8 @@ import { Badge } from '@/components/ui/badge';
 import { 
   HubSpotProperty, 
   CONTACT_PROPERTIES, 
-  COMPANY_PROPERTIES, 
+  COMPANY_PROPERTIES,
+  DEAL_PROPERTIES, 
   PROPERTY_CATEGORIES,
   getPropertiesByCategory,
   getCategoryInfo,
@@ -24,7 +25,7 @@ import {
 } from '@/lib/hubspot-properties';
 
 interface AddColumnDropdownProps {
-  type: 'contact' | 'company';
+  type: 'contact' | 'company' | 'deal';
   visibleColumns: string[];
   onColumnAdd: (columnKey: string) => void;
   onColumnRemove: (columnKey: string) => void;
@@ -41,7 +42,7 @@ const AddColumnDropdown: React.FC<AddColumnDropdownProps> = ({
   const [open, setOpen] = useState(false);
   
   // Obtenir la liste des propriétés selon le type
-  const allProperties = type === 'contact' ? CONTACT_PROPERTIES : COMPANY_PROPERTIES;
+  const allProperties = type === 'contact' ? CONTACT_PROPERTIES : type === 'company' ? COMPANY_PROPERTIES : DEAL_PROPERTIES;
   
   // Propriétés non visibles
   const hiddenProperties = allProperties.filter(prop => !visibleColumns.includes(prop.key));

@@ -34,14 +34,9 @@ export interface ContactsResponse {
   total_pages: number;
 }
 
-// Interface pour la réponse brute du backend Airbyte
-interface AirbyteContact {
-  id: string;
-  [key: string]: string | number | boolean | null | undefined | object;
-}
-
+// Interface pour la réponse du nouveau backend Airbyte
 interface AirbyteContactsResponse {
-  items: AirbyteContact[];
+  items: Contact[];
   total: number;
   page: number;
   limit: number;
@@ -52,49 +47,6 @@ export interface APIError {
   detail?: string;
   message?: string;
   status?: number;
-}
-
-/**
- * Transforme un contact Airbyte (avec préfixe properties_) vers le format attendu par le frontend
- */
-function transformAirbyteContact(airbyteContact: AirbyteContact): Contact {
-  // Extraire toutes les propriétés avec le préfixe properties_
-  const properties: Record<string, string | number | boolean | null | undefined> = {};
-  
-  for (const [key, value] of Object.entries(airbyteContact)) {
-    if (key.startsWith('properties_') && key !== 'properties') {
-      const cleanKey = key.replace('properties_', '');
-      properties[cleanKey] = value as string | number | boolean | null | undefined;
-    }
-  }
-
-  return {
-    id: airbyteContact.id || '',
-    firstname: (airbyteContact.properties_firstname as string) || properties.firstname as string || '',
-    lastname: (airbyteContact.properties_lastname as string) || properties.lastname as string || '',
-    email: (airbyteContact.email as string) || (airbyteContact.properties_email as string) || properties.email as string || '',
-    phone: (airbyteContact.properties_phone as string) || properties.phone as string || '',
-    company: (airbyteContact.properties_company as string) || properties.company as string || '',
-    website: (airbyteContact.properties_website as string) || properties.website as string || '',
-    address: (airbyteContact.properties_address as string) || properties.address as string || '',
-    city: (airbyteContact.properties_city as string) || properties.city as string || '',
-    state: (airbyteContact.properties_state as string) || properties.state as string || '',
-    zip: (airbyteContact.properties_zip as string) || properties.zip as string || '',
-    country: (airbyteContact.properties_country as string) || properties.country as string || '',
-    jobtitle: (airbyteContact.properties_jobtitle as string) || properties.jobtitle as string || '',
-    lifecyclestage: (airbyteContact.properties_lifecyclestage as string) || properties.lifecyclestage as string || '',
-    hs_lead_status: (airbyteContact.properties_hs_lead_status as string) || properties.hs_lead_status as string || '',
-    lastmodifieddate: (airbyteContact.properties_lastmodifieddate as string) || properties.lastmodifieddate as string || '',
-    properties: {
-      ...properties,
-      hs_linkedin_url: (airbyteContact.properties_hs_linkedin_url as string) || properties.hs_linkedin_url as string,
-      createdate: (airbyteContact.properties_createdate as string) || properties.createdate as string,
-      hs_analytics_source: (airbyteContact.properties_hs_analytics_source as string) || properties.hs_analytics_source as string,
-      hubspot_owner_id: (airbyteContact.properties_hubspot_owner_id as string) || properties.hubspot_owner_id as string,
-      mobilephone: (airbyteContact.properties_mobilephone as string) || properties.mobilephone as string,
-      hs_lead_score: (airbyteContact.properties_hs_lead_score as string) || properties.hs_lead_score as string,
-    }
-  };
 }
 
 export async function getContacts(
@@ -181,11 +133,9 @@ export async function getContacts(
       throw new Error('Format de réponse invalide: contacts manquants ou malformés');
     }
 
-    // Transformation des données Airbyte vers le format frontend
-    const transformedContacts = data.items.map(transformAirbyteContact);
-
+    // Transformation du format Airbyte vers le format attendu par le frontend
     return {
-      contacts: transformedContacts,
+      contacts: data.items,
       total: data.total,
       page: data.page,
       limit: data.limit,

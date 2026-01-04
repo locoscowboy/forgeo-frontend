@@ -9,7 +9,7 @@ interface ColumnState {
 }
 
 interface UseTableColumnsOptions {
-  type: 'contact' | 'company';
+  type: 'contact' | 'company' | 'deal';
   defaultColumns: string[];
   storageKey?: string;
 }
@@ -80,7 +80,9 @@ export function useTableColumns({
     // Protéger certaines colonnes essentielles
     const protectedColumns = type === 'contact' 
       ? ['firstname', 'lastname', 'email'] 
-      : ['name', 'domain'];
+      : type === 'company'
+      ? ['name', 'domain']
+      : ['dealname', 'amount'];
     
     if (!protectedColumns.includes(columnKey)) {
       setVisibleColumns(prev => prev.filter(col => col !== columnKey));
